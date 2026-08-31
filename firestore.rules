@@ -1,0 +1,133 @@
+rules_version = '2';
+
+// Regras do Firestore do projeto "tickflix-c2a78".
+//
+// `highlight` precisa ser legível sem usuário autenticado — é o destaque
+// (imagem/nome/info do filme) mostrado no fundo da própria tela de login,
+// antes de qualquer sessão existir. Escrita fica fechada (o app não grava
+// nessa collection, só lê); tudo o mais fica negado por padrão até o resto
+// do modelo de dados (usuários, sessões etc.) ser definido.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /highlight/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Timelines do usuário — cada um só lê/escreve as próprias, guardadas
+    // como users/{uid}/timeline/{timelineId}.
+    match /users/{uid}/timeline/{timelineId} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // "Já vi esse filme" — estado GLOBAL por filme, não por timeline (o
+    // mesmo filme em duas timelines diferentes é a MESMA marcação; a
+    // timeline é só agrupamento, ver service/WatchedSettings.ts). Um doc
+    // por filme visto (chave = timelineMovieKey), existência do doc =
+    // visto. Também usado pela página Oscar pros indicados já resolvidos
+    // por IA (mesma chave, ver oscarNomineeKey em
+    // pages/private/oscar/functions.ts).
+    match /users/{uid}/watched/{movieKey} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // "Seguir uma série" (página Séries) — séries que o usuário segue
+    // pra acompanhar episódio por episódio, diferente de "já vi" acima
+    // (que é só um boolean pro filme/série inteira). Um doc por série
+    // (chave = id da série no TMDb), já com todos os episódios de todas
+    // as temporadas + tag `watched` de cada um, ver
+    // service/FollowingSettings.ts. Nome "following" (não "series") de
+    // propósito — pensando à frente numa timeline categoria "series" que
+    // AGRUPE séries seguidas (ex.: "séries da Marvel"), sem misturar os
+    // dois conceitos no mesmo dado.
+    match /users/{uid}/following/{seriesId} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Edições de premiação (categorias + indicados) — dado público, igual
+    // `highlight`, todo usuário logado pode ler. Escrita liberada pra
+    // qualquer usuário autenticado por enquanto (app sem conceito de
+    // admin ainda; é o botão "Adicionar dados"/"Editar dados" em
+    // pages/private/awards/AddDataModal.tsx que grava aqui, colando um
+    // JSON pesquisado fora do app — ver awards/functions.ts) — reavaliar
+    // se o app ganhar mais de um usuário de verdade. 3 collections, uma
+    // por premiação (AwardConfig.collectionName em
+    // pages/private/awards/awardConfigs.ts) — "oscar" já existia sozinha
+    // antes do Globo de Ouro/Cannes entrarem, mantida com esse nome pra
+    // não perder o dado já cadastrado pela Rebecca.
+    match /oscar/{editionId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /globoDeOuro/{editionId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /cannes/{editionId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Catálogo GLOBAL de cada franquia (doc único por collection, id
+    // "catalog") — dado público igual às premiações acima, mesmo motivo
+    // (read livre, write só autenticado, sem conceito de admin ainda).
+    // Pedido explícito da Rebecca: "salvar os dados numa collection
+    // única e atrelar com os dados os filme para não ficar usando a ia
+    // toda hora" — resolvido por IA (`resolveTimelineMovies`) só na
+    // PRIMEIRA vez que QUALQUER usuário visita aquela franquia; toda
+    // visita seguinte, de qualquer usuário, só LÊ (ver
+    // pages/private/franchise/functions.ts). 9 collections, uma por
+    // franquia (FranchiseConfig.collectionName em
+    // pages/private/franchise/franchiseConfigs.ts).
+    match /marvel/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /dc/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /mundoMagico/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /terraMedia/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /starWars/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /jornadaNasEstrelas/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /jurassicPark/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /percyJackson/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /jamesBond/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,486 @@
+// src/pages/private/awards/styles.scss
+// Generalização de pages/private/oscar/styles.scss — mesmo fundo
+// gradiente roxo escuro já usado em timelines/.dashboard, com um acento
+// de cor por cima pra identidade de "prêmio". Antes era um dourado fixo
+// (só existia o Oscar); agora é `--awards-accent`, uma CSS custom
+// property setada inline por index.tsx a partir de `AwardConfig.accentColor`
+// — cada premiação (Oscar dourado, Globo de Ouro azul, Cannes vermelho)
+// ganha a própria cor sem precisar de 3 cópias desse arquivo.
+@use "@/theme" as *;
+
+$content-max-width: 1440px;
+
+.awards {
+  // Fallback dourado (idêntico ao Oscar original) — só é usado se por
+  // algum motivo a custom property não estiver setada.
+  --awards-accent: #d4af37;
+
+  min-height: 100vh;
+  padding: 48px 0 64px;
+  background: linear-gradient(307deg, #242329 3%, #51279b 64%);
+
+  &__inner {
+    max-width: $content-max-width;
+    margin: 0 auto;
+    padding: 0 48px;
+
+    @media (max-width: 900px) {
+      padding: 0 20px;
+    }
+  }
+
+  &__title {
+    margin: 0 0 4px;
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: #ffffff;
+    text-align: center;
+  }
+
+  &__subtitle {
+    margin: 0 0 36px;
+    text-align: center;
+    font-size: 14px;
+    color: rgba(#ffffff, 0.65);
+  }
+
+  &__empty {
+    color: rgba(#ffffff, 0.65);
+    text-align: center;
+    padding: 24px 0;
+  }
+
+  &__error {
+    color: #ff9b9b;
+    margin: 0 0 20px;
+  }
+
+  &__spinner {
+    animation: awards-spin 0.8s linear infinite;
+  }
+
+  // --- Grade de edições ---
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 16px;
+  }
+
+  &__edition-card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 20px 18px;
+    border: 1px solid rgba(#ffffff, 0.08);
+    border-radius: $radius-md;
+    background: rgba(#ffffff, 0.04);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, transform 0.15s;
+
+    &:hover {
+      border-color: color-mix(in srgb, var(--awards-accent) 50%, transparent);
+      background: rgba(#ffffff, 0.07);
+      transform: translateY(-2px);
+    }
+  }
+
+  &__edition-ordinal {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--awards-accent);
+  }
+
+  &__edition-year {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(#ffffff, 0.55);
+    margin-bottom: 8px;
+  }
+
+  &__edition-headline {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0; // sem isso o texto não encolhe pra caber a elipse
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.35;
+    color: #ffffff;
+    // Uma linha só, com "..." se não couber — cobre tanto o caso com
+    // ícone (headline real, ellipsis fica em &-text abaixo) quanto o
+    // "Indicados em breve" (sem ícone, texto direto aqui).
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    svg {
+      flex: 0 0 auto;
+      color: var(--awards-accent);
+    }
+
+    &--pending {
+      color: rgba(#ffffff, 0.4);
+      font-weight: 400;
+      font-style: italic;
+    }
+  }
+
+  // O nowrap/ellipsis do pai acima não trunca um filho flex sozinho
+  // (o ícone junto quebraria isso) — o texto do vencedor precisa da
+  // própria regra + min-width:0 pra poder encolher dentro da linha.
+  &__edition-headline-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+
+  // --- Detalhe de uma edição ---
+  &__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 24px;
+    border: none;
+    background: none;
+    padding: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(#ffffff, 0.7);
+    cursor: pointer;
+
+    &:hover {
+      color: var(--awards-accent);
+    }
+  }
+
+  &__edition-detail-title {
+    margin: 0 0 4px;
+    font-size: 26px;
+    font-weight: 800;
+    color: #ffffff;
+
+    span {
+      font-weight: 500;
+      color: rgba(#ffffff, 0.55);
+    }
+  }
+
+  &__edition-detail-subtitle {
+    margin: 0;
+    font-size: 13px;
+    color: rgba(#ffffff, 0.55);
+    white-space: nowrap;
+  }
+
+  // "Filmes elegíveis de X" + "N categorias - M filmes" + barra "visto:
+  // W/M" — tudo inline, mesmo tamanho de fonte (herdado de
+  // &__edition-detail-subtitle), gap de 16px entre cada informação.
+  &__edition-detail-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  &__edition-detail-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__edition-detail-progress-bar {
+    width: 90px;
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+    background: rgba(#ffffff, 0.18);
+  }
+
+  &__edition-detail-progress-fill {
+    height: 100%;
+    background: var(--awards-accent);
+  }
+
+  &__edition-detail-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 36px;
+  }
+
+  // Abre o AddDataModal — "Adicionar dados"/"Editar dados" conforme a
+  // edição já tem ou não algo cadastrado.
+  &__resolve-button {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border: 1px solid color-mix(in srgb, var(--awards-accent) 40%, transparent);
+    border-radius: $radius-md;
+    background: color-mix(in srgb, var(--awards-accent) 16%, transparent);
+    padding: 9px 16px;
+    color: var(--awards-accent);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+
+    &:hover:not(:disabled) {
+      background: color-mix(in srgb, var(--awards-accent) 28%, transparent);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  // --- AddDataModal — colar JSON pronto, sem IA nenhuma ---
+  &__add-data-panel {
+    position: relative;
+    width: 100%;
+    max-width: 720px;
+    max-height: 88vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    background: #1a1424;
+    border: 1px solid color-mix(in srgb, var(--awards-accent) 25%, transparent);
+    border-radius: $radius-lg;
+    box-shadow: 0 20px 60px rgba(#000000, 0.5);
+    padding: 32px;
+  }
+
+  &__add-data-title {
+    margin: 0 32px 4px 0;
+    font-size: 20px;
+    font-weight: 800;
+    color: #ffffff;
+
+    span {
+      font-weight: 500;
+      color: rgba(#ffffff, 0.55);
+    }
+  }
+
+  &__add-data-hint {
+    margin: 0 0 16px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: rgba(#ffffff, 0.55);
+  }
+
+  &__add-data-copy-prompt {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(#ffffff, 0.15);
+    border-radius: $radius-sm;
+    background: none;
+    padding: 6px 12px;
+    color: rgba(#ffffff, 0.75);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+      border-color: color-mix(in srgb, var(--awards-accent) 40%, transparent);
+      color: var(--awards-accent);
+    }
+  }
+
+  &__add-data-textarea {
+    width: 100%;
+    min-height: 280px;
+    border: 1px solid rgba(#ffffff, 0.15);
+    border-radius: $radius-md;
+    background: rgba(#000000, 0.25);
+    padding: 14px;
+    color: #ffffff;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    resize: vertical;
+
+    &::placeholder {
+      color: rgba(#ffffff, 0.3);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: color-mix(in srgb, var(--awards-accent) 50%, transparent);
+    }
+  }
+
+  &__add-data-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  &__add-data-cancel {
+    border: none;
+    background: none;
+    padding: 9px 16px;
+    color: rgba(#ffffff, 0.6);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      color: #ffffff;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &__category {
+    margin-bottom: 40px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  &__category-title {
+    position: relative;
+    display: inline-block;
+    margin: 0 0 18px;
+    padding-bottom: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #ffffff;
+
+    &::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 36px;
+      height: 2px;
+      background: var(--awards-accent);
+    }
+  }
+
+  &__nominee-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 18px;
+  }
+
+  &__nominee {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__nominee-open {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    border: none;
+    background: none;
+    padding: 0;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover .awards__nominee-poster {
+      opacity: 0.85;
+    }
+  }
+
+  &__nominee-poster {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    border-radius: $radius-sm;
+    object-fit: cover;
+    background: rgba(#ffffff, 0.06);
+
+    &--empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(#ffffff, 0.35);
+    }
+  }
+
+  &__nominee--winner &__nominee-poster {
+    box-shadow: 0 0 0 2px var(--awards-accent);
+  }
+
+  &__nominee-winner-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--awards-accent);
+    color: #241a00;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  &__nominee-title {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #ffffff;
+  }
+
+  &__nominee--winner &__nominee-title {
+    color: var(--awards-accent);
+  }
+
+  &__nominee-person {
+    font-size: 12px;
+    color: rgba(#ffffff, 0.6);
+  }
+
+  // Toggle "já vi" agora é o <WatchButton/> global (@/components/watchButton)
+  // — usado aqui e em todo card de filme do app (fileira de pôster,
+  // busca, timeline).
+
+  // Detalhe do indicado agora abre o MODAL GLOBAL (@/components/movieDetail,
+  // suas próprias classes movie-detail__*) — componente global, contexto
+  // de prêmio já visível na própria grade (badge/título/nome), não
+  // duplicado dentro do modal. Só o caso raro de indicado SEM tmdbId
+  // cadastrado (o modal real precisa de um id do TMDb pra buscar algo)
+  // usa esse painel de aviso — mesmo chrome do modal global
+  // (movie-detail__overlay/__panel), só com texto simples em vez do
+  // detalhe completo.
+  &__detail-missing-panel {
+    padding: 32px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: $color-text;
+  }
+}
+
+@keyframes awards-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,0 +1,322 @@
+// src/pages/public/about/styles.scss
+// Landing "/sobre" — full-bleed por seção com conteúdo limitado por
+// dentro (.about__inner), mesmo padrão do Dashboard. Gradiente do hero e
+// da seção "Como criar uma timeline" reaproveita a mesma cor do fundo de
+// "Minhas timelines" no Dashboard (.dashboard__timelines), de propósito —
+// é a identidade visual roxa escura do app, não uma cor nova inventada
+// só pra essa página.
+@use "@/theme" as *;
+
+$content-max-width: 1100px;
+$hero-gradient: linear-gradient(307deg, #242329 3%, #51279b 64%);
+
+.about {
+  min-height: 100vh;
+  background: $color-bg;
+
+  &__inner {
+    max-width: $content-max-width;
+    margin: 0 auto;
+    padding: 0 48px;
+
+    @media (max-width: 900px) {
+      padding: 0 20px;
+    }
+  }
+
+  // --- Nav ---
+  &__nav {
+    border-bottom: 1px solid rgba($color-border, 0.3);
+  }
+
+  &__nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+
+    .logo {
+      font-size: 22px;
+    }
+  }
+
+  &__nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: $color-primary;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  // --- Hero ---
+  &__hero {
+    position: relative;
+    background: $hero-gradient;
+    padding: 88px 0 96px;
+    overflow: hidden;
+
+    // Glow decorativo — só CSS, sem imagem nenhuma pra carregar.
+    &::before {
+      content: "";
+      position: absolute;
+      top: -20%;
+      right: -10%;
+      width: 520px;
+      height: 520px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba($color-primary-light, 0.45) 0%, rgba($color-primary-light, 0) 70%);
+      pointer-events: none;
+    }
+
+    .about__inner {
+      position: relative;
+    }
+  }
+
+  &__eyebrow {
+    display: inline-block;
+    margin-bottom: 20px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(#ffffff, 0.12);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  &__hero-title {
+    max-width: 760px;
+    margin: 0 0 16px;
+    color: #ffffff;
+    font-size: 44px;
+    line-height: 1.15;
+    font-weight: 800;
+
+    @media (max-width: 900px) {
+      font-size: 30px;
+    }
+  }
+
+  &__hero-subtitle {
+    margin: 0 0 20px;
+    color: #bfff7e;
+    font-size: 16px;
+    font-style: italic;
+    font-weight: 600;
+  }
+
+  &__hero-lead {
+    max-width: 560px;
+    margin: 0 0 32px;
+    color: rgba(#ffffff, 0.78);
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  &__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+    border-radius: $radius-md;
+    padding: 14px 28px;
+    background: $color-primary-light;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 15px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: filter 0.15s ease, transform 0.15s ease;
+
+    &:hover {
+      filter: brightness(1.12);
+      transform: translateY(-1px);
+    }
+
+    &--light {
+      background: #ffffff;
+      color: $color-primary;
+    }
+  }
+
+  // --- Seções gerais ---
+  &__section {
+    padding: 72px 0;
+
+    &--dark {
+      background: $hero-gradient;
+    }
+  }
+
+  &__section-title {
+    margin: 0 0 12px;
+    text-align: center;
+    font-size: 28px;
+    font-weight: 800;
+    color: $color-primary-dark;
+
+    &--light {
+      color: #ffffff;
+    }
+  }
+
+  &__section-hint {
+    margin: 0 auto 48px;
+    max-width: 480px;
+    text-align: center;
+    color: rgba(#ffffff, 0.7);
+    font-size: 15px;
+  }
+
+  // --- Features ---
+  &__features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 24px;
+    margin-top: 48px;
+  }
+
+  &__feature-card {
+    padding: 28px 24px;
+    border-radius: $radius-lg;
+    background: $color-bg;
+    box-shadow: 0 2px 16px rgba($color-primary-dark, 0.08);
+    border: 1px solid rgba($color-border, 0.25);
+  }
+
+  &__feature-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    margin-bottom: 16px;
+    border-radius: $radius-md;
+    background: rgba($color-primary, 0.1);
+    color: $color-primary;
+  }
+
+  &__feature-title {
+    margin: 0 0 8px;
+    font-size: 16px;
+    font-weight: 700;
+    color: $color-primary-dark;
+  }
+
+  &__feature-description {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: $color-text-muted;
+  }
+
+  // --- Passo a passo ---
+  &__steps {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  &__step {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
+
+  &__step-number {
+    flex: 0 0 auto;
+    font-size: 22px;
+    font-weight: 800;
+    color: rgba(#ffffff, 0.35);
+    line-height: 1.3;
+  }
+
+  &__step-title {
+    margin: 0 0 4px;
+    color: #ffffff;
+    font-size: 17px;
+    font-weight: 700;
+  }
+
+  &__step-description {
+    margin: 0;
+    color: rgba(#ffffff, 0.72);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  &__examples {
+    margin: 56px auto 0;
+    max-width: 680px;
+    text-align: center;
+  }
+
+  &__examples-label {
+    display: block;
+    margin-bottom: 16px;
+    color: rgba(#ffffff, 0.55);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  &__examples-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  &__example-chip {
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: rgba(#ffffff, 0.08);
+    border: 1px solid rgba(#ffffff, 0.16);
+    color: #ffffff;
+    font-size: 13px;
+  }
+
+  // --- CTA final ---
+  &__cta-band {
+    padding: 64px 0;
+    background: $color-primary;
+    text-align: center;
+  }
+
+  &__cta-title {
+    margin: 0 0 24px;
+    color: #ffffff;
+    font-size: 26px;
+    font-weight: 800;
+  }
+
+  // --- Rodapé ---
+  &__footer {
+    padding: 40px 0;
+    border-top: 1px solid rgba($color-border, 0.3);
+  }
+
+  &__footer-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__footer-tagline {
+    color: $color-text-muted;
+    font-size: 13px;
+    font-style: italic;
+  }
+}

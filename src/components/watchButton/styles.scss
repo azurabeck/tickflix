@@ -1,0 +1,42 @@
+// src/components/watchButton/styles.scss
+@use "@/theme" as *;
+
+.watch-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(#000000, 0.5);
+  color: #ffffff;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: rgba(#000000, 0.7);
+    color: $color-success;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &--inline {
+    position: static;
+    flex: 0 0 auto;
+  }
+
+  &--active {
+    color: $color-success;
+
+    &:hover:not(:disabled) {
+      color: $color-error;
+    }
+  }
+}

@@ -1,0 +1,762 @@
+// src/pages/private/home/dashboard/styles.scss
+// Cores tiradas por amostragem de pixel do SVG de referência (Desktop Btn
+// Enabled (3)): fundo lavanda #EDEFFD nas seções, barra de progresso
+// verde #BFFF7E + roxo claro (já existe como $color-primary-light).
+@use "@/theme" as *;
+
+$section-bg: #edeffd;
+// Teto de largura só do CONTEÚDO de cada seção — cada seção em si é
+// full-bleed (100% da tela, com a própria cor de fundo), senão a home
+// vira uma caixa estreita boiando numa tela grande. 1440 dá bastante
+// respiro em monitores grandes sem virar uma linha de texto esticada.
+$content-max-width: 1440px;
+
+.dashboard {
+  min-height: 100vh;
+  background: $color-bg;
+
+  &__inner {
+    max-width: $content-max-width;
+    margin: 0 auto;
+    padding: 0 48px;
+
+    @media (max-width: 900px) {
+      padding: 0 20px;
+    }
+  }
+
+  &__row-timelines {
+    background: linear-gradient(307deg, #242329 3%, #51279b 64%);
+    padding: 32px 0;
+
+    &-title {
+      color: #fff;
+      margin: 0 0 16px;
+      font-size: 16px;
+      font-weight: 400;
+    }
+  }
+
+  &__loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: $color-text-muted;
+    font-size: 14px;
+  }
+
+  &__spinner {
+    animation: dashboard-spin 0.8s linear infinite;
+  }
+
+  &__error {
+    color: $color-error;
+    text-align: center;
+  }
+
+  &__empty {
+    color: $color-text-muted;
+    text-align: center;
+  }
+
+  // --- Carrossel de trailers (topo) ---
+  // Full-bleed de propósito — é o elemento que mais se beneficia de uma
+  // tela grande. Altura em aspect-ratio com teto (max-height) pra não
+  // virar um vídeo gigantesco num monitor ultrawide; o iframe por dentro
+  // é sempre maior que o wrap e centralizado (truque clássico de "cover"
+  // pra embed do YouTube, baseado na proporção 16:9 do vídeo de origem)
+  // pra preencher sem barra preta em nenhuma proporção de tela.
+  &__hero {
+    position: relative;
+  }
+
+  &__hero-video-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 21 / 9;
+    max-height: 640px;
+    min-height: calc(100vh - 120px);
+    overflow: hidden;
+    // Sem cor própria — deixa o gradiente de .dashboard__hero-group
+    // aparecer por trás enquanto o vídeo carrega, sem costura de cor.
+    background: transparent;
+  }
+
+  &__hero-video {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    min-width: 177.78vh; // 100 * 16/9 — garante cobertura total não importa a proporção da tela
+    min-height: 56.25vw; // 100 * 9/16
+    transform: translate(-50%, -50%);
+    border: none;
+    pointer-events: none; // é só ambientação, não um player interativo
+  }
+
+  &__hero-fade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(0deg, rgba(#000000, 0.75) 0%, rgba(#000000, 0) 45%);
+    pointer-events: none;
+  }
+
+  &__hero-caption {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__hero-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: #ffffff;
+    text-shadow: 0 2px 12px rgba(#000000, 0.5);
+
+    @media (max-width: 900px) {
+      font-size: 20px;
+    }
+  }
+
+  &__hero-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  &__hero-badge {
+    display: inline-flex;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: $color-primary;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+  }
+
+  // Som/legenda do trailer — só ícone, ao lado do selo "TRAILER OFICIAL".
+  &__hero-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(#000000, 0.45);
+    color: #ffffff;
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(#000000, 0.65);
+    }
+
+    &[data-active="true"] {
+      background: $color-primary;
+    }
+  }
+
+  &__hero-dots {
+    position: absolute;
+    right: 48px;
+    bottom: 32px;
+    display: flex;
+    gap: 8px;
+
+    @media (max-width: 900px) {
+      right: 20px;
+    }
+  }
+
+  &__hero-dot {
+    width: 8px;
+    height: 8px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(#ffffff, 0.4);
+    cursor: pointer;
+    padding: 0;
+
+    &--active {
+      background: #ffffff;
+    }
+  }
+
+  // Uma linha só: input (com o placeholder explicando o que digitar,
+  // exemplos incluídos) + botão do lado — sem checkbox de "tudo"/
+  // "principais" nem título separado, decisão explícita pra ficar
+  // compacto logo abaixo do trailer.
+  &__create-band {
+    background: $color-primary;
+    padding: 0;
+    height: 60px;
+    display: flex;
+    gap: 0;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3)
+  }
+
+  &__create-inner {
+    display: flex;
+    align-items: center;
+    gap: 0px;
+    width: 100%;
+  }
+
+  &__create-input {
+    flex: 1;
+    border: none;
+    padding: 12px 16px;
+    font-size: 14px;
+    color: #fff;
+    background: $color-primary;
+    height: 100%;
+    
+
+    &::placeholder {
+      color: #ffffff86;
+    }
+
+    &:disabled {
+      opacity: 0.7;
+    }
+  }
+
+  &__create-button {
+    flex: 0 0 auto;
+    border: none;
+    padding: 12px 32px;
+    background: $color-primary-medium;
+    color: #ffffff;
+    font-weight: 500;
+    font-size: 15px;
+    cursor: pointer;
+    min-width: 140px;
+    height: 100%;
+
+    &:hover:not(:disabled) {
+      filter: brightness(1.1);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .dashboard__spinner {
+      display: block;
+      margin: 0 auto;
+    }
+  }
+
+  // --- Modal "criar timeline" (preview + ajuste antes de salvar) ---
+  &__create-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(#000000, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    z-index: 1000;
+  }
+
+  &__create-modal-panel {
+    position: relative;
+    width: 100%;
+    max-width: 640px;
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    background: $color-bg;
+    border-radius: $radius-lg;
+    box-shadow: 0 20px 60px rgba(#000000, 0.35);
+    padding: 24px;
+  }
+
+  &__create-modal-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: rgba($color-border, 0.2);
+    color: $color-text-muted;
+    cursor: pointer;
+
+    &:hover {
+      background: rgba($color-border, 0.35);
+    }
+  }
+
+  &__create-modal-title {
+    margin: 0 32px 16px 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: $color-primary-dark;
+  }
+
+  &__create-modal-conversation {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 160px;
+    overflow-y: auto;
+    margin-bottom: 16px;
+    padding-right: 4px;
+  }
+
+  &__create-modal-turn {
+    padding: 10px 14px;
+    border-radius: $radius-md;
+    background: $section-bg;
+  }
+
+  &__create-modal-user-message {
+    margin: 0 0 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: $color-text;
+  }
+
+  &__create-modal-ai-reply {
+    margin: 0 0 4px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: $color-primary-dark;
+    padding-left: 10px;
+    border-left: 2px solid $color-primary-light;
+  }
+
+  &__create-modal-turn-result {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 12px;
+    color: $color-primary;
+    font-weight: 600;
+  }
+
+  &__create-modal-turn-error {
+    margin: 0;
+    font-size: 12px;
+    color: $color-error;
+    font-weight: 600;
+  }
+
+  &__create-modal-preview {
+    flex: 1;
+    min-height: 100px;
+    overflow-y: auto;
+    margin-bottom: 16px;
+  }
+
+  &__create-modal-empty {
+    text-align: center;
+    color: $color-text-muted;
+    font-size: 13px;
+    padding: 24px 0;
+  }
+
+  &__create-modal-poster-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+    gap: 10px;
+  }
+
+  &__create-modal-poster-item {
+    aspect-ratio: 2 / 3;
+    border-radius: $radius-sm;
+    overflow: hidden;
+    background: rgba($color-border, 0.3);
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    &--empty {
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  &__create-modal-refine {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  &__create-modal-refine-input {
+    flex: 1;
+    border: 1px solid rgba($color-border, 0.5);
+    border-radius: $radius-md;
+    padding: 10px 14px;
+    font-size: 13px;
+
+    &::placeholder {
+      color: $color-text-muted;
+    }
+
+    &:disabled {
+      opacity: 0.7;
+    }
+  }
+
+  &__create-modal-refine-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    border: none;
+    border-radius: $radius-md;
+    background: $color-primary;
+    color: #ffffff;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      filter: brightness(1.1);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &__create-modal-save {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    border: none;
+    border-radius: $radius-md;
+    padding: 14px;
+    background: $color-primary-light;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      filter: brightness(1.1);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  // --- Fileiras de pôsteres (últimos vistos / em cartaz / bilheteria) ---
+  &__row {
+    padding: 32px 0;
+
+    &:nth-of-type(even) {
+      background: $section-bg;
+    }
+  }
+
+  &__row-title {
+    margin: 0 0 30px;
+    font-size: 16px;
+    font-weight: 600;
+    color: $color-primary;
+    text-transform: uppercase;
+    margin-left: 50px;
+  }
+
+  &__row-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  &__row-chevron {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid rgba($color-border, 0.4);
+    border-radius: 50%;
+    background: $color-bg;
+    color: $color-primary;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+    &:hover:not(:disabled) {
+      background: rgba($color-primary, 0.08);
+    }
+
+    &:disabled {
+      opacity: 0.3;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+  }
+
+  &__row-posters {
+    display: flex;
+    flex: 1;
+    min-width: 0; // sem isso a fileira empurra o flex pai e quebra o layout com as setas
+    gap: 16px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    padding-bottom: 4px;
+
+    // a navegação agora é pelas setas — some a scrollbar nativa
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    &--centered {
+      justify-content: center;
+    }
+  }
+
+  &__row-item {
+    position: relative;
+    flex: 0 0 auto;
+  }
+
+  &__row-item-open {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    border: none;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+
+    &:hover .dashboard__row-poster {
+      opacity: 0.85;
+    }
+  }
+
+  &__row-poster {
+    width: 120px;
+    aspect-ratio: 2 / 3;
+    border-radius: $radius-sm;
+    object-fit: cover;
+    background: rgba($color-border, 0.3);
+
+    &--empty {
+      display: block;
+    }
+  }
+
+  &__row-rank {
+    font-size: 12px;
+    font-weight: 700;
+    color: $color-primary-dark;
+  }
+
+  // --- "Timelines que você segue" — timeline com a estrela marcada em
+  // @/pages/private/timelines. Abre o mesmo TimelineDetail de lá.
+  &__timeline-row {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  &__timeline-card {
+    position: relative;
+    flex: 0 0 220px;
+    height: 140px;
+    border: none;
+    border-radius: $radius-md;
+    overflow: hidden;
+    background: linear-gradient(135deg, $color-primary-dark, $color-primary);
+    cursor: pointer;
+    text-align: left;
+    padding: 0;
+
+    &:hover .dashboard__timeline-card-bg {
+      transform: scale(1.05);
+    }
+  }
+
+  &__timeline-card-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.2s;
+  }
+
+  &__timeline-card-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(0deg, rgba(#000000, 0.82) 0%, rgba(#000000, 0.15) 60%, rgba(#000000, 0.35) 100%);
+  }
+
+  &__timeline-card-name {
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    bottom: 34px;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #ffffff;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  &__timeline-card-progress {
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    bottom: 22px;
+    height: 4px;
+    border-radius: 2px;
+    overflow: hidden;
+    background: rgba(#ffffff, 0.25);
+  }
+
+  &__timeline-card-progress-fill {
+    height: 100%;
+    background: #bfff7e;
+  }
+
+  &__timeline-card-count {
+    position: absolute;
+    left: 14px;
+    bottom: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(#ffffff, 0.85);
+  }
+
+  // --- Rodapé ---
+  &__footer {
+    padding: 40px 0 56px;
+    border-top: 1px solid rgba($color-border, 0.3);
+  }
+
+  &__footer-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  &__search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 420px;
+  }
+
+  &__search-input {
+    flex: 1;
+    border: 1px solid rgba($color-border, 0.5);
+    border-radius: $radius-md;
+    padding: 10px 16px;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+
+    &::placeholder {
+      color: $color-text-muted;
+    }
+  }
+
+  &__search-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border: none;
+    border-radius: $radius-md;
+    background: $color-primary;
+    color: #ffffff;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      filter: brightness(1.1);
+    }
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+  }
+
+  &__search-results {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 16px;
+    width: 100%;
+    max-width: 720px;
+  }
+
+  &__search-result {
+    position: relative;
+  }
+
+  &__search-result-open {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    border: none;
+    background: none;
+    padding: 0;
+    font-size: 12px;
+    text-align: center;
+    color: $color-text;
+    cursor: pointer;
+
+    &:hover .dashboard__search-poster {
+      opacity: 0.85;
+    }
+  }
+
+  &__search-poster {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    border-radius: $radius-sm;
+    object-fit: cover;
+    background: rgba($color-border, 0.3);
+  }
+
+}
+
+@keyframes dashboard-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

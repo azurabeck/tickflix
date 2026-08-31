@@ -1,0 +1,49 @@
+// src/pages/private/franchise/styles.scss
+// Fundo + cabeçalho próprios da página; a GRADE de pôsteres em si reusa
+// as classes timelines-page__movie-* (import de
+// pages/private/timelines/styles.scss em index.tsx) — mesmo padrão
+// visual de dentro de TimelineDetail, sem duplicar CSS de grade/pôster/
+// scrim que já existe lá.
+@use "@/theme" as *;
+
+$content-max-width: 1200px;
+
+.franchise-page {
+  min-height: 100vh;
+  padding: 48px 0 64px;
+  background: linear-gradient(307deg, #242329 3%, #51279b 64%);
+
+  &__inner {
+    max-width: $content-max-width;
+    margin: 0 auto;
+    padding: 0 48px;
+
+    @media (max-width: 900px) {
+      padding: 0 20px;
+    }
+  }
+
+  &__title {
+    margin: 0 0 4px;
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    color: #ffffff;
+    text-align: center;
+  }
+
+  &__subtitle {
+    margin: 0 0 16px;
+    text-align: center;
+    font-size: 14px;
+    color: rgba(#ffffff, 0.65);
+  }
+
+  &__progress {
+    margin: 0 0 24px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(#ffffff, 0.75);
+  }
+}

@@ -1,0 +1,11 @@
+// src/pages/private/home/section_01/styles.scss
+@use "@/theme" as *;
+
+.home-section-01 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  color: $color-text-muted;
+  font-size: 18px;
+}

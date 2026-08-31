@@ -1,0 +1,676 @@
+// src/pages/private/series/styles.scss
+// Mesmo vocabulário visual da Home (home/dashboard/styles.scss) — fundo
+// lavanda alternado nas fileiras, barra de progresso verde, cartões com
+// sombra — só com o namespace `series-page` em vez de `dashboard`, e a
+// grade "Minhas séries"/dialog de episódios emprestados do padrão de
+// pages/private/timelines/styles.scss (`__grid`/`__card`/`__detail-*`).
+@use "@/theme" as *;
+
+$section-bg: #edeffd;
+$progress-fill: #bfff7e;
+$content-max-width: 1440px;
+
+.series-page {
+  min-height: 100vh;
+  background: $color-bg;
+
+  &__inner {
+    max-width: $content-max-width;
+    margin: 0 auto;
+    padding: 0 48px;
+
+    @media (max-width: 900px) {
+      padding: 0 20px;
+    }
+  }
+
+  &__header {
+    padding: 32px 0 8px;
+  }
+
+  &__title {
+    margin: 0 0 4px;
+    font-size: 22px;
+    font-weight: 700;
+    color: $color-primary-dark;
+  }
+
+  &__hint {
+    margin: 0;
+    font-size: 13px;
+    color: $color-text-muted;
+  }
+
+  &__loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: $color-text-muted;
+    font-size: 14px;
+  }
+
+  &__spinner {
+    animation: series-page-spin 0.8s linear infinite;
+  }
+
+  &__error {
+    color: $color-error;
+    text-align: center;
+  }
+
+  &__empty {
+    color: $color-text-muted;
+    text-align: center;
+  }
+
+  // --- Fileiras "Mais vistas na {streaming}" (SeriesRow.tsx) ---
+  &__row {
+    padding: 32px 0;
+
+    &:nth-of-type(even) {
+      background: $section-bg;
+    }
+  }
+
+  &__row-title {
+    margin: 0 0 30px;
+    font-size: 16px;
+    font-weight: 600;
+    color: $color-primary;
+    text-transform: uppercase;
+    margin-left: 50px;
+  }
+
+  &__row-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  &__row-chevron {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid rgba($color-border, 0.4);
+    border-radius: 50%;
+    background: $color-bg;
+    color: $color-primary;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+    &:hover:not(:disabled) {
+      background: rgba($color-primary, 0.08);
+    }
+
+    &:disabled {
+      opacity: 0.3;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+  }
+
+  &__row-posters {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    padding-bottom: 4px;
+
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    &--centered {
+      justify-content: center;
+    }
+  }
+
+  &__row-item {
+    position: relative;
+    flex: 0 0 auto;
+  }
+
+  &__row-item-open {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 140px;
+    border: none;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+
+    &:hover .series-page__row-poster {
+      opacity: 0.85;
+    }
+  }
+
+  &__row-poster {
+    width: 140px;
+    aspect-ratio: 2 / 3;
+    border-radius: $radius-sm;
+    object-fit: cover;
+    background: rgba($color-border, 0.3);
+  }
+
+  // Posição no ranking (Nº avaliada dentro daquele streaming) — canto
+  // superior esquerdo do pôster, mesma ideia visual do selo "Nº lugar" de
+  // "Campeões de bilheteria" na Home, só que sobreposto (não abaixo).
+  &__row-rank {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 1;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: rgba(#000000, 0.6);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  &__row-title-text {
+    width: 100%;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: $color-text;
+    text-align: center;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  // Nota do TMDb + país de origem — pedido explícito da Rebecca: "dai vc
+  // consegue ver da onde a série é, e qual nota tem". Nota é a mesma que
+  // ordena a fileira (sort_by=vote_average.desc, functions.ts).
+  &__row-rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    font-weight: 700;
+    color: $color-primary;
+
+    svg {
+      color: #f5b301;
+    }
+  }
+
+  &__row-flag {
+    margin-left: 2px;
+    font-size: 12px;
+  }
+
+  // Botão de "adicionar às minhas séries" — mesmo posicionamento/estilo
+  // do @/components/watchButton global, ícone diferente (Plus/Check em
+  // vez de Bookmark) porque o significado aqui é outro (entrar na lista
+  // de acompanhamento, não "já vi" a série inteira).
+  &__add-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(#000000, 0.5);
+    color: #ffffff;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background: rgba(#000000, 0.7);
+      color: $color-success;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    &--active {
+      color: $color-success;
+
+      &:hover:not(:disabled) {
+        color: $color-error;
+      }
+    }
+  }
+
+  // --- "Minhas séries" (grade + progresso) ---
+  &__my-series {
+    padding: 32px 0;
+
+    &:nth-of-type(even) {
+      background: $section-bg;
+    }
+  }
+
+  // "Minhas séries" agora é uma fileira que rola (ScrollableRow.tsx),
+  // cards do mesmo tamanho dos itens das fileiras de streaming — pedido
+  // explícito da Rebecca: "vamos fazer que nem nos outros blocos, cards
+  // menores, com arrows para rotacionar os cards". `.series-page__my-item`
+  // é só o EXTRA sobre `.series-page__row-item` (lixeira + barra de
+  // progresso + contagem) — pôster/título reaproveitam
+  // `.series-page__row-poster`/`.series-page__row-title-text` direto.
+  &__my-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  &__my-card-delete {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(#000000, 0.5);
+    color: #ffffff;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background: rgba(#000000, 0.7);
+      color: $color-error;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  &__my-item-progress-bar {
+    height: 4px;
+    border-radius: $radius-sm;
+    overflow: hidden;
+    background: rgba($color-border, 0.3);
+  }
+
+  &__my-item-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, $progress-fill, darken($progress-fill, 12%));
+    transition: width 0.25s ease;
+  }
+
+  &__my-item-count {
+    font-size: 11px;
+    color: $color-text-muted;
+    text-align: center;
+  }
+
+  // Barra de progresso — reaproveitada pelo card da grade e pelo header
+  // do dialog de episódios (SeriesDetail.tsx).
+  &__progress-bar {
+    position: relative;
+    height: 8px;
+    border-radius: $radius-sm;
+    overflow: hidden;
+    background: rgba($color-border, 0.3);
+  }
+
+  &__progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, $progress-fill, darken($progress-fill, 12%));
+    transition: width 0.25s ease;
+  }
+
+  // --- SeriesDetail — reusa .movie-detail__overlay/__panel/__close de
+  // @/components/movieDetail (mesmo dialog visual: backdrop, pôster,
+  // sinopse) — pedido explícito da Rebecca: "vc tirou os detalhes...
+  // mantenha, deixa o modal scrollar e então começa a parte de
+  // selecionar os capítulos... e aí joga a informação restantes abaixo
+  // da lista de capítulos". `.series-page__episodes-section` é a seção
+  // própria encaixada entre `MovieDetailHeader` (sinopse) e
+  // `MovieDetailCast`/`MovieDetailProviders` (elenco/onde assistir) —
+  // mesmo espaçamento horizontal (24px) dos outros blocos do
+  // movie-detail, pra alinhar.
+  &__episodes-section {
+    padding: 0 24px 24px;
+  }
+
+  &__episodes-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  &__episodes-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: $color-primary-dark;
+  }
+
+  &__detail-progress {
+    font-size: 13px;
+    color: $color-text-muted;
+    white-space: nowrap;
+  }
+
+  // --- Acordeão de temporadas (SeriesDetail.tsx) ---
+  // Pedido explícito da Rebecca: "uma lista de capítulos colapsável, que
+  // eu posso marcar o capítulo inteiro, ou se abrir eu posso marcar um
+  // por 1" — cada temporada é uma seção colapsável própria, com o botão
+  // de marcar a temporada inteira disponível já no cabeçalho (não precisa
+  // expandir pra usar).
+  &__season-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 12px;
+  }
+
+  &__season {
+    border: 1px solid rgba($color-border, 0.3);
+    border-radius: $radius-md;
+    overflow: hidden;
+  }
+
+  &__season-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+  }
+
+  &__season-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+    color: $color-text-muted;
+
+    &:hover {
+      color: $color-primary;
+    }
+  }
+
+  &__season-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: $color-primary-dark;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__season-count {
+    flex: 0 0 auto;
+    font-size: 12px;
+    font-weight: 600;
+    color: $color-text-muted;
+  }
+
+  // Marcar/desmarcar a temporada inteira — mesmo estilo visual do
+  // @/components/watchButton (círculo), mas inline no cabeçalho (não
+  // sobreposto num pôster).
+  &__season-mark-all {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: 1px solid rgba($color-border, 0.5);
+    border-radius: 50%;
+    background: none;
+    color: $color-text-muted;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      border-color: $color-success;
+      color: $color-success;
+    }
+
+    &--active {
+      background: $color-success;
+      border-color: $color-success;
+      color: #ffffff;
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  }
+
+  &__season-progress-bar {
+    height: 3px;
+    background: rgba($color-border, 0.3);
+  }
+
+  &__season-progress-fill {
+    height: 100%;
+    background: $color-success;
+    transition: width 0.25s ease;
+  }
+
+  &__season-hint {
+    margin: 6px 10px 2px;
+    font-size: 11px;
+    color: $color-text-muted;
+    font-style: italic;
+  }
+
+  &__episode-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px;
+  }
+
+  &__episode {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    border: none;
+    border-radius: $radius-sm;
+    padding: 6px 8px;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background: $section-bg;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+
+    &--watched &-name,
+    &--watched &-number {
+      color: $color-primary;
+    }
+
+    // Episódio ainda não lançado — pedido explícito da Rebecca:
+    // "capítulos que não foram lançados aí, pode estar com mais
+    // opacity e a data que vai ser lançado". `<div>`, não `<button>`
+    // (não tem ação nenhuma pra fazer com ele ainda).
+    &--unaired {
+      opacity: 0.45;
+      cursor: default;
+    }
+  }
+
+  &__episode-check {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex: 0 0 auto;
+    border: 1px solid rgba($color-border, 0.6);
+    border-radius: $radius-sm;
+    color: $color-success;
+
+    .series-page__episode--watched & {
+      border-color: $color-success;
+      background: rgba($color-success, 0.12);
+    }
+
+    .series-page__episode--unaired & {
+      border-style: dashed;
+    }
+  }
+
+  &__episode-number {
+    flex: 0 0 auto;
+    font-size: 13px;
+    font-weight: 600;
+    color: $color-text-muted;
+  }
+
+  &__episode-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    color: $color-text;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  // Data de estreia futura / "Aguardando data" / "Cancelado" — no lugar
+  // do checkbox pra episódio que ainda não foi ao ar.
+  &__episode-airing {
+    flex: 0 0 auto;
+    font-size: 11px;
+    font-weight: 600;
+    color: $color-text-muted;
+    white-space: nowrap;
+  }
+
+  // --- Rodapé (busca) — mesmo padrão visual do rodapé da Home ---
+  &__footer {
+    padding: 40px 0 56px;
+    border-top: 1px solid rgba($color-border, 0.3);
+  }
+
+  &__footer-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  &__search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 420px;
+  }
+
+  &__search-input {
+    flex: 1;
+    border: 1px solid rgba($color-border, 0.5);
+    border-radius: $radius-md;
+    padding: 10px 16px;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+
+    &::placeholder {
+      color: $color-text-muted;
+    }
+  }
+
+  &__search-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border: none;
+    border-radius: $radius-md;
+    background: $color-primary;
+    color: #ffffff;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      filter: brightness(1.1);
+    }
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+  }
+
+  &__search-results {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 16px;
+    width: 100%;
+    max-width: 720px;
+  }
+
+  &__search-result {
+    position: relative;
+  }
+
+  &__search-result-open {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    border: none;
+    background: none;
+    padding: 0;
+    font-size: 12px;
+    text-align: center;
+    color: $color-text;
+    cursor: pointer;
+
+    &:hover .series-page__search-poster {
+      opacity: 0.85;
+    }
+  }
+
+  &__search-poster {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    border-radius: $radius-sm;
+    object-fit: cover;
+    background: rgba($color-border, 0.3);
+  }
+}
+
+@keyframes series-page-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

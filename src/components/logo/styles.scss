@@ -1,0 +1,17 @@
+// src/components/logo/styles.scss
+@use "@/theme" as *;
+
+.logo {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1;
+
+  &__tick {
+    color: $color-primary;
+  }
+
+  &__flix {
+    color: $color-primary-dark;
+  }
+}
