@@ -201,7 +201,7 @@ const HeroCarousel = ({ items }: HeroCarouselProps) => {
         <div className="dashboard__hero-caption dashboard__inner">
           <span className="dashboard__hero-title">{current.title}</span>
           <div className="dashboard__hero-controls">
-            <span className="dashboard__hero-badge">TRAILER OFICIAL</span>
+            <span className="dashboard__hero-badge">EM CARTAZ</span>
             <button
               type="button"
               className="dashboard__hero-icon-btn"
