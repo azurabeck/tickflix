@@ -226,7 +226,16 @@ export const fetchHeroTrailers = async (movies: { id: number; title: string }[])
   return withTrailers.filter((item): item is HeroTrailer => item !== null);
 };
 
-// --- Busca do rodapé ---------------------------------------------------------
+// --- Busca ------------------------------------------------------------------
+// Usada pelo modal global de busca (@/components/searchModal, ícone de
+// lupa na navbar) — antes vivia num rodapé próprio de cada página
+// (Filmes/Séries/Animes, 3 cópias quase idênticas), consolidado num só
+// lugar: pedido explícito da Rebecca: "essa barra de search que a gente
+// tem no final das páginas filmes/séries/animes pode sair dali e virar
+// só um ícone de lupa no navbar". `/search/multi` já cobre filme E
+// série/anime juntos — nenhuma das duas outras versões (`searchSeries`/
+// `searchAnime`, removidas) filtrava por tipo de verdade, então nada de
+// comportamento se perde.
 
 interface RawTmdbMultiResult {
   id: number;

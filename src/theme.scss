@@ -39,6 +39,19 @@ body,
   margin: 0;
 }
 
+// Rede de segurança global — pedido explícito da Rebecca: "não deixe
+// nada vazar da tela". Qualquer elemento que escape da largura do
+// viewport (padding mal contado, `min-width` esquecido num item de
+// fileira horizontal etc.) rola a página INTEIRA de lado em vez de
+// ficar contido — isso NUNCA deveria acontecer, então trava aqui como
+// última linha de defesa; o conteúdo que precisa rolar de lado de
+// propósito (fileiras de pôster) já rola dentro do PRÓPRIO container
+// (`overflow-x: auto` local), não da página.
+html,
+body {
+  overflow-x: hidden;
+}
+
 body {
   font-family: $font-body;
   color: $color-text;

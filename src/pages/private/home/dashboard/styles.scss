@@ -211,13 +211,18 @@ $content-max-width: 1440px;
 
   &__create-input {
     flex: 1;
+    // Item flex de texto tem `min-width: auto` por padrão (o tamanho
+    // MÍNIMO do conteúdo, não zero) — em telas estreitas isso pode
+    // resistir a encolher e empurrar o botão ao lado pra fora da faixa.
+    // `min-width: 0` deixa o `flex: 1` de verdade mandar.
+    min-width: 0;
     border: none;
     padding: 12px 16px;
     font-size: 14px;
     color: #fff;
     background: $color-primary;
     height: 100%;
-    
+
 
     &::placeholder {
       color: #ffffff86;
@@ -239,6 +244,12 @@ $content-max-width: 1440px;
     cursor: pointer;
     min-width: 140px;
     height: 100%;
+
+    @media (max-width: 480px) {
+      padding: 12px 16px;
+      min-width: 100px;
+      font-size: 13px;
+    }
 
     &:hover:not(:disabled) {
       filter: brightness(1.1);
@@ -402,6 +413,7 @@ $content-max-width: 1440px;
 
   &__create-modal-refine-input {
     flex: 1;
+    min-width: 0;
     border: 1px solid rgba($color-border, 0.5);
     border-radius: $radius-md;
     padding: 10px 14px;
@@ -477,12 +489,24 @@ $content-max-width: 1440px;
     color: $color-primary;
     text-transform: uppercase;
     margin-left: 50px;
+
+    // 50px de recuo (além do padding de `&__inner`) é desenho de tela
+    // grande — num viewport de celular isso sozinho já come uma fatia
+    // enorme da largura útil, sem ganhar nada em troca.
+    @media (max-width: 900px) {
+      margin-left: 0;
+      margin-bottom: 16px;
+    }
   }
 
   &__row-content {
     display: flex;
     align-items: center;
     gap: 12px;
+
+    @media (max-width: 900px) {
+      gap: 6px;
+    }
   }
 
   &__row-chevron {
@@ -507,6 +531,19 @@ $content-max-width: 1440px;
       opacity: 0.3;
       box-shadow: none;
       cursor: not-allowed;
+    }
+
+    // Menor no mobile — libera espaço de verdade pros pôsteres; a
+    // fileira já rola por toque de qualquer forma, a seta é só um
+    // atalho extra ali.
+    @media (max-width: 900px) {
+      width: 30px;
+      height: 30px;
+
+      svg {
+        width: 16px;
+        height: 16px;
+      }
     }
   }
 
@@ -678,6 +715,7 @@ $content-max-width: 1440px;
 
   &__search-input {
     flex: 1;
+    min-width: 0;
     border: 1px solid rgba($color-border, 0.5);
     border-radius: $radius-md;
     padding: 10px 16px;

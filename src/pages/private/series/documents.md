@@ -123,10 +123,10 @@ dentro (`.series-page__inner`, teto de 1440px). Ordem:
    tem um filtro pra excluir "animação japonesa" especificamente no
    `/discover` (só dá pra excluir o gênero inteiro), o filtro acontece
    client-side DEPOIS da resposta, antes de montar o pool de candidatos
-   pra ponderação (ver acima). A busca do rodapé
-   (`searchSeries`) NÃO aplica esse filtro — se a pessoa procura um anime
-   pelo nome, ele aparece normalmente; a exclusão é só das fileiras de
-   "melhor avaliada".
+   pra ponderação (ver acima). A busca (hoje o modal global,
+   @/components/searchModal — ver item 3 abaixo) nunca aplicou esse
+   filtro — se a pessoa procura um anime pelo nome, ele aparece
+   normalmente; a exclusão é só das fileiras de "melhor avaliada".
 
    Visual/scroll idêntico a `MovieRow` da Home (chevrons dos dois lados,
    `scrollBy` suave, centraliza quando cabe tudo) — só que `SeriesRow`
@@ -148,7 +148,7 @@ dentro (`.series-page__inner`, teto de 1440px). Ordem:
    bastante pra não pertencer só a timeline). Clicar no card abre
    `SeriesDetail.tsx`. Lixeira no canto do card remove (com confirmação —
    perde o progresso de episódios todo, diferente do toggle rápido de
-   seguir/deixar de seguir nas fileiras/busca).
+   seguir/deixar de seguir na fileira).
 
 2.5. **"Top 20 mais vistas em {ano atual}"** (`SeriesRow.tsx`, logo
    abaixo de "Minhas séries") — pedido explícito da Rebecca: "que segue o
@@ -173,15 +173,31 @@ dentro (`.series-page__inner`, teto de 1440px). Ordem:
    lixeira, a barra de progresso e a contagem por cima
    (`.series-page__my-item*`).
 
-3. **Busca** (rodapé, mesmo padrão visual do rodapé da Home) —
-   `searchSeries` (`/search/tv`), cada resultado com o mesmo botão de
-   "seguir" das fileiras.
+3. **Busca** — SAIU daqui. Existia um rodapé próprio (`searchSeries`,
+   `/search/tv`, cada resultado com o mesmo botão de "seguir" das
+   fileiras) até virar o ícone de lupa GLOBAL da navbar — pedido
+   explícito da Rebecca: "essa barra de search que a gente tem no final
+   das páginas filmes/séries/animes pode sair dali e virar só um ícone
+   de lupa no navbar, quando o usuário clica, então aparece o modal pra
+   ele fazer a busca". Ver `@/components/searchModal` — um modal só,
+   compartilhado por TODAS as páginas (Filmes/Séries/Animes tinham 3
+   buscas quase idênticas, `searchMovies`/`searchSeries`/`searchAnime`;
+   as duas últimas eram literalmente o mesmo `/search/tv` sem filtro de
+   anime nenhum, então virar uma busca `/search/multi` só não perde
+   comportamento nenhum de verdade). O rodapé inteiro (`<footer>`) saiu
+   junto — era só a busca, nada mais pra mostrar sem ela. O botão de
+   "seguir" rápido do resultado de busca NÃO foi pro modal global (ação
+   específica de série, resolve temporadas/episódios via
+   `fetchSeriesWithEpisodes` antes de gravar — não faz sentido num modal
+   que também abre a partir da página Filmes) — continua disponível nas
+   fileiras de streaming e em "Minhas séries" desta página, só não a
+   partir da busca.
 
 **Por que NÃO tem o `@/components/watchButton` global aqui** — o
 "já vi" genérico (boolean por filme/série inteira,
 `service/WatchedSettings.ts`) não é o que a Rebecca pediu pra série: o
 pedido é especificamente marcar quais EPISÓDIOS já foram vistos. Por
-isso cada pôster (fileiras de streaming + busca) tem um botão próprio de
+isso cada pôster de fileira tem um botão próprio de
 "seguir" (`Plus`/`Check`, mesmo estilo visual/posição do `WatchButton`
 mas ícone e collection diferentes) — clicar nele resolve temporadas +
 TODOS os episódios no TMDb (`fetchSeriesWithEpisodes`, `functions.ts`) e

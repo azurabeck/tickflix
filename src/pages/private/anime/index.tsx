@@ -28,7 +28,7 @@
 // gravado ao seguir (service/FollowingSettings.ts) — cada página só
 // mostra a própria categoria na coleção COMPARTILHADA `users/{uid}/following`.
 import { useEffect, useState } from "react";
-import { Check, Loader2, Plus, Search, Star, Trash2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { auth } from "@/service/FirebaseSettings";
 import MovieDetail from "@/components/movieDetail";
 import { posterUrl } from "@/service/TMDbSettings";
@@ -48,15 +48,14 @@ import {
   unfollowSeries,
   type FollowedSeries,
 } from "@/service/FollowingSettings";
-import { STREAMING_PROVIDERS, countryFlagEmoji, fetchSeriesWithEpisodes, type SeriesRowItem } from "@/pages/private/series/functions";
+import { STREAMING_PROVIDERS, fetchSeriesWithEpisodes, type SeriesRowItem } from "@/pages/private/series/functions";
 import ScrollableRow from "@/pages/private/series/ScrollableRow";
 import SeriesRow from "@/pages/private/series/SeriesRow";
 import SeriesDetail from "@/pages/private/series/SeriesDetail";
 import "@/pages/private/series/styles.scss";
-import { fetchAnimeHeroTrailers, fetchTopAnimeByProvider, fetchTopAnimeOfTheYear, searchAnime } from "./functions";
+import { fetchAnimeHeroTrailers, fetchTopAnimeByProvider, fetchTopAnimeOfTheYear } from "./functions";
 
 const ROW_LIMIT = 20;
-const SEARCH_LIMIT = 12;
 const HERO_LIMIT = 5;
 const TOP_OF_YEAR_LIMIT = 20;
 
@@ -72,11 +71,6 @@ const AnimePage = () => {
   const [followedAnime, setFollowedAnime] = useState<FollowedSeries[]>([]);
   const [pendingIds, setPendingIds] = useState<Set<number>>(new Set());
   const [deletingId, setDeletingId] = useState<number | null>(null);
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<SeriesRowItem[] | null>(null);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
 
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [selectedAnimeId, setSelectedAnimeId] = useState<number | null>(null);
@@ -244,21 +238,6 @@ const AnimePage = () => {
     }
   };
 
-  const handleSearch = async () => {
-    const q = searchQuery.trim();
-    if (!q || searchLoading) return;
-    setSearchLoading(true);
-    setSearchError(null);
-    try {
-      setSearchResults(await searchAnime(q, SEARCH_LIMIT));
-    } catch (err) {
-      console.error("Erro na busca de anime:", err);
-      setSearchError("Não foi possível buscar agora.");
-    } finally {
-      setSearchLoading(false);
-    }
-  };
-
   const selectedAnime = selectedAnimeId !== null ? followedAnime.find((s) => s.id === selectedAnimeId) ?? null : null;
 
   const handlePosterClick = (item: SeriesRowItem) => {
@@ -365,66 +344,14 @@ const AnimePage = () => {
         />
       ))}
 
-      <footer className="series-page__footer">
-        <div className="series-page__inner series-page__footer-inner">
-          <div className="series-page__search">
-            <input
-              type="text"
-              className="series-page__search-input"
-              placeholder="PROCURAR ANIME"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            />
-            <button type="button" className="series-page__search-button" onClick={handleSearch} disabled={searchLoading}>
-              {searchLoading ? <Loader2 className="series-page__spinner" size={16} /> : <Search size={16} />}
-            </button>
-          </div>
-
-          {searchError && <p className="series-page__error">{searchError}</p>}
-
-          {searchResults && (
-            <div className="series-page__search-results">
-              {searchResults.length === 0 && <p className="series-page__empty">Nada encontrado.</p>}
-              {searchResults.map((item) => {
-                const poster = posterUrl(item.posterPath);
-                const isAdded = followedIds.has(item.id);
-                const isPending = pendingIds.has(item.id);
-                const flag = countryFlagEmoji(item.originCountry);
-                return (
-                  <div key={item.id} className="series-page__search-result">
-                    <button type="button" className="series-page__search-result-open" onClick={() => handlePosterClick(item)}>
-                      {poster ? (
-                        <img src={poster} alt={item.title} className="series-page__search-poster" />
-                      ) : (
-                        <div className="series-page__search-poster series-page__search-poster--empty" />
-                      )}
-                      <span>{item.title}</span>
-                      {item.voteAverage > 0 && (
-                        <span className="series-page__row-rating">
-                          <Star size={11} fill="currentColor" />
-                          {item.voteAverage.toFixed(1)}
-                          {flag && <span className="series-page__row-flag">{flag}</span>}
-                        </span>
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      className={isAdded ? "series-page__add-btn series-page__add-btn--active" : "series-page__add-btn"}
-                      onClick={() => handleToggleFollowed(item)}
-                      disabled={!uid || isPending}
-                      title={isAdded ? "Remover dos meus animes" : "Adicionar aos meus animes"}
-                      aria-label={isAdded ? "Remover dos meus animes" : "Adicionar aos meus animes"}
-                    >
-                      {isPending ? <Loader2 className="series-page__spinner" size={14} /> : isAdded ? <Check size={14} /> : <Plus size={14} />}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </footer>
+      {/* O rodapé inteiro era só a barra de busca — saiu daqui e virou o
+          ícone de lupa global da navbar (@/components/appNav →
+          @/components/searchModal), pedido explícito da Rebecca: "essa
+          barra de search que a gente tem no final das páginas
+          filmes/séries/animes pode sair dali e virar só um ícone de
+          lupa no navbar". Ver mesmo comentário em
+          @/pages/private/series/index.tsx pro que muda no fluxo de
+          "seguir" a partir da busca. */}
 
       {selectedItemId !== null && <MovieDetail id={selectedItemId} mediaType="tv" onClose={() => setSelectedItemId(null)} />}
 

@@ -242,6 +242,10 @@ $timeline-follow-color: #f5c451;
     border-radius: $radius-lg;
     box-shadow: 0 20px 60px rgba(#000000, 0.35);
     padding: 32px;
+
+    @media (max-width: 600px) {
+      padding: 20px;
+    }
   }
 
   &__detail-close {
@@ -267,8 +271,9 @@ $timeline-follow-color: #f5c451;
   &__detail-header {
     display: flex;
     align-items: baseline;
+    flex-wrap: wrap; // nome longo de timeline + progresso não colidem/vazam num painel estreito
     justify-content: space-between;
-    gap: 16px;
+    gap: 8px 16px;
     margin-bottom: 24px;
     padding-right: 32px; // não colidir com o botão de fechar
   }

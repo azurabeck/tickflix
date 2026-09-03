@@ -34,10 +34,33 @@
 //   Mundo Mágico, Terra Média, Star Wars, Jornada nas Estrelas, Jurassic
 //   Park, Percy Jackson, James Bond). Cada item é `/franquias/{slug}`
 //   (rota dinâmica, ver pages/private/franchise/franchiseConfigs.ts).
+//
+// MOBILE (≤900px, pedido explícito da Rebecca: "faça toda a parte
+// responsiva para mobile do site... não esqueça no menu na navbar") —
+// 3 links + 3 dropdowns (com até 9 itens cada) + Sair NUNCA cabem numa
+// linha só abaixo de ~900px, então viram um menu hambúrguer
+// (`mobileMenuOpen`): a MESMA `.app-nav__tabs` (mesmos links, mesmos 3
+// `NavDropdown`, mesmo estado/lógica de abrir-fechar de cada um) só
+// muda de LAYOUT via CSS (`styles.scss`, `@media (max-width: 900px)`) —
+// de linha horizontal pra painel vertical abaixo da navbar, com cada
+// dropdown virando uma lista indentada INLINE (não mais flutuante por
+// cima do conteúdo) quando aberto. Não duplica lógica nenhuma: é o
+// mesmo componente, reflow por CSS.
+//
+// Ícone de busca — pedido explícito da Rebecca: "essa barra de search
+// que a gente tem no final das páginas filmes/séries/animes pode sair
+// dali e virar só um ícone de lupa no navbar, quando o usuário clica,
+// então aparece o modal pra ele fazer a busca". Fica em
+// `.app-nav__actions`, JUNTO do hambúrguer (não dentro de `.app-nav__menu`
+// — teria que abrir o menu inteiro só pra buscar) — sempre visível,
+// desktop ou mobile, um toque só de distância. Abre
+// `@/components/searchModal`, o MESMO modal em qualquer página (o modal
+// em si é global, não pertence a nenhuma tela específica).
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, LogOut } from "lucide-react";
+import { ChevronDown, LogOut, Menu, Search, X } from "lucide-react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import Logo from "@/components/logo";
+import SearchModal from "@/components/searchModal";
 import { ROUTES } from "@/service/Routes";
 import type { TimelineCategoryFilter } from "@/service/TimelineSettings";
 import { AWARD_CONFIGS } from "@/pages/private/awards/awardConfigs";
@@ -76,21 +99,31 @@ const AppNav = () => {
   // "oscar" | "franquias"), não um boolean por dropdown, senão abrir um
   // não fecharia os outros dois sozinho.
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  // Painel do hambúrguer (mobile, ≤900px) — some/aparece por CSS, esse
+  // boolean só controla SE ele existe no DOM (evita ficar montado,
+  // escondido por `display:none`, respondendo a clique-fora à toa).
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
 
   // Fecha ao clicar fora — dropdown simples, sem lib própria pra menu.
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (navRef.current && !navRef.current.contains(e.target as Node)) setOpenDropdown(null);
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
+        setOpenDropdown(null);
+        setMobileMenuOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // Fecha ao navegar — trocar de categoria/página não deve deixar o menu
-  // aberto por cima da tela nova.
+  // (nem o painel do hambúrguer no mobile) aberto por cima da tela nova.
   useEffect(() => {
     setOpenDropdown(null);
+    setMobileMenuOpen(false);
+    setSearchOpen(false);
   }, [location.pathname, location.search]);
 
   const activeCategory = new URLSearchParams(location.search).get("category");
@@ -120,50 +153,77 @@ const AppNav = () => {
     <nav className="app-nav">
       <div className="app-nav__inner" ref={navRef}>
         <Logo />
-        <div className="app-nav__tabs">
-          {NAV_LINKS.map((link) => (
-            <NavLink
-              key={link.to}
-              to={link.to}
-              end
-              className={({ isActive }) => (isActive ? "app-nav__tab app-nav__tab--active" : "app-nav__tab")}
-            >
-              {link.label}
-            </NavLink>
-          ))}
 
-          <NavDropdown
-            id="oscar"
-            label="Oscar"
-            items={awardItems}
-            isActive={isAwardsActive}
-            isOpen={openDropdown === "oscar"}
-            onToggle={() => setOpenDropdown((prev) => (prev === "oscar" ? null : "oscar"))}
-          />
+        <div className={mobileMenuOpen ? "app-nav__menu app-nav__menu--open" : "app-nav__menu"}>
+          <div className="app-nav__tabs">
+            {NAV_LINKS.map((link) => (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                end
+                className={({ isActive }) => (isActive ? "app-nav__tab app-nav__tab--active" : "app-nav__tab")}
+              >
+                {link.label}
+              </NavLink>
+            ))}
 
-          <NavDropdown
-            id="franquias"
-            label="Franquias"
-            items={franchiseItems}
-            isActive={isFranchiseActive}
-            isOpen={openDropdown === "franquias"}
-            onToggle={() => setOpenDropdown((prev) => (prev === "franquias" ? null : "franquias"))}
-          />
+            <NavDropdown
+              id="oscar"
+              label="Oscar"
+              items={awardItems}
+              isActive={isAwardsActive}
+              isOpen={openDropdown === "oscar"}
+              onToggle={() => setOpenDropdown((prev) => (prev === "oscar" ? null : "oscar"))}
+            />
 
-          <NavDropdown
-            id="timelines"
-            label="Timelines"
-            items={timelineItems}
-            isActive={isTimelinesActive}
-            isOpen={openDropdown === "timelines"}
-            onToggle={() => setOpenDropdown((prev) => (prev === "timelines" ? null : "timelines"))}
-          />
+            <NavDropdown
+              id="franquias"
+              label="Franquias"
+              items={franchiseItems}
+              isActive={isFranchiseActive}
+              isOpen={openDropdown === "franquias"}
+              onToggle={() => setOpenDropdown((prev) => (prev === "franquias" ? null : "franquias"))}
+            />
+
+            <NavDropdown
+              id="timelines"
+              label="Timelines"
+              items={timelineItems}
+              isActive={isTimelinesActive}
+              isOpen={openDropdown === "timelines"}
+              onToggle={() => setOpenDropdown((prev) => (prev === "timelines" ? null : "timelines"))}
+            />
+          </div>
+          <button type="button" className="app-nav__logout" onClick={handleLogout}>
+            <LogOut size={16} />
+            Sair
+          </button>
         </div>
-        <button type="button" className="app-nav__logout" onClick={handleLogout}>
-          <LogOut size={16} />
-          Sair
-        </button>
+
+        {/* Busca + hambúrguer, agrupados — SEMPRE visíveis (desktop ou
+            mobile), fora de `.app-nav__menu` de propósito: abrir o menu
+            inteiro só pra buscar seria um passo extra à toa. */}
+        <div className="app-nav__actions">
+          <button type="button" className="app-nav__search-btn" onClick={() => setSearchOpen(true)} aria-label="Buscar">
+            <Search size={20} />
+          </button>
+
+          {/* Hambúrguer — só existe visualmente ≤900px (CSS), mas fica no
+              DOM sempre; o botão em si nunca precisa sumir de verdade,
+              só o painel que ele abre. */}
+          <button
+            type="button"
+            className="app-nav__burger"
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+            aria-expanded={mobileMenuOpen}
+            aria-label={mobileMenuOpen ? "Fechar menu" : "Abrir menu"}
+          >
+            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
       </div>
+
+      {searchOpen && <SearchModal onClose={() => setSearchOpen(false)} />}
     </nav>
   );
 };

@@ -36,6 +36,11 @@
     z-index: 2;
     width: 100%;
     padding: 40px 24px;
+    // Espaço reservado embaixo pro `&__badge` (fixed, canto inferior
+    // direito) não tampar o link "Ainda não tem uma conta?" — bug real
+    // visto ao vivo num viewport de celular curto, onde o rodapé do
+    // formulário fica perto o bastante do fundo pra colidir com o badge.
+    padding-bottom: 72px;
     margin-top: auto;
     display: flex;
     flex-direction: column;

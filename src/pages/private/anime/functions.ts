@@ -164,11 +164,3 @@ export const fetchAnimeHeroTrailers = async (limit: number): Promise<HeroTrailer
   return withTrailers.filter((item): item is HeroTrailer => item !== null);
 };
 
-// --- Busca (rodapé) -----------------------------------------------------------
-// Igual searchSeries — NÃO filtra por anime (mesma decisão da página
-// Séries pra busca: se a pessoa procurou o nome, mostra, mesmo que não
-// bata com a classificação automática).
-export const searchAnime = async (query: string, limit: number): Promise<SeriesRowItem[]> => {
-  const data = await tmdbFetch<{ results: RawTvResult[] }>("/search/tv", { query });
-  return data.results.slice(0, limit).map(normalizeSeriesRowItem);
-};

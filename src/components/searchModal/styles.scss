@@ -1,0 +1,177 @@
+// src/components/searchModal/styles.scss
+// Mesmo padrão visual de @/components/movieDetail (overlay/painel claro,
+// canto de fechar) — só que ancorado mais pro TOPO da tela (`align-items:
+// flex-start` + padding-top maior), não centralizado verticalmente, pra
+// não competir com o teclado virtual em mobile e pra grade de resultados
+// crescer pra baixo com espaço de sobra.
+@use "@/theme" as *;
+
+.search-modal {
+  &__overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(#000000, 0.6);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 88px 24px 24px;
+    z-index: 9999;
+
+    @media (max-width: 600px) {
+      padding: 76px 16px 16px;
+    }
+  }
+
+  &__panel {
+    position: relative;
+    width: 100%;
+    max-width: 640px;
+    max-height: calc(100vh - 112px);
+    overflow-y: auto;
+    background: $color-bg;
+    border-radius: $radius-lg;
+    box-shadow: 0 20px 60px rgba(#000000, 0.35);
+    padding: 24px;
+
+    @media (max-width: 600px) {
+      padding: 18px;
+      max-height: calc(100vh - 92px);
+    }
+  }
+
+  &__close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: rgba($color-border, 0.2);
+    color: $color-text-muted;
+    cursor: pointer;
+
+    &:hover {
+      background: rgba($color-border, 0.35);
+    }
+  }
+
+  &__bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 40px; // não colidir com o botão de fechar
+  }
+
+  &__input {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid rgba($color-border, 0.5);
+    border-radius: $radius-md;
+    padding: 12px 16px;
+    font-size: 14px;
+    color: $color-text;
+
+    &::placeholder {
+      color: $color-text-muted;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: $color-primary;
+    }
+  }
+
+  &__button {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: $radius-md;
+    background: $color-primary;
+    color: #ffffff;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      filter: brightness(1.1);
+    }
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+  }
+
+  &__spinner {
+    animation: search-modal-spin 0.8s linear infinite;
+  }
+
+  &__error {
+    margin: 12px 0 0;
+    font-size: 13px;
+    color: $color-error;
+  }
+
+  &__empty {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: 24px 0;
+    text-align: center;
+    color: $color-text-muted;
+    font-size: 13px;
+  }
+
+  &__results {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 14px;
+    margin-top: 20px;
+  }
+
+  &__result {
+    position: relative;
+  }
+
+  &__result-open {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    border: none;
+    background: none;
+    padding: 0;
+    font-size: 12px;
+    text-align: center;
+    color: $color-text;
+    cursor: pointer;
+
+    &:hover .search-modal__poster {
+      opacity: 0.85;
+    }
+  }
+
+  &__poster {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    border-radius: $radius-sm;
+    object-fit: cover;
+    background: rgba($color-border, 0.3);
+  }
+}
+
+@keyframes search-modal-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

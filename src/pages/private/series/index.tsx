@@ -36,7 +36,7 @@
 // "já vi" global de sempre (service/WatchedSettings.ts) — é sobre
 // timeline, um conceito diferente do de série seguida.
 import { useEffect, useState } from "react";
-import { Check, Loader2, Plus, Search, Star, Trash2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { auth } from "@/service/FirebaseSettings";
 import MovieDetail from "@/components/movieDetail";
 import { posterUrl } from "@/service/TMDbSettings";
@@ -58,12 +58,10 @@ import {
 } from "@/service/FollowingSettings";
 import {
   STREAMING_PROVIDERS,
-  countryFlagEmoji,
   fetchSeriesHeroTrailers,
   fetchSeriesWithEpisodes,
   fetchTopSeriesByProvider,
   fetchTopSeriesOfTheYear,
-  searchSeries,
   type SeriesRowItem,
 } from "./functions";
 import ScrollableRow from "./ScrollableRow";
@@ -75,7 +73,6 @@ import "./styles.scss";
 // avaliadas por streaming, não o ROW_LIMIT=8 genérico das fileiras da
 // Home.
 const ROW_LIMIT = 20;
-const SEARCH_LIMIT = 12;
 const HERO_LIMIT = 5; // mesmo teto do carrossel da Home
 // "Top 20 mais vistas no ano" — pedido explícito da Rebecca: "que segue
 // o mesmo critério dos trailers" (fetchTopSeriesOfTheYear, functions.ts:
@@ -100,11 +97,6 @@ const SeriesPage = () => {
   // vezes.
   const [pendingIds, setPendingIds] = useState<Set<number>>(new Set());
   const [deletingId, setDeletingId] = useState<number | null>(null);
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<SeriesRowItem[] | null>(null);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
 
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [selectedSeriesId, setSelectedSeriesId] = useState<number | null>(null);
@@ -190,11 +182,12 @@ const SeriesPage = () => {
 
   const followedIds = new Set(followedSeries.map((s) => s.id));
 
-  // Toggle "seguir" — usado tanto nas fileiras de streaming quanto na
-  // busca do rodapé. Seguir exige resolver temporadas + TODOS os
-  // episódios no TMDb antes (fetchSeriesWithEpisodes), então não dá pra
-  // ser 100% otimista feito o toggle de "já vi" do resto do app; deixar
-  // de seguir é otimista igual ao padrão (desfaz recarregando se a
+  // Toggle "seguir" — usado nas fileiras de streaming e em "Minhas
+  // séries" (não mais na busca, que virou o modal global sem esse botão,
+  // ver @/components/searchModal). Seguir exige resolver temporadas +
+  // TODOS os episódios no TMDb antes (fetchSeriesWithEpisodes), então não
+  // dá pra ser 100% otimista feito o toggle de "já vi" do resto do app;
+  // deixar de seguir é otimista igual ao padrão (desfaz recarregando se a
   // gravação falhar).
   const handleToggleFollowed = async (item: SeriesRowItem) => {
     if (!uid || pendingIds.has(item.id)) return;
@@ -298,21 +291,6 @@ const SeriesPage = () => {
     } catch (err) {
       console.error("Erro ao marcar temporada:", err);
       setFollowedSeries((prev) => prev.map((s) => (s.id === series.id ? series : s))); // desfaz
-    }
-  };
-
-  const handleSearch = async () => {
-    const q = searchQuery.trim();
-    if (!q || searchLoading) return;
-    setSearchLoading(true);
-    setSearchError(null);
-    try {
-      setSearchResults(await searchSeries(q, SEARCH_LIMIT));
-    } catch (err) {
-      console.error("Erro na busca de séries:", err);
-      setSearchError("Não foi possível buscar agora.");
-    } finally {
-      setSearchLoading(false);
     }
   };
 
@@ -422,66 +400,18 @@ const SeriesPage = () => {
         />
       ))}
 
-      <footer className="series-page__footer">
-        <div className="series-page__inner series-page__footer-inner">
-          <div className="series-page__search">
-            <input
-              type="text"
-              className="series-page__search-input"
-              placeholder="PROCURAR SÉRIE"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            />
-            <button type="button" className="series-page__search-button" onClick={handleSearch} disabled={searchLoading}>
-              {searchLoading ? <Loader2 className="series-page__spinner" size={16} /> : <Search size={16} />}
-            </button>
-          </div>
-
-          {searchError && <p className="series-page__error">{searchError}</p>}
-
-          {searchResults && (
-            <div className="series-page__search-results">
-              {searchResults.length === 0 && <p className="series-page__empty">Nada encontrado.</p>}
-              {searchResults.map((item) => {
-                const poster = posterUrl(item.posterPath);
-                const isAdded = followedIds.has(item.id);
-                const isPending = pendingIds.has(item.id);
-                const flag = countryFlagEmoji(item.originCountry);
-                return (
-                  <div key={item.id} className="series-page__search-result">
-                    <button type="button" className="series-page__search-result-open" onClick={() => handlePosterClick(item)}>
-                      {poster ? (
-                        <img src={poster} alt={item.title} className="series-page__search-poster" />
-                      ) : (
-                        <div className="series-page__search-poster series-page__search-poster--empty" />
-                      )}
-                      <span>{item.title}</span>
-                      {item.voteAverage > 0 && (
-                        <span className="series-page__row-rating">
-                          <Star size={11} fill="currentColor" />
-                          {item.voteAverage.toFixed(1)}
-                          {flag && <span className="series-page__row-flag">{flag}</span>}
-                        </span>
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      className={isAdded ? "series-page__add-btn series-page__add-btn--active" : "series-page__add-btn"}
-                      onClick={() => handleToggleFollowed(item)}
-                      disabled={!uid || isPending}
-                      title={isAdded ? "Remover das minhas séries" : "Adicionar às minhas séries"}
-                      aria-label={isAdded ? "Remover das minhas séries" : "Adicionar às minhas séries"}
-                    >
-                      {isPending ? <Loader2 className="series-page__spinner" size={14} /> : isAdded ? <Check size={14} /> : <Plus size={14} />}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </footer>
+      {/* O rodapé inteiro era só a barra de busca (sem Logo aqui, diferente
+          da Home) — saiu daqui e virou o ícone de lupa global da navbar
+          (@/components/appNav → @/components/searchModal), pedido
+          explícito da Rebecca: "essa barra de search que a gente tem no
+          final das páginas filmes/séries/animes pode sair dali e virar
+          só um ícone de lupa no navbar". Sem mais nada pra mostrar, o
+          <footer> em si saiu junto (deixar um rodapé vazio só ocupando
+          espaço não fazia sentido). O modal global abre o MovieDetail
+          genérico (sem o botão de "seguir" rápido que existia aqui, que
+          resolve temporadas/episódios e é uma ação específica de série
+          — continua disponível nas fileiras de streaming/"Minhas
+          séries" desta página, só saiu do fluxo de busca). */}
 
       {selectedItemId !== null && <MovieDetail id={selectedItemId} mediaType="tv" onClose={() => setSelectedItemId(null)} />}
 

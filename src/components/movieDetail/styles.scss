@@ -71,6 +71,10 @@
     background-position: center top;
     background-color: $color-primary-dark;
     border-radius: $radius-lg $radius-lg 0 0;
+
+    @media (max-width: 600px) {
+      height: 160px;
+    }
   }
 
   &__backdrop-fade {
@@ -79,12 +83,25 @@
     background: linear-gradient(180deg, rgba(#000000, 0.1) 0%, $color-bg 100%);
   }
 
+  // Pôster + info lado a lado é desenho de tela larga — num modal de
+  // ~280px de largura útil (mobile) isso sobra ~120px pro texto, apertado
+  // demais (título/gêneros/sinopse todos espremidos). ≤600px empilha:
+  // pôster centralizado em cima (ainda "flutuando" sobre o backdrop, só
+  // que centralizado em vez de à esquerda), info embaixo em largura
+  // cheia.
   &__body {
     display: flex;
     gap: 20px;
     padding: 0 24px 20px;
     margin-top: -64px;
     position: relative;
+
+    @media (max-width: 600px) {
+      flex-direction: column;
+      align-items: center;
+      padding: 0 20px 20px;
+      margin-top: -48px;
+    }
   }
 
   &__poster {
@@ -99,12 +116,22 @@
     &--empty {
       display: block;
     }
+
+    @media (max-width: 600px) {
+      width: 110px;
+    }
   }
 
   &__info {
     flex: 1;
     min-width: 0;
     padding-top: 68px;
+    width: 100%;
+
+    @media (max-width: 600px) {
+      padding-top: 12px;
+      text-align: center;
+    }
   }
 
   &__title {
@@ -133,6 +160,10 @@
     span {
       white-space: nowrap;
     }
+
+    @media (max-width: 600px) {
+      justify-content: center;
+    }
   }
 
   &__rating {
@@ -152,6 +183,10 @@
     flex-wrap: wrap;
     gap: 6px;
     margin-bottom: 10px;
+
+    @media (max-width: 600px) {
+      justify-content: center;
+    }
   }
 
   &__genre-tag {
@@ -182,6 +217,10 @@
 
   &__cast {
     padding: 0 24px 24px;
+
+    @media (max-width: 600px) {
+      padding: 0 20px 20px;
+    }
   }
 
   &__cast-title {
@@ -235,6 +274,10 @@
 
   &__providers {
     padding: 0 24px 24px;
+
+    @media (max-width: 600px) {
+      padding: 0 20px 20px;
+    }
   }
 
   &__providers-title {

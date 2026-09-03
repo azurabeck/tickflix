@@ -80,12 +80,21 @@ $content-max-width: 1440px;
     color: $color-primary;
     text-transform: uppercase;
     margin-left: 50px;
+
+    @media (max-width: 900px) {
+      margin-left: 0;
+      margin-bottom: 16px;
+    }
   }
 
   &__row-content {
     display: flex;
     align-items: center;
     gap: 12px;
+
+    @media (max-width: 900px) {
+      gap: 6px;
+    }
   }
 
   &__row-chevron {
@@ -110,6 +119,16 @@ $content-max-width: 1440px;
       opacity: 0.3;
       box-shadow: none;
       cursor: not-allowed;
+    }
+
+    @media (max-width: 900px) {
+      width: 30px;
+      height: 30px;
+
+      svg {
+        width: 16px;
+        height: 16px;
+      }
     }
   }
 
@@ -593,6 +612,7 @@ $content-max-width: 1440px;
 
   &__search-input {
     flex: 1;
+    min-width: 0;
     border: 1px solid rgba($color-border, 0.5);
     border-radius: $radius-md;
     padding: 10px 16px;

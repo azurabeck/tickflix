@@ -219,14 +219,21 @@ quando a página troca ou um dialog abre por cima. Ordem do conteúdo:
    sort vem contaminado por título obscuro com dado de revenue
    errado/vandalizado (TMDb é editado pela comunidade), rankeando acima
    de bilheteria de verdade. Cada item mostra "Nº lugar".
-7. **Rodapé** — logo + busca "PROCURAR FILME" (`searchMovies`, TMDb
-   `/search/multi`, filtrando só `movie`/`tv`), resultados aparecem numa
-   grade simples de pôsteres abaixo do campo.
+7. **Rodapé** — só a logo agora. Tinha a busca "PROCURAR FILME" também
+   (`searchMovies`, TMDb `/search/multi`) até virar o ícone de lupa
+   GLOBAL da navbar — pedido explícito da Rebecca: "essa barra de search
+   que a gente tem no final das páginas filmes/séries/animes pode sair
+   dali e virar só um ícone de lupa no navbar, quando o usuário clica,
+   então aparece o modal pra ele fazer a busca". `searchMovies` (esta
+   pasta) continua existindo — é a função que
+   `@/components/searchModal` (modal global, usado pelas 3 páginas)
+   importa direto daqui, mesma busca de sempre, só chamada de outro
+   lugar agora.
 
 Clicar em qualquer pôster do Dashboard (últimos vistos/em cartaz/
-bilheteria/busca) abre o modal `@/components/movieDetail` com todos os
+bilheteria) abre o modal `@/components/movieDetail` com todos os
 detalhes do TMDb (sinopse, gêneros, nota, direção/criação, elenco). Todo
-pôster (`MovieRow.tsx` e a grade de busca do rodapé) também tem o
+pôster (`MovieRow.tsx`) também tem o
 `@/components/watchButton` global sobreposto no canto — clique
 independente do de abrir o detalhe (`stopPropagation` dentro do próprio
 botão), toggle de "já vi" (`handleToggleWatched` em `index.tsx`, escreve

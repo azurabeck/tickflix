@@ -12,19 +12,18 @@
 // "Em cartaz em {cidade}" abaixo, não uma busca própria, ver
 // `loadHeroTrailers` mais abaixo), painel de criação, "Últimos vistos"
 // (Firestore), "Em cartaz em {cidade}" e "Campeões de bilheteria" (TMDb),
-// rodapé com busca. A nav é global agora (@/components/appNav, renderizada
-// por PrivateLayout) — não vive mais aqui; a grade "Minhas timelines"
-// também saiu daqui, virou a página própria @/pages/private/timelines.
+// rodapé só com a Logo (busca saiu daqui, virou o ícone de lupa global da
+// navbar, ver @/components/searchModal). A nav é global agora
+// (@/components/appNav, renderizada por PrivateLayout) — não vive mais
+// aqui; a grade "Minhas timelines" também saiu daqui, virou a página
+// própria @/pages/private/timelines.
 import { useEffect, useState } from "react";
-import { Loader2, Search } from "lucide-react";
 import Logo from "@/components/logo";
 import MovieDetail from "@/components/movieDetail";
 import { fetchTimelines, movieKey, type Timeline } from "@/service/TimelineSettings";
-import { posterUrl } from "@/service/TMDbSettings";
 import { buildIngressoMovieUrl, slugify } from "@/service/IngressoSettings";
 import { fetchCurrentCityName } from "@/service/LocationSettings";
 import { fetchWatchedMap, setWatched } from "@/service/WatchedSettings";
-import WatchButton from "@/components/watchButton";
 import TimelineDetail from "@/pages/private/timelines/TimelineDetail";
 import {
   getRecentlyWatched,
@@ -32,7 +31,6 @@ import {
   fetchNowPlayingBrazil,
   fetchBoxOfficeChampions,
   fetchHeroTrailers,
-  searchMovies,
   type DashboardMovie,
   type HeroTrailer,
 } from "./functions";
@@ -83,11 +81,6 @@ const Dashboard = ({ uid }: DashboardProps) => {
   const [nowPlayingError, setNowPlayingError] = useState<string | null>(null);
   const [boxOffice, setBoxOffice] = useState<DashboardMovie[] | null>(null);
   const [boxOfficeError, setBoxOfficeError] = useState<string | null>(null);
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<DashboardMovie[] | null>(null);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
 
   const [selectedMovie, setSelectedMovie] = useState<{ id: number; mediaType: "movie" | "tv" } | null>(null);
 
@@ -201,26 +194,9 @@ const Dashboard = ({ uid }: DashboardProps) => {
       });
   }, []);
 
-  const handleSearch = async () => {
-    const query = searchQuery.trim();
-    if (!query || searchLoading) return;
-
-    setSearchLoading(true);
-    setSearchError(null);
-    try {
-      const results = await searchMovies(query, 12);
-      setSearchResults(results);
-    } catch (err) {
-      console.error("Erro na busca:", err);
-      setSearchError("Não foi possível buscar agora.");
-    } finally {
-      setSearchLoading(false);
-    }
-  };
-
-  // Toggle "já vi" de qualquer card de filme da home (fileiras + busca do
-  // rodapé) — mesmo estado global usado pelas timelines e pela página
-  // Oscar (service/WatchedSettings.ts), não é algo próprio daqui.
+  // Toggle "já vi" de qualquer card de filme da home (fileiras) — mesmo
+  // estado global usado pelas timelines e pela página Oscar
+  // (service/WatchedSettings.ts), não é algo próprio daqui.
   // id/mediaType opcionais pra aceitar MovieRowItem (item sem identidade
   // TMDb, ex.: "Em cartaz" vindo do ingresso.com, nunca chama isso de
   // verdade — MovieRow só renderiza o WatchButton quando os dois existem).
@@ -302,52 +278,15 @@ const Dashboard = ({ uid }: DashboardProps) => {
         onToggleWatched={handleToggleWatched}
       />
 
+      {/* Busca saiu daqui — virou o ícone de lupa global da navbar
+          (@/components/appNav → @/components/searchModal), pedido
+          explícito da Rebecca: "essa barra de search que a gente tem no
+          final das páginas filmes/séries/animes pode sair dali e virar
+          só um ícone de lupa no navbar". Rodapé com a Logo continua, só
+          como assinatura da marca no fim da página. */}
       <footer className="dashboard__footer">
         <div className="dashboard__inner dashboard__footer-inner">
           <Logo />
-
-          <div className="dashboard__search">
-            <input
-              type="text"
-              className="dashboard__search-input"
-              placeholder="PROCURAR FILME"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            />
-            <button type="button" className="dashboard__search-button" onClick={handleSearch} disabled={searchLoading}>
-              {searchLoading ? <Loader2 className="dashboard__spinner" size={16} /> : <Search size={16} />}
-            </button>
-          </div>
-
-          {searchError && <p className="dashboard__error">{searchError}</p>}
-
-          {searchResults && (
-            <div className="dashboard__search-results">
-              {searchResults.length === 0 && <p className="dashboard__empty">Nada encontrado.</p>}
-              {searchResults.map((movie) => {
-                const poster = posterUrl(movie.posterPath);
-                const isWatched = watchedMap.has(movieKey(movie.mediaType, movie.id));
-                return (
-                  <div key={movie.id} className="dashboard__search-result">
-                    <button
-                      type="button"
-                      className="dashboard__search-result-open"
-                      onClick={() => setSelectedMovie({ id: movie.id, mediaType: movie.mediaType })}
-                    >
-                      {poster ? (
-                        <img src={poster} alt={movie.title} className="dashboard__search-poster" />
-                      ) : (
-                        <div className="dashboard__search-poster dashboard__search-poster--empty" />
-                      )}
-                      <span>{movie.title}</span>
-                    </button>
-                    <WatchButton isWatched={isWatched} onToggle={() => handleToggleWatched(movie)} disabled={!uid} />
-                  </div>
-                );
-              })}
-            </div>
-          )}
         </div>
       </footer>
 

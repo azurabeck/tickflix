@@ -241,6 +241,53 @@ $content-max-width: 1440px;
   }
 
   // --- AddDataModal — colar JSON pronto, sem IA nenhuma ---
+  //
+  // `&__detail-overlay`/`&__detail-close` — faltavam aqui (bug real, já
+  // existia antes dessa generalização, na página Oscar original: o JSX
+  // de `AddDataModal.tsx` sempre usou essas duas classes pro fundo
+  // escurecido/botão de fechar, mas elas nunca tinham sido definidas em
+  // lugar nenhum do SCSS — sem `position: fixed`/centralização, o modal
+  // renderizava solto no fluxo normal da página, empurrado pro rodapé em
+  // vez de flutuar centralizado por cima de tudo). Rebecca relatou ao
+  // vivo testando Globo de Ouro/Cannes: "eles parecer estar com o layout
+  // quebrado". Só ficou mais óbvio em Globo de Ouro/Cannes porque toda
+  // edição lá ainda está vazia (sempre cai direto nesse modal); no Oscar
+  // a maioria das edições já tem dado cadastrado, então "Adicionar
+  // dados"/"Editar dados" é clicado bem menos. Mesmo padrão de
+  // `pages/private/timelines/styles.scss` (`&__detail-overlay`/
+  // `&__detail-close`), só com a cor de acento do módulo.
+  &__detail-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(#000000, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    z-index: 9999;
+  }
+
+  &__detail-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(#ffffff, 0.1);
+    color: rgba(#ffffff, 0.75);
+    cursor: pointer;
+
+    &:hover {
+      background: color-mix(in srgb, var(--awards-accent) 25%, transparent);
+      color: var(--awards-accent);
+    }
+  }
+
   &__add-data-panel {
     position: relative;
     width: 100%;
@@ -254,6 +301,10 @@ $content-max-width: 1440px;
     border-radius: $radius-lg;
     box-shadow: 0 20px 60px rgba(#000000, 0.5);
     padding: 32px;
+
+    @media (max-width: 600px) {
+      padding: 20px;
+    }
   }
 
   &__add-data-title {

@@ -277,13 +277,6 @@ export const fetchSeriesHeroTrailers = async (limit: number): Promise<HeroTraile
   return withTrailers.filter((item): item is HeroTrailer => item !== null);
 };
 
-// --- Busca (rodapé) -----------------------------------------------------------
-
-export const searchSeries = async (query: string, limit: number): Promise<SeriesRowItem[]> => {
-  const data = await tmdbFetch<{ results: RawTvResult[] }>("/search/tv", { query });
-  return data.results.slice(0, limit).map(normalizeSeriesRowItem);
-};
-
 // --- Lista de temporadas + status (resumo, primeiro passo pra seguir) -------
 // Season 0 (especiais) fica de fora — não entra na contagem "oficial" de
 // episódios da série pro usuário comum. `status` ("Returning Series",
