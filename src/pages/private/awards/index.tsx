@@ -15,7 +15,9 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import MovieDetail from "@/components/movieDetail";
+import { fetchAvailabilityMap } from "@/components/movieDetail/functions";
 import { auth } from "@/service/FirebaseSettings";
+import { fetchCurrentLocation } from "@/service/LocationSettings";
 import { fetchWatchedMap, setWatched } from "@/service/WatchedSettings";
 import type { AwardConfig } from "./awardConfigs";
 import {
@@ -54,6 +56,11 @@ const AwardPage = ({ config }: AwardPageProps) => {
   // timeline do usuário (dessa premiação ou de outra), compartilha essa
   // mesma marcação. Otimista no toggle, desfaz se a gravação falhar.
   const [watchedMap, setWatchedMapState] = useState<Map<string, number>>(new Map());
+  // Claquete ("disponível em streaming/aluguel") — pedido explícito da
+  // Rebecca: "deve aparecer em todos os lugares do site". Só dá pra
+  // resolver pra indicados com tmdbId real cadastrado (ver
+  // awardNomineeKey em functions.ts).
+  const [availabilityMap, setAvailabilityMap] = useState<Map<string, true>>(new Map());
 
   // Trocar de premiação (Oscar → Globo de Ouro, ex.) é o MESMO componente
   // React, então o estado local não reseta sozinho — precisa reagir à
@@ -107,6 +114,35 @@ const AwardPage = ({ config }: AwardPageProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedOrdinal, config]);
 
+  useEffect(() => {
+    if (!selectedEdition?.categories) {
+      setAvailabilityMap(new Map());
+      return;
+    }
+    const uniqueNominees = new Map<string, AwardNominee>();
+    for (const category of selectedEdition.categories) {
+      for (const nom of category.nominees) {
+        if (nom.tmdbId !== null) uniqueNominees.set(awardNomineeKey(nom), nom);
+      }
+    }
+    const items = Array.from(uniqueNominees.values()).map((nom) => ({ id: nom.tmdbId as number, mediaType: nom.mediaType }));
+    if (items.length === 0) {
+      setAvailabilityMap(new Map());
+      return;
+    }
+
+    let cancelled = false;
+    fetchCurrentLocation()
+      .then(({ countryCode }) => fetchAvailabilityMap(items, countryCode ?? "BR"))
+      .then((resolved) => {
+        if (!cancelled) setAvailabilityMap(resolved);
+      })
+      .catch((err) => console.error("Erro ao buscar disponibilidade (streaming/aluguel):", err));
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedEdition]);
+
   const handleToggleWatched = async (nominee: AwardNominee) => {
     if (!uid) return;
     const key = awardNomineeKey(nominee);
@@ -148,6 +184,7 @@ const AwardPage = ({ config }: AwardPageProps) => {
             config={config}
             edition={selectedEdition}
             watchedMap={watchedMap}
+            availabilityMap={availabilityMap}
             uid={uid}
             onBack={() => setSelectedOrdinal(null)}
             onSelectNominee={(_categoryName, nominee) => setSelectedNominee(nominee)}

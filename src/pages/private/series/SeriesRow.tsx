@@ -21,6 +21,8 @@
 // cada página sem precisar duplicar o componente inteiro.
 import { Check, Loader2, Plus, Star } from "lucide-react";
 import { posterUrl } from "@/service/TMDbSettings";
+import { movieKey } from "@/service/TimelineSettings";
+import AvailabilityBadge from "@/components/availabilityBadge";
 import { countryFlagEmoji, type SeriesRowItem } from "./functions";
 import ScrollableRow from "./ScrollableRow";
 
@@ -31,6 +33,10 @@ interface SeriesRowProps {
   error?: string | null;
   addedIds: Set<number>;
   pendingIds: Set<number>;
+  // Claquete ("disponível em streaming/aluguel") — pedido explícito da
+  // Rebecca: "deve aparecer em todos os lugares do site". Mesmo formato
+  // de `availabilityMap` em @/pages/private/home/dashboard/MovieRow.tsx.
+  availabilityMap: Map<string, true>;
   uid: string | null;
   onItemClick: (item: SeriesRowItem) => void;
   onToggleAdded: (item: SeriesRowItem) => void;
@@ -45,6 +51,7 @@ const SeriesRow = ({
   error,
   addedIds,
   pendingIds,
+  availabilityMap,
   uid,
   onItemClick,
   onToggleAdded,
@@ -76,6 +83,7 @@ const SeriesRow = ({
                   ) : (
                     <div className="series-page__row-poster series-page__row-poster--empty" />
                   )}
+                  <AvailabilityBadge available={availabilityMap.has(movieKey("tv", item.id))} />
                   <span className="series-page__row-title-text">{item.title}</span>
                   <span className="series-page__row-rating">
                     <Star size={11} fill="currentColor" />

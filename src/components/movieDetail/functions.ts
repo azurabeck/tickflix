@@ -4,11 +4,19 @@
 // que abre ao clicar num pôster em qualquer lugar do app (timeline,
 // últimos vistos, em cartaz, bilheteria, busca do rodapé).
 import { tmdbFetch } from "@/service/TMDbSettings";
+import { movieKey } from "@/service/TimelineSettings";
 
 export interface MovieDetail {
   id: number;
   mediaType: "movie" | "tv";
   title: string;
+  // Nome original (idioma de produção) — pedido explícito da Rebecca:
+  // "vamos colocar ali na descrição tb o nome original de cada filme".
+  // `title` já vem traduzido (pt-BR, idioma padrão de `tmdbFetch`); quem
+  // renderiza só mostra esse campo quando ele DIFERE de `title` (ver
+  // index.tsx) — pra um filme nacional, por exemplo, os dois já são
+  // iguais, mostrar de novo seria redundante.
+  originalTitle: string;
   tagline: string;
   overview: string;
   posterPath: string | null;
@@ -58,6 +66,7 @@ interface RawCredits {
 interface RawMovieDetail {
   id: number;
   title: string;
+  original_title: string;
   tagline: string;
   overview: string;
   poster_path: string | null;
@@ -74,6 +83,7 @@ interface RawMovieDetail {
 interface RawTvDetail {
   id: number;
   name: string;
+  original_name: string;
   tagline: string;
   overview: string;
   poster_path: string | null;
@@ -101,6 +111,7 @@ export const fetchMovieDetail = async (id: number, mediaType: "movie" | "tv"): P
       id: data.id,
       mediaType: "movie",
       title: data.title,
+      originalTitle: data.original_title,
       tagline: data.tagline,
       overview: data.overview,
       posterPath: data.poster_path,
@@ -123,6 +134,7 @@ export const fetchMovieDetail = async (id: number, mediaType: "movie" | "tv"): P
     id: data.id,
     mediaType: "tv",
     title: data.name,
+    originalTitle: data.original_name,
     tagline: data.tagline,
     overview: data.overview,
     posterPath: data.poster_path,
@@ -213,4 +225,42 @@ export const fetchWatchProviders = async (
     rent: mapProviders(country.rent),
     buy: mapProviders(country.buy),
   };
+};
+
+// --- Disponibilidade (claquete) ----------------------------------------------
+// Nasceu só na fileira "Principais lançamentos" (home/dashboard/functions.ts,
+// `fetchRecentMajorReleases`) — generalizada pra cá, pedido explícito da
+// Rebecca: "a claquete dizendo se o filme ta disponível em streaming ou
+// aluguel, deve aparecer em todos os lugares do site, pode virar um
+// padrão do componente global de details". Mora no MESMO arquivo que já
+// resolve "onde assistir" pro modal de detalhes (não duplica a ideia de
+// "disponível = tem flatrate ou rent"), usada por QUALQUER fileira/grade
+// de pôster do app junto do componente global
+// @/components/availabilityBadge.
+export const isAvailableToWatch = (providers: WatchProviders | null): boolean =>
+  Boolean(providers && (providers.flatrate.length > 0 || providers.rent.length > 0));
+
+// Busca disponibilidade de VÁRIOS títulos de uma vez, em paralelo — mesmo
+// padrão de `fetchWatchedMap` (service/WatchedSettings.ts): devolve um
+// Map pela chave de `movieKey`, PRESENÇA = disponível (não guarda quem
+// não está, só como `watchedMap` só guarda quem já foi visto). Falha em
+// resolver UM título não derruba os outros (cada chamada é independente,
+// `Promise.all` sobre promises que já tratam o próprio erro).
+export const fetchAvailabilityMap = async (
+  items: { id: number; mediaType: "movie" | "tv" }[],
+  countryCode: string
+): Promise<Map<string, true>> => {
+  const keys = await Promise.all(
+    items.map(async (item): Promise<string | null> => {
+      try {
+        const providers = await fetchWatchProviders(item.id, item.mediaType, countryCode);
+        return isAvailableToWatch(providers) ? movieKey(item.mediaType, item.id) : null;
+      } catch (err) {
+        console.error(`Erro ao buscar disponibilidade de ${item.mediaType}-${item.id}:`, err);
+        return null;
+      }
+    })
+  );
+
+  return new Map(keys.filter((key): key is string => key !== null).map((key) => [key, true as const]));
 };

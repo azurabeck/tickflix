@@ -491,6 +491,15 @@ $content-max-width: 1440px;
     text-transform: uppercase;
   }
 
+  // Claquete global (components/availabilityBadge) nasce no top-left —
+  // mesmo canto do badge "Vencedor" acima, então empurra pro bottom-left
+  // aqui (mesma solução já usada em Séries/Animes pro rank number).
+  &__nominee .availability-badge {
+    top: auto;
+    bottom: 8px;
+    left: 8px;
+  }
+
   &__nominee-title {
     font-size: 13px;
     font-weight: 600;

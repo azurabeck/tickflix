@@ -39,8 +39,11 @@ import { useEffect, useState } from "react";
 import { Loader2, Trash2 } from "lucide-react";
 import { auth } from "@/service/FirebaseSettings";
 import MovieDetail from "@/components/movieDetail";
+import { fetchAvailabilityMap } from "@/components/movieDetail/functions";
+import AvailabilityBadge from "@/components/availabilityBadge";
 import { posterUrl } from "@/service/TMDbSettings";
 import { fetchTimelines, movieKey, progressPercent, type Timeline } from "@/service/TimelineSettings";
+import { fetchCurrentLocation } from "@/service/LocationSettings";
 import { fetchWatchedMap, setWatched } from "@/service/WatchedSettings";
 import CreateTimelinePanel from "@/pages/private/home/dashboard/CreateTimelinePanel";
 import FollowedTimelinesRow from "@/pages/private/home/dashboard/FollowedTimelinesRow";
@@ -112,6 +115,26 @@ const SeriesPage = () => {
   // progresso de EPISÓDIO das séries seguidas (esse é outro conceito,
   // service/FollowingSettings.ts).
   const [watchedMap, setWatchedMapState] = useState<Map<string, number>>(new Map());
+  // Claquete ("disponível em streaming/aluguel") — pedido explícito da
+  // Rebecca: "deve aparecer em todos os lugares do site". Mesmo padrão
+  // de @/pages/private/home/dashboard/index.tsx: UM Map compartilhado
+  // entre todas as fileiras desta página, cada uma soma o próprio pedaço
+  // assim que os itens chegam (`mergeAvailability`).
+  const [availabilityMap, setAvailabilityMap] = useState<Map<string, true>>(new Map());
+
+  const mergeAvailability = async (items: { id: number }[]) => {
+    if (items.length === 0) return;
+    try {
+      const { countryCode } = await fetchCurrentLocation();
+      const resolved = await fetchAvailabilityMap(
+        items.map((item) => ({ id: item.id, mediaType: "tv" as const })),
+        countryCode ?? "BR"
+      );
+      setAvailabilityMap((prev) => new Map([...prev, ...resolved]));
+    } catch (err) {
+      console.error("Erro ao buscar disponibilidade (streaming/aluguel):", err);
+    }
+  };
 
   // Só categoria "series" — a mesma collection agora também guarda anime
   // seguido pela página Animes (service/FollowingSettings.ts,
@@ -119,7 +142,11 @@ const SeriesPage = () => {
   const loadFollowedSeries = () => {
     if (!uid) return;
     fetchFollowedSeries(uid)
-      .then((all) => setFollowedSeries(all.filter((s) => s.category === "series")))
+      .then((all) => {
+        const mine = all.filter((s) => s.category === "series");
+        setFollowedSeries(mine);
+        mergeAvailability(mine);
+      })
       .catch((err) => console.error("Erro ao buscar séries seguidas:", err));
   };
 
@@ -140,7 +167,10 @@ const SeriesPage = () => {
   useEffect(() => {
     STREAMING_PROVIDERS.forEach((provider) => {
       fetchTopSeriesByProvider(provider.id, ROW_LIMIT)
-        .then((items) => setProviderRows((prev) => ({ ...prev, [provider.id]: items })))
+        .then((items) => {
+          setProviderRows((prev) => ({ ...prev, [provider.id]: items }));
+          mergeAvailability(items);
+        })
         .catch((err) => {
           console.error(`Erro ao buscar séries mais vistas na ${provider.label}:`, err);
           setProviderErrors((prev) => ({ ...prev, [provider.id]: "Não foi possível carregar agora." }));
@@ -152,7 +182,10 @@ const SeriesPage = () => {
       .catch((err) => console.error("Erro ao buscar trailers do topo:", err));
 
     fetchTopSeriesOfTheYear(TOP_OF_YEAR_LIMIT)
-      .then(setTopOfYear)
+      .then((items) => {
+        setTopOfYear(items);
+        mergeAvailability(items);
+      })
       .catch((err) => {
         console.error("Erro ao buscar top 20 do ano:", err);
         setTopOfYearError("Não foi possível carregar agora.");
@@ -357,6 +390,7 @@ const SeriesPage = () => {
                       ) : (
                         <div className="series-page__row-poster series-page__row-poster--empty" />
                       )}
+                      <AvailabilityBadge available={availabilityMap.has(movieKey("tv", series.id))} />
                       <span className="series-page__row-title-text">{series.title}</span>
                     </button>
                     <div className="series-page__my-item-progress-bar">
@@ -380,6 +414,7 @@ const SeriesPage = () => {
         error={topOfYearError}
         addedIds={followedIds}
         pendingIds={pendingIds}
+        availabilityMap={availabilityMap}
         uid={uid}
         onItemClick={handlePosterClick}
         onToggleAdded={handleToggleFollowed}
@@ -394,6 +429,7 @@ const SeriesPage = () => {
           error={providerErrors[provider.id] ?? null}
           addedIds={followedIds}
           pendingIds={pendingIds}
+          availabilityMap={availabilityMap}
           uid={uid}
           onItemClick={handlePosterClick}
           onToggleAdded={handleToggleFollowed}

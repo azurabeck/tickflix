@@ -4,6 +4,7 @@ import { tmdbFetch, searchTmdbTitle, searchMovieByTitle, fetchTitleById, type Tm
 import { createTimeline, timelineMovieKey, type ContentType, type TimelineMovie } from "@/service/TimelineSettings";
 import { fetchRecentlyWatchedKeys } from "@/service/WatchedSettings";
 import { fetchIngressoNowPlaying } from "@/service/IngressoSettings";
+import { fetchWatchProviders } from "@/components/movieDetail/functions";
 import type { MovieRowItem } from "./MovieRow";
 
 // Único lugar que ainda cria timeline a partir de um TmdbMovie "solto"
@@ -150,6 +151,219 @@ export const fetchBoxOfficeChampions = async (limit: number): Promise<DashboardM
   return data.results
     .slice(0, limit)
     .map((m) => ({ id: m.id, mediaType: "movie" as const, title: m.title, posterPath: m.poster_path }));
+};
+
+// --- Principais lançamentos dos últimos 12 meses -----------------------------
+// Pedido explícito da Rebecca: "vamos colocar uma lista ali com os
+// principais lançamentos do ano no ocidente, do mes atual para
+// janeiro... e vamos colocar um simbolo de claquete para os que já
+// tiverem disponiveis para ver via streaming ou aluguel" — ajustado ao
+// vivo pra uma janela ROLANTE: "melhor melhor.. invez de ser no ano
+// atual.. nos ultimos 12 meses" (não "ano calendário", que reseta em
+// janeiro e encolheria a lista perto do início do ano).
+//
+// `primary_release_date.gte/lte` (não `primary_release_year`, que só
+// aceita ano cheio) cobre os últimos 12 meses terminando hoje, com
+// `region: "BR"` pra usar a data de lançamento no Brasil (igual "Em
+// cartaz"). `sort_by=popularity.desc` + `vote_count.gte` — "principais"
+// aqui é sobre RELEVÂNCIA (o que todo mundo comentou), não bilheteria
+// especificamente (essa já tem a própria fileira).
+//
+// Piso de voto BEM mais baixo que o da bilheteria (300) — bug real visto
+// ao vivo: "Verity" (Colleen Hoover) estreava HOJE, com popularidade 74
+// (mais alta que vários títulos já na lista), mas só 16 votos — óbvio,
+// acabou de sair, ninguém teve tempo de avaliar ainda. Um piso de 80
+// (já reduzido da bilheteria, mas ainda alto pra isso) excluía
+// exatamente o tipo de filme que essa fileira existe pra mostrar: o
+// lançamento NOVO. Diferente da bilheteria (que ordena por
+// `revenue.desc`, campo fácil de vandalizar sozinho — um filme obscuro
+// com revenue errado cadastrado pode saltar pro topo com poucochos
+// votos), aqui o sort é por `popularity.desc`, um score já composto do
+// próprio TMDb (visualizações, tendência, votos etc.) — bem mais
+// resistente a um campo só vandalizado, então não precisa do mesmo piso
+// alto pra filtrar ruído — um piso bem mais baixo (10) já basta pra
+// cortar lixo de verdade (filme com 0-1 voto, sem engajamento nenhum),
+// sem derrubar lançamento novo e genuinamente relevante.
+//
+// "No ocidente" — mesma definição de anime já usada em toda a página
+// Séries/Animes (gênero Animação + idioma original japonês): excluído
+// AQUI, não via `without_genres` na query (isso cortaria animação
+// OCIDENTAL também — Pixar, DreamWorks — que deve continuar). Como o
+// filtro é client-side, pagina (`CANDIDATE_PAGES`, mesmo padrão de
+// `fetchTopSeriesOfTheYear` em pages/private/series/functions.ts) até
+// preencher `limit` ou acabarem as páginas candidatas.
+// Teto de páginas candidatas ESCALA com `limit` — a fileira da Home pede
+// 20 (5 páginas já sobra), mas o modal "Ver tudo" (MajorReleasesModal.tsx)
+// pede bem mais pra ter densidade real em cada mês depois de agrupar;
+// sem escalar, um `limit` grande simplesmente não teria páginas
+// suficientes pra tentar preencher.
+const releasesCandidatePages = (limit: number): number => Math.max(5, Math.ceil(limit / 15));
+
+interface RawTmdbMovieWithGenres extends RawTmdbMovie {
+  genre_ids: number[];
+  original_language: string;
+  release_date: string;
+}
+
+const ANIMATION_GENRE_ID = 16;
+const isWesternMovie = (m: RawTmdbMovieWithGenres): boolean => !(m.genre_ids.includes(ANIMATION_GENRE_ID) && m.original_language === "ja");
+
+const isoDate = (date: Date): string => date.toISOString().slice(0, 10);
+
+// --- Data de lançamento — BRASIL OU EUA, a mais cedo das duas ---------------
+// `/discover/movie` SEMPRE devolve, em `results[].release_date`, a data
+// PRIMÁRIA/global do filme no TMDb (normalmente a dos EUA ou do país de
+// origem) — mesmo passando `region: "BR"` na query. `region` ali afeta
+// só o FILTRO (`.gte/.lte` usam a janela de lançamento no Brasil pra
+// decidir quem entra na lista), não o campo `release_date` de cada item.
+// Bug relatado ao vivo pela Rebecca: "Pinóquio" estreava EM CARTAZ no
+// Brasil (outubro), mas aparecia agrupado em "Novembro" — porque
+// `release_date` do /discover era a estreia global (novembro), diferente
+// da estreia real no Brasil (outubro), e era essa data genérica que
+// virava a chave de agrupamento.
+//
+// Correção: uma chamada a mais, por filme, em `/movie/{id}/release_dates`
+// (o único endpoint do TMDb que tem data POR PAÍS de verdade). Pedido
+// explícito da Rebecca, um passo além de "usa a data do Brasil": "vamos
+// mostrar os filmes a partir da data de estreia brasil ou eua, estreia em
+// outros lugares do mundo não me interessam.. brasil ou eua, o mais
+// recenete [sic].. tipo de no brasil foi 29 de outubro e no usa foi 3 de
+// novembro então mostra o filme em outubro" — ou seja, a data que conta é
+// a MAIS CEDO entre Brasil e EUA (não a mais recente em termos de
+// calendário — "mais recente" aqui é "a que já aconteceu primeiro"),
+// ignorando QUALQUER outro país. Cada país usa a estreia de CINEMA (type
+// 2 "limitada" ou 3 "ampla"; a mais antiga das duas, se tiver as duas);
+// sem estreia de cinema cadastrada naquele país, cai pra QUALQUER data
+// cadastrada nele. Com os dois países resolvidos, fica com o menor dos
+// dois; com só um resolvido, fica com esse; sem nenhum dos dois, cai pro
+// `release_date` genérico do /discover como último recurso (melhor uma
+// data aproximada que nenhuma).
+interface RawReleaseDateEntry {
+  release_date: string; // ISO datetime completo, ex. "2026-10-01T00:00:00.000Z"
+  type: number; // 1 Premiere, 2 Estreia limitada, 3 Estreia ampla (cinema), 4 Digital, 5 Físico, 6 TV
+}
+
+interface RawCountryReleaseDates {
+  iso_3166_1: string;
+  release_dates: RawReleaseDateEntry[];
+}
+
+const THEATRICAL_RELEASE_TYPES = new Set([2, 3]);
+
+const earliestReleaseDate = (entries: RawReleaseDateEntry[]): string =>
+  entries.reduce((earliest, entry) => (entry.release_date < earliest ? entry.release_date : earliest), entries[0].release_date).slice(0, 10);
+
+// Estreia de cinema de UM país — "YYYY-MM-DD" ou `null` se esse país não
+// tem dado nenhum cadastrado pra esse filme.
+const extractTheatricalDate = (country: RawCountryReleaseDates | undefined): string | null => {
+  if (!country || country.release_dates.length === 0) return null;
+  const theatrical = country.release_dates.filter((d) => THEATRICAL_RELEASE_TYPES.has(d.type));
+  return earliestReleaseDate(theatrical.length > 0 ? theatrical : country.release_dates);
+};
+
+const fetchBrOrUsReleaseDate = async (movieId: number): Promise<string | null> => {
+  const data = await tmdbFetch<{ results: RawCountryReleaseDates[] }>(`/movie/${movieId}/release_dates`);
+  const br = extractTheatricalDate(data.results.find((r) => r.iso_3166_1 === "BR"));
+  const us = extractTheatricalDate(data.results.find((r) => r.iso_3166_1 === "US"));
+
+  if (br && us) return br < us ? br : us;
+  return br ?? us;
+};
+
+export interface MajorReleaseMovie extends DashboardMovie {
+  // Já disponível pra assistir (streaming por assinatura OU aluguel) —
+  // o claquete pedido pela Rebecca. `fetchWatchProviders` é o MESMO
+  // usado pelo modal de detalhes (@/components/movieDetail), reaproveitado
+  // aqui em vez de duplicar a chamada/o parse de `/watch/providers`.
+  available: boolean;
+  // "YYYY-MM-DD" — estreia de cinema no BRASIL OU NOS EUA, a mais cedo
+  // das duas (`fetchBrOrUsReleaseDate` acima), não a data genérica/global
+  // do /discover (ver comentário longo acima — eram diferentes de
+  // verdade pra "Pinóquio", bug real). Só usado pra agrupar por mês no
+  // modal "Ver tudo" (MajorReleasesModal.tsx); a fileira da Home ignora
+  // esse campo.
+  releaseDate: string;
+}
+
+export const fetchRecentMajorReleases = async (limit: number): Promise<MajorReleaseMovie[]> => {
+  const today = new Date();
+  const twelveMonthsAgo = new Date(today);
+  twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+
+  const collected: RawTmdbMovieWithGenres[] = [];
+  let page = 1;
+  let totalPages = 1;
+  const candidatePages = releasesCandidatePages(limit);
+
+  while (collected.length < limit && page <= totalPages && page <= candidatePages) {
+    const data = await tmdbFetch<{ results: RawTmdbMovieWithGenres[]; total_pages: number }>("/discover/movie", {
+      sort_by: "popularity.desc",
+      "primary_release_date.gte": isoDate(twelveMonthsAgo),
+      "primary_release_date.lte": isoDate(today),
+      region: "BR",
+      include_adult: "false",
+      "vote_count.gte": "10",
+      page: String(page),
+    });
+    totalPages = data.total_pages;
+    collected.push(...data.results.filter(isWesternMovie));
+    page += 1;
+  }
+
+  const movies = collected.slice(0, limit);
+
+  // Disponibilidade (/watch/providers) e data de estreia BRASIL-OU-EUA
+  // (/movie/{id}/release_dates, ver fetchBrOrUsReleaseDate acima) são
+  // duas chamadas A PARTE por filme (nenhuma vem junto do /discover) —
+  // as duas em paralelo entre si E entre todos os filmes de uma vez,
+  // mesmo raciocínio já aceito em `fetchHeroTrailers` (TMDb aguenta,
+  // custo conhecido). `allSettled` (não `all`) pra cada par — falha em
+  // resolver UMA das duas chamadas de UM filme não derruba a lista
+  // inteira nem a outra chamada desse mesmo filme: só fica sem claquete
+  // (`available: false`) e/ou cai pro `release_date` genérico do
+  // /discover (aproximado, mas melhor que travar a fileira inteira).
+  const withAvailability = await Promise.all(
+    movies.map(async (m): Promise<MajorReleaseMovie> => {
+      const [providersResult, releaseDateResult] = await Promise.allSettled([
+        fetchWatchProviders(m.id, "movie", "BR"),
+        fetchBrOrUsReleaseDate(m.id),
+      ]);
+
+      let available = false;
+      if (providersResult.status === "fulfilled") {
+        const providers = providersResult.value;
+        available = Boolean(providers && (providers.flatrate.length > 0 || providers.rent.length > 0));
+      } else {
+        console.error(`Erro ao buscar onde assistir de ${m.title}:`, providersResult.reason);
+      }
+
+      let releaseDate = m.release_date;
+      if (releaseDateResult.status === "fulfilled" && releaseDateResult.value) {
+        releaseDate = releaseDateResult.value;
+      } else if (releaseDateResult.status === "rejected") {
+        console.error(`Erro ao buscar data de lançamento (Brasil/EUA) de ${m.title}:`, releaseDateResult.reason);
+      }
+
+      return { id: m.id, mediaType: "movie", title: m.title, posterPath: m.poster_path, available, releaseDate };
+    })
+  );
+
+  // Segundo bug real, visto ao vivo (relatado pela Rebecca depois do
+  // primeiro): "a gente deveria esta mostrando os filmes a partir do mes
+  // corrente... pq esta mostrando novembro?" — "Pinóquio" aparecia na
+  // lista mesmo com a estreia de CINEMA (resolvida acima, ver
+  // fetchBrOrUsReleaseDate) ainda no FUTURO (depois de hoje). Ele entrou
+  // no `/discover` porque o FILTRO `.gte/.lte` do TMDb usa uma data
+  // genérica pra decidir quem participa da busca (mesmo problema de
+  // sempre — `region` não garante nada ali) — essa data genérica caía
+  // dentro da janela de 12 meses, mesmo a estreia de verdade sendo mais
+  // pra frente. "Últimos 12 meses" é uma lista pra TRÁS no tempo (o que
+  // já saiu), nunca pra frente — então, agora que cada filme já tem a
+  // data de estreia REAL (Brasil/EUA) resolvida, qualquer um com
+  // `releaseDate` depois de hoje é descartado aqui, não importa por que
+  // motivo entrou no resultado do /discover.
+  const todayIso = isoDate(today);
+  return withAvailability.filter((m) => m.releaseDate <= todayIso);
 };
 
 // --- Carrossel de trailers (topo da home) ------------------------------------

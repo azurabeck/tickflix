@@ -20,6 +20,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { movieKey } from "@/service/TimelineSettings";
 import { posterUrl as resolveTmdbPosterUrl } from "@/service/TMDbSettings";
 import WatchButton from "@/components/watchButton";
+import AvailabilityBadge from "@/components/availabilityBadge";
 
 export interface MovieRowItem {
   id?: number;
@@ -37,9 +38,20 @@ interface MovieRowProps {
   loading?: boolean;
   error?: string | null;
   watchedMap: Map<string, number>;
+  // Claquete — pedido explícito da Rebecca: "deve aparecer em todos os
+  // lugares do site". Mesmo formato de `watchedMap` (presença = true),
+  // resolvido por `fetchAvailabilityMap`
+  // (@/components/movieDetail/functions.ts) — quem chama decide QUANDO
+  // buscar isso (ver dashboard/index.tsx), essa fileira só lê o Map.
+  availabilityMap: Map<string, true>;
   uid: string | null;
   onItemClick: (item: MovieRowItem) => void;
   onToggleWatched: (item: MovieRowItem) => void;
+  // Botão "Ver tudo" no cabeçalho da fileira — opcional, só a fileira
+  // "Principais lançamentos" usa hoje (abre `MajorReleasesModal.tsx`,
+  // agrupado por mês). `undefined` não desenha nada, as outras fileiras
+  // (Últimos vistos/Em cartaz/Bilheteria) continuam sem botão nenhum.
+  onSeeAll?: () => void;
 }
 
 // Quanto da largura visível anda por clique na seta — menos que 100% pra
@@ -47,7 +59,7 @@ interface MovieRowProps {
 // de que "veio de algum lugar" em vez de trocar a página inteira seca.
 const SCROLL_STEP_RATIO = 0.85;
 
-const MovieRow = ({ title, items, loading, error, watchedMap, uid, onItemClick, onToggleWatched }: MovieRowProps) => {
+const MovieRow = ({ title, items, loading, error, watchedMap, availabilityMap, uid, onItemClick, onToggleWatched, onSeeAll }: MovieRowProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -85,7 +97,14 @@ const MovieRow = ({ title, items, loading, error, watchedMap, uid, onItemClick, 
   return (
     <section className="dashboard__row">
       <div className="dashboard__inner">
-        <h2 className="dashboard__row-title">{title}</h2>
+        <div className="dashboard__row-header">
+          <h2 className="dashboard__row-title">{title}</h2>
+          {onSeeAll && (
+            <button type="button" className="dashboard__row-see-all" onClick={onSeeAll}>
+              Ver tudo
+            </button>
+          )}
+        </div>
 
         {loading && <p className="dashboard__loading">Carregando...</p>}
         {error && <p className="dashboard__error">{error}</p>}
@@ -110,7 +129,9 @@ const MovieRow = ({ title, items, loading, error, watchedMap, uid, onItemClick, 
               {items.map((item, index) => {
                 const poster = item.posterUrl ?? resolveTmdbPosterUrl(item.posterPath ?? null);
                 const hasIdentity = item.id !== undefined && item.mediaType !== undefined;
-                const isWatched = hasIdentity && watchedMap.has(movieKey(item.mediaType!, item.id!));
+                const key = hasIdentity ? movieKey(item.mediaType!, item.id!) : null;
+                const isWatched = Boolean(key && watchedMap.has(key));
+                const isAvailable = Boolean(key && availabilityMap.has(key));
 
                 return (
                   <div key={item.id ?? `${item.title}-${index}`} className="dashboard__row-item">
@@ -120,6 +141,7 @@ const MovieRow = ({ title, items, loading, error, watchedMap, uid, onItemClick, 
                       ) : (
                         <div className="dashboard__row-poster dashboard__row-poster--empty" />
                       )}
+                      <AvailabilityBadge available={isAvailable} />
                       {item.rankLabel && <span className="dashboard__row-rank">{item.rankLabel}</span>}
                     </button>
                     {hasIdentity && <WatchButton isWatched={isWatched} onToggle={() => onToggleWatched(item)} disabled={!uid} />}

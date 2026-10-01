@@ -27,10 +27,13 @@ import { Loader2, Search, X } from "lucide-react";
 import { auth } from "@/service/FirebaseSettings";
 import { posterUrl } from "@/service/TMDbSettings";
 import { movieKey } from "@/service/TimelineSettings";
+import { fetchCurrentLocation } from "@/service/LocationSettings";
 import { fetchWatchedMap, setWatched } from "@/service/WatchedSettings";
 import { searchMovies, type DashboardMovie } from "@/pages/private/home/dashboard/functions";
 import MovieDetail from "@/components/movieDetail";
+import { fetchAvailabilityMap } from "@/components/movieDetail/functions";
 import WatchButton from "@/components/watchButton";
+import AvailabilityBadge from "@/components/availabilityBadge";
 import "./styles.scss";
 
 interface SearchModalProps {
@@ -46,6 +49,11 @@ const SearchModal = ({ onClose }: SearchModalProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [watchedMap, setWatchedMapState] = useState<Map<string, number>>(new Map());
+  // Claquete ("disponível em streaming/aluguel") — pedido explícito da
+  // Rebecca: "deve aparecer em todos os lugares do site". Resolvida aqui
+  // dentro, a cada nova busca (mesmo padrão self-contained de
+  // TimelineDetail/EditionDetail/Franchise).
+  const [availabilityMap, setAvailabilityMap] = useState<Map<string, true>>(new Map());
   const [selectedMovie, setSelectedMovie] = useState<{ id: number; mediaType: "movie" | "tv" } | null>(null);
 
   useEffect(() => {
@@ -54,6 +62,25 @@ const SearchModal = ({ onClose }: SearchModalProps) => {
       .then(setWatchedMapState)
       .catch((err) => console.error("Erro ao buscar filmes vistos:", err));
   }, [uid]);
+
+  useEffect(() => {
+    if (!results || results.length === 0) {
+      setAvailabilityMap(new Map());
+      return;
+    }
+    let cancelled = false;
+    const items = results.map((movie) => ({ id: movie.id, mediaType: movie.mediaType }));
+    fetchCurrentLocation()
+      .then(({ countryCode }) => fetchAvailabilityMap(items, countryCode ?? "BR"))
+      .then((resolved) => {
+        if (!cancelled) setAvailabilityMap(resolved);
+      })
+      .catch((err) => console.error("Erro ao buscar disponibilidade (streaming/aluguel):", err));
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [results]);
 
   const handleSearch = async () => {
     const q = query.trim();
@@ -132,6 +159,7 @@ const SearchModal = ({ onClose }: SearchModalProps) => {
                     ) : (
                       <div className="search-modal__poster search-modal__poster--empty" />
                     )}
+                    <AvailabilityBadge available={availabilityMap.has(movieKey(movie.mediaType, movie.id))} />
                     <span>{movie.title}</span>
                   </button>
                   <WatchButton isWatched={isWatched} onToggle={() => handleToggleWatched(movie)} disabled={!uid} />

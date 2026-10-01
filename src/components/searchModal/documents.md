@@ -49,6 +49,13 @@ independente, cada tela carregando seu próprio estado de "já vi".
 cuidado de sempre com `stopPropagation` num wrapper, pra fechar o
 `MovieDetail` não borbulhar e fechar o `SearchModal` junto).
 
+## Claquete de disponibilidade
+
+Cada resultado também resolve `@/components/availabilityBadge`
+(ver `documents.md` dele pro histórico completo) — self-contained,
+igual o resto do estado deste modal: `useEffect` keyed em `results`,
+refaz a cada busca nova (não herda nada de página nenhuma).
+
 ## Visual
 
 Mesmo padrão de overlay/painel claro de `@/components/movieDetail`

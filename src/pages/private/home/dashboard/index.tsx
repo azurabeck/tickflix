@@ -20,9 +20,10 @@
 import { useEffect, useState } from "react";
 import Logo from "@/components/logo";
 import MovieDetail from "@/components/movieDetail";
+import { fetchAvailabilityMap } from "@/components/movieDetail/functions";
 import { fetchTimelines, movieKey, type Timeline } from "@/service/TimelineSettings";
 import { buildIngressoMovieUrl, slugify } from "@/service/IngressoSettings";
-import { fetchCurrentCityName } from "@/service/LocationSettings";
+import { fetchCurrentCityName, fetchCurrentLocation } from "@/service/LocationSettings";
 import { fetchWatchedMap, setWatched } from "@/service/WatchedSettings";
 import TimelineDetail from "@/pages/private/timelines/TimelineDetail";
 import {
@@ -30,13 +31,16 @@ import {
   fetchIngressoNowPlayingResolved,
   fetchNowPlayingBrazil,
   fetchBoxOfficeChampions,
+  fetchRecentMajorReleases,
   fetchHeroTrailers,
   type DashboardMovie,
   type HeroTrailer,
+  type MajorReleaseMovie,
 } from "./functions";
 import CreateTimelinePanel from "./CreateTimelinePanel";
 import FollowedTimelinesRow from "./FollowedTimelinesRow";
 import HeroCarousel from "./HeroCarousel";
+import MajorReleasesModal from "./MajorReleasesModal";
 import MovieRow, { type MovieRowItem } from "./MovieRow";
 import "./styles.scss";
 
@@ -50,6 +54,10 @@ const ROW_LIMIT = 8;
 // explícito da Rebecca — não o mesmo ROW_LIMIT=8 genérico das outras
 // fileiras.
 const BOX_OFFICE_LIMIT = 20;
+// "Principais lançamentos dos últimos 12 meses" — mesmo teto de
+// "Campeões de bilheteria" (também um TOP 20), pedido parecido (lista
+// "principal" de um período, não fileira curta de 8).
+const MAJOR_RELEASES_LIMIT = 20;
 // "Em cartaz" tem que trazer TODOS os filmes que estão na página real do
 // ingresso.com (pedido explícito: "não ta trazendo todos os filmes em
 // cartaz"), não só os primeiros 8 como o resto das fileiras — a página
@@ -57,12 +65,45 @@ const BOX_OFFICE_LIMIT = 20;
 // uma rede de segurança contra a lista deles crescer descontroladamente
 // um dia, não um corte de verdade na prática.
 const INGRESSO_LIMIT = 40;
+// Fallback de país pra claquete de disponibilidade — mesma escolha já
+// feita em @/components/movieDetail/index.tsx ("onde assistir") quando a
+// geolocation falha/é negada.
+const DEFAULT_COUNTRY_CODE = "BR";
 
 const Dashboard = ({ uid }: DashboardProps) => {
   // "Já vi" é estado global por filme (service/WatchedSettings.ts,
   // users/{uid}/watched) — usado aqui só pra colorir o ícone de bookmark
   // de cada card (`.has(key)`).
   const [watchedMap, setWatchedMap] = useState<Map<string, number>>(new Map());
+  // Claquete ("disponível em streaming/aluguel") — pedido explícito da
+  // Rebecca: "deve aparecer em todos os lugares do site". UM Map
+  // compartilhado por "Últimos vistos"/"Em cartaz"/"Campeões de
+  // bilheteria" (cada fileira MERGE o próprio pedaço nele, assim que os
+  // itens dela chegam — ver `mergeAvailability` abaixo); "Principais
+  // lançamentos" já resolve isso sozinha (`fetchRecentMajorReleases`,
+  // precisa da data de estreia de qualquer forma), por isso tem o
+  // próprio Map derivado mais abaixo, não usa este aqui.
+  const [availabilityMap, setAvailabilityMap] = useState<Map<string, true>>(new Map());
+
+  // Busca disponibilidade de um lote de itens e ACRESCENTA ao Map
+  // existente (nunca substitui o que já foi resolvido por outra
+  // fileira) — cada fileira chama isso com os PRÓPRIOS itens assim que
+  // eles chegam, em vez de um efeito combinado que dispararia de novo
+  // (pra TODAS as fileiras) sempre que QUALQUER uma mudasse (ex.:
+  // "Últimos vistos" recarrega a cada toggle de "já vi").
+  const mergeAvailability = async (items: { id?: number; mediaType?: "movie" | "tv" }[]) => {
+    const withIdentity = items.filter((m): m is { id: number; mediaType: "movie" | "tv" } => m.id !== undefined && m.mediaType !== undefined);
+    if (withIdentity.length === 0) return;
+
+    try {
+      const { countryCode } = await fetchCurrentLocation();
+      const resolved = await fetchAvailabilityMap(withIdentity, countryCode ?? DEFAULT_COUNTRY_CODE);
+      setAvailabilityMap((prev) => new Map([...prev, ...resolved]));
+    } catch (err) {
+      console.error("Erro ao buscar disponibilidade (streaming/aluguel):", err);
+    }
+  };
+
   // "Últimos vistos" é uma query própria (fetchRecentlyWatchedKeys,
   // ordenada por watchedAt) + resolução no TMDb pela chave — não deriva
   // do Map acima. Recarrega a cada toggle (loadRecentlyWatched).
@@ -82,6 +123,21 @@ const Dashboard = ({ uid }: DashboardProps) => {
   const [boxOffice, setBoxOffice] = useState<DashboardMovie[] | null>(null);
   const [boxOfficeError, setBoxOfficeError] = useState<string | null>(null);
 
+  // "Principais lançamentos dos últimos 12 meses" — pedido explícito da
+  // Rebecca: "vamos colocar uma lista ali com os principais lançamentos
+  // do ano no ocidente... e vamos colocar um simbolo de claquete para os
+  // que já tiverem disponiveis para ver via streaming ou aluguel"
+  // (período ajustado ao vivo pra janela rolante de 12 meses, ver
+  // functions.ts). `available` de cada item já vem resolvido de lá.
+  const [majorReleases, setMajorReleases] = useState<MajorReleaseMovie[] | null>(null);
+  const [majorReleasesError, setMajorReleasesError] = useState<string | null>(null);
+  // "Ver tudo" — pedido explícito da Rebecca: "coloca um botão ver tudo
+  // ali, nos lançamentos dos ultimos 12 meses, os fillmes deve estar
+  // agrupados por mes". Abre MajorReleasesModal.tsx, que busca a própria
+  // lista maior (não reaproveita `majorReleases` acima, que é só os 20
+  // da fileira).
+  const [majorReleasesModalOpen, setMajorReleasesModalOpen] = useState(false);
+
   const [selectedMovie, setSelectedMovie] = useState<{ id: number; mediaType: "movie" | "tv" } | null>(null);
 
   // "Em cartaz {cidade}" — geolocation do navegador + reverse geocoding
@@ -97,7 +153,10 @@ const Dashboard = ({ uid }: DashboardProps) => {
   const loadRecentlyWatched = () => {
     if (!uid) return;
     getRecentlyWatched(uid, RECENT_LIMIT)
-      .then(setRecentlyWatched)
+      .then((movies) => {
+        setRecentlyWatched(movies);
+        mergeAvailability(movies);
+      })
       .catch((err) => console.error("Erro ao buscar últimos vistos:", err));
   };
 
@@ -157,6 +216,7 @@ const Dashboard = ({ uid }: DashboardProps) => {
         const movies = await fetchIngressoNowPlayingResolved(slugify(city), INGRESSO_LIMIT);
         setNowPlaying(movies);
         loadHeroTrailers(movies);
+        mergeAvailability(movies);
         return;
       } catch (err) {
         console.error("Erro ao buscar em cartaz do ingresso.com, caindo pro TMDb:", err);
@@ -178,6 +238,7 @@ const Dashboard = ({ uid }: DashboardProps) => {
         }));
         setNowPlaying(mapped);
         loadHeroTrailers(mapped);
+        mergeAvailability(mapped);
       } catch (fallbackErr) {
         console.error("Erro ao buscar em cartaz (fallback TMDb):", fallbackErr);
         setNowPlayingError("Não foi possível carregar os filmes em cartaz.");
@@ -187,10 +248,20 @@ const Dashboard = ({ uid }: DashboardProps) => {
     loadNowPlaying();
 
     fetchBoxOfficeChampions(BOX_OFFICE_LIMIT)
-      .then(setBoxOffice)
+      .then((movies) => {
+        setBoxOffice(movies);
+        mergeAvailability(movies);
+      })
       .catch((err) => {
         console.error("Erro ao buscar bilheteria:", err);
         setBoxOfficeError("Não foi possível carregar os campeões de bilheteria.");
+      });
+
+    fetchRecentMajorReleases(MAJOR_RELEASES_LIMIT)
+      .then(setMajorReleases)
+      .catch((err) => {
+        console.error("Erro ao buscar principais lançamentos:", err);
+        setMajorReleasesError("Não foi possível carregar os principais lançamentos.");
       });
   }, []);
 
@@ -237,6 +308,7 @@ const Dashboard = ({ uid }: DashboardProps) => {
             posterPath: movie.posterPath,
           }))}
           watchedMap={watchedMap}
+          availabilityMap={availabilityMap}
           uid={uid}
           onItemClick={(item: MovieRowItem) => item.id !== undefined && item.mediaType && setSelectedMovie({ id: item.id, mediaType: item.mediaType })}
           onToggleWatched={handleToggleWatched}
@@ -249,6 +321,7 @@ const Dashboard = ({ uid }: DashboardProps) => {
         loading={nowPlaying === null && !nowPlayingError}
         error={nowPlayingError}
         watchedMap={watchedMap}
+        availabilityMap={availabilityMap}
         uid={uid}
         // "Em cartaz" é justamente onde faz sentido ir direto comprar
         // ingresso — pedido explícito da Rebecca: "quando a gente clicar
@@ -273,10 +346,43 @@ const Dashboard = ({ uid }: DashboardProps) => {
         loading={boxOffice === null && !boxOfficeError}
         error={boxOfficeError}
         watchedMap={watchedMap}
+        availabilityMap={availabilityMap}
         uid={uid}
         onItemClick={(item: MovieRowItem) => item.id !== undefined && item.mediaType && setSelectedMovie({ id: item.id, mediaType: item.mediaType })}
         onToggleWatched={handleToggleWatched}
       />
+
+      <MovieRow
+        title="Principais lançamentos dos últimos 12 meses"
+        items={(majorReleases ?? []).map((movie) => ({
+          id: movie.id,
+          mediaType: movie.mediaType,
+          title: movie.title,
+          posterPath: movie.posterPath,
+        }))}
+        loading={majorReleases === null && !majorReleasesError}
+        error={majorReleasesError}
+        watchedMap={watchedMap}
+        // Essa fileira já resolve a própria disponibilidade dentro de
+        // `fetchRecentMajorReleases` (precisa da data de estreia de
+        // qualquer forma) — deriva um Map só com quem tem `available:
+        // true`, mesmo formato que as outras fileiras usam.
+        availabilityMap={new Map((majorReleases ?? []).filter((m) => m.available).map((m) => [movieKey(m.mediaType, m.id), true as const]))}
+        uid={uid}
+        onItemClick={(item: MovieRowItem) => item.id !== undefined && item.mediaType && setSelectedMovie({ id: item.id, mediaType: item.mediaType })}
+        onToggleWatched={handleToggleWatched}
+        onSeeAll={() => setMajorReleasesModalOpen(true)}
+      />
+
+      {majorReleasesModalOpen && (
+        <MajorReleasesModal
+          watchedMap={watchedMap}
+          uid={uid}
+          onClose={() => setMajorReleasesModalOpen(false)}
+          onSelectMovie={setSelectedMovie}
+          onToggleWatched={handleToggleWatched}
+        />
+      )}
 
       {/* Busca saiu daqui — virou o ícone de lupa global da navbar
           (@/components/appNav → @/components/searchModal), pedido

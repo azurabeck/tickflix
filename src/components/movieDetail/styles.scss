@@ -198,6 +198,13 @@
     font-weight: 600;
   }
 
+  &__original-title {
+    margin: 0 0 6px;
+    font-size: 12px;
+    font-style: italic;
+    color: $color-text-muted;
+  }
+
   &__directors {
     margin: 0 0 10px;
     font-size: 13px;

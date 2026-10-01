@@ -34,10 +34,13 @@ import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Navigate, useParams } from "react-router-dom";
 import MovieDetail from "@/components/movieDetail";
+import { fetchAvailabilityMap } from "@/components/movieDetail/functions";
 import WatchButton from "@/components/watchButton";
+import AvailabilityBadge from "@/components/availabilityBadge";
 import { auth } from "@/service/FirebaseSettings";
 import { ROUTES } from "@/service/Routes";
 import { posterUrl } from "@/service/TMDbSettings";
+import { fetchCurrentLocation } from "@/service/LocationSettings";
 import {
   createFranchiseTimeline,
   fetchTimelineByFranchise,
@@ -62,6 +65,9 @@ const FranchisePage = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedMovie, setSelectedMovie] = useState<TimelineMovie | null>(null);
   const [watchedMap, setWatchedMapState] = useState<Map<string, number>>(new Map());
+  // Claquete ("disponível em streaming/aluguel") — pedido explícito da
+  // Rebecca: "deve aparecer em todos os lugares do site".
+  const [availabilityMap, setAvailabilityMap] = useState<Map<string, true>>(new Map());
 
   useEffect(() => {
     if (!config || !uid) {
@@ -139,6 +145,20 @@ const FranchisePage = () => {
       .catch((err) => console.error("Erro ao buscar filmes vistos:", err));
   }, [uid]);
 
+  useEffect(() => {
+    if (!timeline || timeline.movies.length === 0) return;
+    let cancelled = false;
+    fetchCurrentLocation()
+      .then(({ countryCode }) => fetchAvailabilityMap(timeline.movies, countryCode ?? "BR"))
+      .then((resolved) => {
+        if (!cancelled) setAvailabilityMap(resolved);
+      })
+      .catch((err) => console.error("Erro ao buscar disponibilidade (streaming/aluguel):", err));
+    return () => {
+      cancelled = true;
+    };
+  }, [timeline]);
+
   const handleToggleWatched = async (movie: TimelineMovie) => {
     if (!uid) return;
     const key = timelineMovieKey(movie);
@@ -198,6 +218,7 @@ const FranchisePage = () => {
                     ) : (
                       <div className="timelines-page__movie-poster timelines-page__movie-poster--empty" />
                     )}
+                    <AvailabilityBadge available={availabilityMap.has(key)} />
                     <span className="timelines-page__movie-title">
                       {movie.title} {movie.year && `(${movie.year})`}
                     </span>

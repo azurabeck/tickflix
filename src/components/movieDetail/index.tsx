@@ -88,6 +88,14 @@ export const MovieDetailHeader = ({ detail }: { detail: MovieDetailData }) => {
             </div>
           )}
 
+          {/* Pedido explícito da Rebecca: "vamos colocar ali na descrição
+              tb o nome original de cada filme" — só aparece quando
+              DIFERE do título já mostrado (pt-BR); pra produção nacional
+              os dois são o mesmo texto, mostrar de novo seria ruído. */}
+          {detail.originalTitle && detail.originalTitle !== detail.title && (
+            <p className="movie-detail__original-title">Nome original: {detail.originalTitle}</p>
+          )}
+
           {detail.directors.length > 0 && (
             <p className="movie-detail__directors">
               {detail.mediaType === "movie" ? "Direção" : "Criação"}: {detail.directors.join(", ")}

@@ -6,6 +6,7 @@
 // Festival de Cannes", ver AwardConfig.editionNoun).
 import { ArrowLeft, Clapperboard, FileJson, Trophy } from "lucide-react";
 import WatchButton from "@/components/watchButton";
+import AvailabilityBadge from "@/components/availabilityBadge";
 import { posterUrl } from "@/service/TMDbSettings";
 import type { AwardConfig } from "./awardConfigs";
 import { awardNomineeKey, type AwardEdition, type AwardNominee } from "./functions";
@@ -14,6 +15,9 @@ interface EditionDetailProps {
   config: AwardConfig;
   edition: AwardEdition;
   watchedMap: Map<string, number>;
+  // Claquete ("disponível em streaming/aluguel") — pedido explícito da
+  // Rebecca: "deve aparecer em todos os lugares do site".
+  availabilityMap: Map<string, true>;
   uid: string | null;
   onBack: () => void;
   onSelectNominee: (categoryName: string, nominee: AwardNominee) => void;
@@ -25,6 +29,7 @@ const NomineeCard = ({
   nominee,
   categoryName,
   isWatched,
+  isAvailable,
   uid,
   onSelectNominee,
   onToggleWatched,
@@ -32,6 +37,7 @@ const NomineeCard = ({
   nominee: AwardNominee;
   categoryName: string;
   isWatched: boolean;
+  isAvailable: boolean;
   uid: string | null;
   onSelectNominee: (categoryName: string, nominee: AwardNominee) => void;
   onToggleWatched: (nominee: AwardNominee) => void;
@@ -48,6 +54,8 @@ const NomineeCard = ({
             <Clapperboard size={22} />
           </div>
         )}
+
+        <AvailabilityBadge available={isAvailable} />
 
         {nominee.isWinner && (
           <span className="awards__nominee-winner-badge">
@@ -81,6 +89,7 @@ const EditionDetail = ({
   config,
   edition,
   watchedMap,
+  availabilityMap,
   uid,
   onBack,
   onSelectNominee,
@@ -142,6 +151,7 @@ const EditionDetail = ({
               nominee={nom}
               categoryName={category.name}
               isWatched={watchedMap.has(awardNomineeKey(nom))}
+              isAvailable={availabilityMap.has(awardNomineeKey(nom))}
               uid={uid}
               onSelectNominee={onSelectNominee}
               onToggleWatched={onToggleWatched}
