@@ -4,7 +4,7 @@ import { tmdbFetch, searchTmdbTitle, searchMovieByTitle, fetchTitleById, type Tm
 import { createTimeline, timelineMovieKey, type ContentType, type TimelineMovie } from "@/service/TimelineSettings";
 import { fetchRecentlyWatchedKeys } from "@/service/WatchedSettings";
 import { fetchIngressoNowPlaying } from "@/service/IngressoSettings";
-import { fetchWatchProviders } from "@/components/movieDetail/functions";
+import { fetchWatchProvidersBrUs, isAvailableToWatch } from "@/components/movieDetail/functions";
 import type { MovieRowItem } from "./MovieRow";
 
 // Único lugar que ainda cria timeline a partir de um TmdbMovie "solto"
@@ -317,25 +317,29 @@ export const fetchRecentMajorReleases = async (limit: number): Promise<MajorRele
   // duas chamadas A PARTE por filme (nenhuma vem junto do /discover) —
   // as duas em paralelo entre si E entre todos os filmes de uma vez,
   // mesmo raciocínio já aceito em `fetchHeroTrailers` (TMDb aguenta,
-  // custo conhecido). `allSettled` (não `all`) pra cada par — falha em
-  // resolver UMA das duas chamadas de UM filme não derruba a lista
-  // inteira nem a outra chamada desse mesmo filme: só fica sem claquete
+  // custo conhecido). `allSettled` pro par — falha em resolver UMA das
+  // duas não derruba a outra nem a lista inteira: só fica sem claquete
   // (`available: false`) e/ou cai pro `release_date` genérico do
   // /discover (aproximado, mas melhor que travar a fileira inteira).
+  //
+  // `fetchWatchProvidersBrUs` (não duas chamadas de `fetchWatchProviders`
+  // separadas) — bug real descoberto depois de a Rebecca relatar que a
+  // claquete "às vezes aparece, às vezes não": `/watch/providers` do TMDb
+  // já devolve BR e US na MESMA resposta, pedir os dois em separado
+  // dobrava à toa a requisição concorrente por filme (ver
+  // @/components/movieDetail/functions.ts pro comentário completo).
   const withAvailability = await Promise.all(
     movies.map(async (m): Promise<MajorReleaseMovie> => {
       const [providersResult, releaseDateResult] = await Promise.allSettled([
-        fetchWatchProviders(m.id, "movie", "BR"),
+        fetchWatchProvidersBrUs(m.id, "movie"),
         fetchBrOrUsReleaseDate(m.id),
       ]);
 
-      let available = false;
-      if (providersResult.status === "fulfilled") {
-        const providers = providersResult.value;
-        available = Boolean(providers && (providers.flatrate.length > 0 || providers.rent.length > 0));
-      } else {
-        console.error(`Erro ao buscar onde assistir de ${m.title}:`, providersResult.reason);
-      }
+      if (providersResult.status === "rejected") console.error(`Erro ao buscar onde assistir de ${m.title}:`, providersResult.reason);
+
+      const available =
+        providersResult.status === "fulfilled" &&
+        (isAvailableToWatch(providersResult.value.br) || isAvailableToWatch(providersResult.value.us));
 
       let releaseDate = m.release_date;
       if (releaseDateResult.status === "fulfilled" && releaseDateResult.value) {

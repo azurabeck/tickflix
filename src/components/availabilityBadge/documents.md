@@ -1,12 +1,36 @@
 # AvailabilityBadge
 
 Selo GLOBAL de "disponível pra ver em streaming ou aluguel" — ícone
-`Clapperboard`, canto SUPERIOR ESQUERDO de qualquer pôster, por padrão.
-Extraído da fileira "Principais lançamentos" (`@/pages/private/home/dashboard`,
+`Play`, canto SUPERIOR ESQUERDO de qualquer pôster, por padrão. Extraído
+da fileira "Principais lançamentos" (`@/pages/private/home/dashboard`,
 ver `documents.md` de lá pro histórico original) — pedido explícito da
 Rebecca: "a claquete dizendo se o filme ta disponível em streaming ou
 aluguel, deve aparecer em todos os lugares do site, pode virar um padrão
 do componente global de details".
+
+**Ícone trocado depois** — pedido explícito da Rebecca: "o simbolo de
+claquete troca pra um simbolo de player.. e o simbolo de claquete passa
+ser pra adicionar a uma timeline". A claquete (`Clapperboard`) virou o
+ícone de `@/components/addToTimelineButton` (ação nova, abre um menu);
+esse selo ficou com o `Play`. Nas páginas onde o canto superior-esquerdo
+já tinha outro selo (Séries/Animes, Awards), o `Play` foi empurrado pro
+INFERIOR DIREITO (não mais o inferior esquerdo — esse canto agora é
+reservado, em todo o site, pro `AddToTimelineButton`).
+
+**Bug real, relatado pela Rebecca**: "as vezes aparece o botão de play ou
+não... lembrando que tem que ser se já esta disponível aqui OU no eua".
+A regra BR-ou-US já estava certa (ver `fetchAvailabilityMap`,
+`@/components/movieDetail/functions.ts`) — o problema era `/watch/providers`
+sendo chamado DUAS vezes por filme (uma pra BR, outra pra US) quando o
+endpoint já devolve os DOIS países na MESMA resposta. Isso dobrava à toa
+a requisição concorrente numa página com várias fileiras carregando
+junto, aumentando a chance de uma falha transitória de rede derrubar
+SILENCIOSAMENTE a claquete daquele filme (sem reaparecer sozinha depois
+— o Map só cresce, nunca corrige um `false` pra `true` depois do fato).
+Corrigido com `fetchWatchProvidersBrUs` (UMA chamada, extrai BR e US da
+mesma resposta) + uma tentativa extra antes de desistir de vez num
+filme. Mesma correção aplicada em `fetchRecentMajorReleases`
+(`home/dashboard/functions.ts`), que tinha o mesmo problema.
 
 Mesmo padrão de `@/components/watchButton`: componente burro, só recebe
 `available: boolean` e desenha o selo (ou `null` quando `false` — nunca
@@ -18,14 +42,23 @@ esse booleano.
 Vive junto do `fetchWatchProviders` que ele reaproveita (mesma chamada
 `/watch/providers` do TMDb que já resolve "onde assistir" no modal de
 detalhes — nenhuma duplicação de rede). Recebe uma lista de
-`{id, mediaType}` + código do país, devolve um `Map<string, true>`
-chaveado por `movieKey(mediaType, id)` (`service/TimelineSettings.ts`,
-mesmo formato de chave do `watchedMap`) — só entram no Map os que TÊM
-`flatrate` (assinatura) ou `rent` (aluguel); `buy` (compra avulsa) não
-conta, mesma regra desde a fileira original. Falha ao resolver um item
-não derruba os outros (`Promise.all` com `try/catch` por item, não
-`Promise.allSettled` — aqui cada item já devolve `null` em vez de
-rejeitar).
+`{id, mediaType}`, devolve um `Map<string, true>` chaveado por
+`movieKey(mediaType, id)` (`service/TimelineSettings.ts`, mesmo formato
+de chave do `watchedMap`) — só entram no Map os que TÊM `flatrate`
+(assinatura) ou `rent` (aluguel); `buy` (compra avulsa) não conta, mesma
+regra desde a fileira original.
+
+**BRASIL OU EUA, fixo** — pedido explícito da Rebecca: "essa claquete
+deve considerar se esta disponível no usa ou no brasil". NÃO usa mais a
+localização do usuário (`fetchCurrentLocation`) pra decidir qual país
+checar — sempre checa os DOIS países, `Promise.allSettled` por par
+BR/US de cada item, disponível = tem BR OU tem US (mesmo "ou/ou" já
+usado pra data de estreia em `fetchRecentMajorReleases`,
+`dashboard/functions.ts`). Falha em resolver um país não derruba o
+outro país nem os outros itens. Efeito colateral bom: como não depende
+mais de geolocation, cada tela que chama isso ficou mais rápida (não
+espera o `navigator.geolocation` — que pode levar até 8s — antes de
+disparar as chamadas de disponibilidade).
 
 `Map<string, true>` (não `Set`) só pra espelhar o mesmo padrão de
 "presença = true" já usado por `watchedMap`/outras partes do app — mais

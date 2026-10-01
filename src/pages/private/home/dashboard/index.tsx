@@ -23,7 +23,7 @@ import MovieDetail from "@/components/movieDetail";
 import { fetchAvailabilityMap } from "@/components/movieDetail/functions";
 import { fetchTimelines, movieKey, type Timeline } from "@/service/TimelineSettings";
 import { buildIngressoMovieUrl, slugify } from "@/service/IngressoSettings";
-import { fetchCurrentCityName, fetchCurrentLocation } from "@/service/LocationSettings";
+import { fetchCurrentCityName } from "@/service/LocationSettings";
 import { fetchWatchedMap, setWatched } from "@/service/WatchedSettings";
 import TimelineDetail from "@/pages/private/timelines/TimelineDetail";
 import {
@@ -65,10 +65,6 @@ const MAJOR_RELEASES_LIMIT = 20;
 // uma rede de segurança contra a lista deles crescer descontroladamente
 // um dia, não um corte de verdade na prática.
 const INGRESSO_LIMIT = 40;
-// Fallback de país pra claquete de disponibilidade — mesma escolha já
-// feita em @/components/movieDetail/index.tsx ("onde assistir") quando a
-// geolocation falha/é negada.
-const DEFAULT_COUNTRY_CODE = "BR";
 
 const Dashboard = ({ uid }: DashboardProps) => {
   // "Já vi" é estado global por filme (service/WatchedSettings.ts,
@@ -96,8 +92,7 @@ const Dashboard = ({ uid }: DashboardProps) => {
     if (withIdentity.length === 0) return;
 
     try {
-      const { countryCode } = await fetchCurrentLocation();
-      const resolved = await fetchAvailabilityMap(withIdentity, countryCode ?? DEFAULT_COUNTRY_CODE);
+      const resolved = await fetchAvailabilityMap(withIdentity);
       setAvailabilityMap((prev) => new Map([...prev, ...resolved]));
     } catch (err) {
       console.error("Erro ao buscar disponibilidade (streaming/aluguel):", err);

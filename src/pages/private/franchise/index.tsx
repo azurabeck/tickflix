@@ -37,10 +37,10 @@ import MovieDetail from "@/components/movieDetail";
 import { fetchAvailabilityMap } from "@/components/movieDetail/functions";
 import WatchButton from "@/components/watchButton";
 import AvailabilityBadge from "@/components/availabilityBadge";
+import AddToTimelineButton from "@/components/addToTimelineButton";
 import { auth } from "@/service/FirebaseSettings";
 import { ROUTES } from "@/service/Routes";
 import { posterUrl } from "@/service/TMDbSettings";
-import { fetchCurrentLocation } from "@/service/LocationSettings";
 import {
   createFranchiseTimeline,
   fetchTimelineByFranchise,
@@ -148,8 +148,7 @@ const FranchisePage = () => {
   useEffect(() => {
     if (!timeline || timeline.movies.length === 0) return;
     let cancelled = false;
-    fetchCurrentLocation()
-      .then(({ countryCode }) => fetchAvailabilityMap(timeline.movies, countryCode ?? "BR"))
+    fetchAvailabilityMap(timeline.movies)
       .then((resolved) => {
         if (!cancelled) setAvailabilityMap(resolved);
       })
@@ -224,6 +223,7 @@ const FranchisePage = () => {
                     </span>
                   </button>
                   <WatchButton isWatched={isWatched} onToggle={() => handleToggleWatched(movie)} disabled={!uid} />
+                  <AddToTimelineButton uid={uid} movie={{ id: movie.id, mediaType: movie.mediaType, title: movie.title, posterPath: movie.posterPath }} />
                 </div>
               );
             })}

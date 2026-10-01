@@ -105,6 +105,24 @@ export const searchMovieByTitle = async (title: string): Promise<TmdbMovie | nul
   return best ? normalizeResult(best, "movie") : null;
 };
 
+// Busca filme E série juntos (igual `searchMovies` de
+// home/dashboard/functions.ts, reaproveitada pelo @/components/searchModal)
+// — mas com `year` já resolvido (`TmdbMovie`, não `DashboardMovie`), pro
+// campo "ano" exigido por `TimelineMovie` (service/TimelineSettings.ts) na
+// hora de adicionar um resultado de busca numa timeline manual
+// (@/components/addToTimelineButton).
+interface RawTmdbMultiResult extends RawTmdbResult {
+  media_type?: string;
+}
+
+export const searchTmdbMulti = async (query: string, limit: number): Promise<TmdbMovie[]> => {
+  const data = await tmdbFetch<{ results: RawTmdbMultiResult[] }>("/search/multi", { query });
+  return data.results
+    .filter((r): r is RawTmdbMultiResult & { media_type: "movie" | "tv" } => r.media_type === "movie" || r.media_type === "tv")
+    .slice(0, limit)
+    .map((r) => normalizeResult(r, r.media_type));
+};
+
 // --- Resolução por id já conhecido -------------------------------------------
 // Diferente de searchTmdbTitle (busca por nome quando só se sabe o
 // título) — aqui já se sabe o id de verdade (ex.: a chave de "já vi",
@@ -112,10 +130,19 @@ export const searchMovieByTitle = async (title: string): Promise<TmdbMovie | nul
 // título/pôster pra exibir. Usado por "Últimos vistos"
 // (home/dashboard/functions.ts) pra listar sem duplicar esse dado no
 // Firestore.
-export const fetchTitleById = async (mediaType: "movie" | "tv", id: number): Promise<{ title: string; posterPath: string | null } | null> => {
+export const fetchTitleById = async (
+  mediaType: "movie" | "tv",
+  id: number
+): Promise<{ title: string; posterPath: string | null; year: string } | null> => {
   try {
-    const data = await tmdbFetch<{ title?: string; name?: string; poster_path: string | null }>(`/${mediaType}/${id}`);
-    return { title: data.title ?? data.name ?? "Sem título", posterPath: data.poster_path };
+    const data = await tmdbFetch<{ title?: string; name?: string; poster_path: string | null; release_date?: string; first_air_date?: string }>(
+      `/${mediaType}/${id}`
+    );
+    return {
+      title: data.title ?? data.name ?? "Sem título",
+      posterPath: data.poster_path,
+      year: (data.release_date ?? data.first_air_date ?? "").slice(0, 4),
+    };
   } catch (err) {
     console.error(`Erro ao resolver ${mediaType}/${id} no TMDb:`, err);
     return null;

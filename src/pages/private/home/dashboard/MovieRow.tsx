@@ -21,6 +21,7 @@ import { movieKey } from "@/service/TimelineSettings";
 import { posterUrl as resolveTmdbPosterUrl } from "@/service/TMDbSettings";
 import WatchButton from "@/components/watchButton";
 import AvailabilityBadge from "@/components/availabilityBadge";
+import AddToTimelineButton from "@/components/addToTimelineButton";
 
 export interface MovieRowItem {
   id?: number;
@@ -145,6 +146,9 @@ const MovieRow = ({ title, items, loading, error, watchedMap, availabilityMap, u
                       {item.rankLabel && <span className="dashboard__row-rank">{item.rankLabel}</span>}
                     </button>
                     {hasIdentity && <WatchButton isWatched={isWatched} onToggle={() => onToggleWatched(item)} disabled={!uid} />}
+                    {hasIdentity && (
+                      <AddToTimelineButton uid={uid} movie={{ id: item.id!, mediaType: item.mediaType!, title: item.title, posterPath: item.posterPath ?? null }} />
+                    )}
                   </div>
                 );
               })}

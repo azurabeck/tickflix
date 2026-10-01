@@ -248,15 +248,18 @@ quando a página troca ou um dialog abre por cima. Ordem do conteúdo:
 
    **Claquete** — pedido explícito, "símbolo de claquete para os que já
    tiverem disponíveis para ver via streaming ou aluguel". Pra cada
-   filme da lista, uma chamada A PARTE (`fetchWatchProviders`,
-   reaproveitada direto de `@/components/movieDetail/functions` — mesma
-   função que já resolve "onde assistir" no modal de detalhes, não
-   duplicada aqui) verifica se tem `flatrate` (assinatura) OU `rent`
-   (aluguel) pro Brasil; `buy` (compra avulsa) não conta — o pedido foi
-   especificamente "streaming ou aluguel". Em paralelo pra todos os 20 de
-   uma vez (mesmo raciocínio já aceito em `fetchHeroTrailers`: custo
-   aceitável, TMDb aguenta). Falha ao resolver UM filme não derruba a
-   lista — só esse item fica sem claquete (`available: false`).
+   filme da lista, chamadas A PARTE (`fetchWatchProviders`, reaproveitada
+   direto de `@/components/movieDetail/functions` — mesma função que já
+   resolve "onde assistir" no modal de detalhes, não duplicada aqui)
+   verificam se tem `flatrate` (assinatura) OU `rent` (aluguel); `buy`
+   (compra avulsa) não conta — o pedido foi especificamente "streaming ou
+   aluguel". **BRASIL OU EUA** — refinamento pedido depois, ver seção
+   "Virou componente GLOBAL" abaixo: checa os dois países, disponível se
+   qualquer um dos dois tiver. Em paralelo pra todos os 20 de uma vez
+   (mesmo raciocínio já aceito em `fetchHeroTrailers`: custo aceitável,
+   TMDb aguenta). Falha ao resolver UM país de UM filme não derruba a
+   lista nem o outro país — só esse país fica de fora da checagem
+   (`available: false` só se os DOIS falharem/não tiverem dado).
 
    **Virou componente GLOBAL** — pedido explícito da Rebecca, um dia
    depois de ver a fileira pronta: "a claquete... deve aparecer em todos
@@ -277,6 +280,18 @@ quando a página troca ou um dialog abre por cima. Ordem do conteúdo:
    continua resolvendo `available` por filme sozinha (já faz a chamada
    junto da data de estreia, ver `fetchRecentMajorReleases`) e só
    converte pro Map na hora de passar pro `MovieRow.tsx`.
+
+   **"BR ou EUA", não a localização do usuário** — pedido explícito da
+   Rebecca, depois de ver a claquete funcionando: "essa claquete deve
+   considerar se esta disponível no usa ou no brasil". `fetchAvailabilityMap`
+   deixou de receber `countryCode` (não usa mais `fetchCurrentLocation`
+   pra decidir o país) — sempre checa BRASIL E EUA pra cada item,
+   disponível se qualquer um dos dois tiver `flatrate`/`rent`. Mesma
+   regra "ou/ou" que a data de estreia já usava (`fetchBrOrUsReleaseDate`
+   acima). Efeito colateral bom: nenhuma tela mais espera a geolocation
+   do navegador (até 8s) antes de disparar as chamadas de disponibilidade
+   — só a fileira "Em cartaz em {cidade}" ainda depende dela, pra cidade
+   mesmo.
 
    **"Ver tudo" (`MajorReleasesModal.tsx`)** — pedido explícito da
    Rebecca, um dia depois de ver a fileira pronta: "coloca um botão ver

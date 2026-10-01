@@ -41,9 +41,9 @@ import { auth } from "@/service/FirebaseSettings";
 import MovieDetail from "@/components/movieDetail";
 import { fetchAvailabilityMap } from "@/components/movieDetail/functions";
 import AvailabilityBadge from "@/components/availabilityBadge";
+import AddToTimelineButton from "@/components/addToTimelineButton";
 import { posterUrl } from "@/service/TMDbSettings";
 import { fetchTimelines, movieKey, progressPercent, type Timeline } from "@/service/TimelineSettings";
-import { fetchCurrentLocation } from "@/service/LocationSettings";
 import { fetchWatchedMap, setWatched } from "@/service/WatchedSettings";
 import CreateTimelinePanel from "@/pages/private/home/dashboard/CreateTimelinePanel";
 import FollowedTimelinesRow from "@/pages/private/home/dashboard/FollowedTimelinesRow";
@@ -125,11 +125,7 @@ const SeriesPage = () => {
   const mergeAvailability = async (items: { id: number }[]) => {
     if (items.length === 0) return;
     try {
-      const { countryCode } = await fetchCurrentLocation();
-      const resolved = await fetchAvailabilityMap(
-        items.map((item) => ({ id: item.id, mediaType: "tv" as const })),
-        countryCode ?? "BR"
-      );
+      const resolved = await fetchAvailabilityMap(items.map((item) => ({ id: item.id, mediaType: "tv" as const })));
       setAvailabilityMap((prev) => new Map([...prev, ...resolved]));
     } catch (err) {
       console.error("Erro ao buscar disponibilidade (streaming/aluguel):", err);
@@ -399,6 +395,7 @@ const SeriesPage = () => {
                     <span className="series-page__my-item-count">
                       visto: {watched}/{total}
                     </span>
+                    <AddToTimelineButton uid={uid} movie={{ id: series.id, mediaType: "tv", title: series.title, posterPath: series.posterPath }} />
                   </div>
                 );
               })}

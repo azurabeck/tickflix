@@ -27,13 +27,13 @@ import { Loader2, Search, X } from "lucide-react";
 import { auth } from "@/service/FirebaseSettings";
 import { posterUrl } from "@/service/TMDbSettings";
 import { movieKey } from "@/service/TimelineSettings";
-import { fetchCurrentLocation } from "@/service/LocationSettings";
 import { fetchWatchedMap, setWatched } from "@/service/WatchedSettings";
 import { searchMovies, type DashboardMovie } from "@/pages/private/home/dashboard/functions";
 import MovieDetail from "@/components/movieDetail";
 import { fetchAvailabilityMap } from "@/components/movieDetail/functions";
 import WatchButton from "@/components/watchButton";
 import AvailabilityBadge from "@/components/availabilityBadge";
+import AddToTimelineButton from "@/components/addToTimelineButton";
 import "./styles.scss";
 
 interface SearchModalProps {
@@ -70,8 +70,7 @@ const SearchModal = ({ onClose }: SearchModalProps) => {
     }
     let cancelled = false;
     const items = results.map((movie) => ({ id: movie.id, mediaType: movie.mediaType }));
-    fetchCurrentLocation()
-      .then(({ countryCode }) => fetchAvailabilityMap(items, countryCode ?? "BR"))
+    fetchAvailabilityMap(items)
       .then((resolved) => {
         if (!cancelled) setAvailabilityMap(resolved);
       })
@@ -163,6 +162,7 @@ const SearchModal = ({ onClose }: SearchModalProps) => {
                     <span>{movie.title}</span>
                   </button>
                   <WatchButton isWatched={isWatched} onToggle={() => handleToggleWatched(movie)} disabled={!uid} />
+                  <AddToTimelineButton uid={uid} movie={{ id: movie.id, mediaType: movie.mediaType, title: movie.title, posterPath: movie.posterPath }} />
                 </div>
               );
             })}

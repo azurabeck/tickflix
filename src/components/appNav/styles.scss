@@ -38,7 +38,7 @@ $content-max-width: 1440px;
     flex: 0 0 auto;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
   }
 
   &__search-btn {
@@ -260,6 +260,22 @@ $content-max-width: 1440px;
     &:hover {
       background: rgba($color-primary, 0.08);
     }
+  }
+
+  // Duas versões do MESMO botão — pedido explícito da Rebecca: "o botão
+  // sair no navbar deve ficar a esquerda do search e devem estar
+  // agrupados.. pra ficarem a esquerda direitinho deixando o meio pra o
+  // menu". No desktop, "Sair" solto dentro de `&__menu` (`display:
+  // contents`) virava mais um item espalhado por `justify-content:
+  // space-between` de `&__inner` — longe da busca, do lado errado.
+  // `&--grouped` (dentro de `&__actions`, mesmo grupo da busca/hambúrguer)
+  // resolve isso sem reestruturar o resto da nav; `&--panel` continua
+  // sendo o rodapé do painel mobile de sempre, cada uma visível só no seu
+  // breakpoint.
+  &__logout--panel {
+    @media (min-width: 901px) {
+      display: none;
+    }
 
     // Fim do painel empilhado — linha divisória + afastado dos links
     // acima, pra não parecer só mais um item da lista.
@@ -268,6 +284,12 @@ $content-max-width: 1440px;
       padding-top: 16px;
       border-top: 1px solid rgba($color-border, 0.3);
       justify-content: center;
+    }
+  }
+
+  &__logout--grouped {
+    @media (max-width: 900px) {
+      display: none;
     }
   }
 }

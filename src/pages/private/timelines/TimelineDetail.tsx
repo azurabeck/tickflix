@@ -25,10 +25,10 @@ import { X } from "lucide-react";
 import { timelineMovieKey, type Timeline, type TimelineMovie } from "@/service/TimelineSettings";
 import { posterUrl } from "@/service/TMDbSettings";
 import { fetchAvailabilityMap } from "@/components/movieDetail/functions";
-import { fetchCurrentLocation } from "@/service/LocationSettings";
 import MovieDetail from "@/components/movieDetail";
 import WatchButton from "@/components/watchButton";
 import AvailabilityBadge from "@/components/availabilityBadge";
+import AddToTimelineButton from "@/components/addToTimelineButton";
 import "./styles.scss";
 
 interface TimelineDetailProps {
@@ -45,8 +45,7 @@ const TimelineDetail = ({ timeline, watchedMap, uid, onClose, onToggleWatched }:
 
   useEffect(() => {
     let cancelled = false;
-    fetchCurrentLocation()
-      .then(({ countryCode }) => fetchAvailabilityMap(timeline.movies, countryCode ?? "BR"))
+    fetchAvailabilityMap(timeline.movies)
       .then((resolved) => {
         if (!cancelled) setAvailabilityMap(resolved);
       })
@@ -94,6 +93,7 @@ const TimelineDetail = ({ timeline, watchedMap, uid, onClose, onToggleWatched }:
                   </span>
                 </button>
                 <WatchButton isWatched={isWatched} onToggle={() => onToggleWatched(movie)} disabled={!uid} />
+                <AddToTimelineButton uid={uid} movie={{ id: movie.id, mediaType: movie.mediaType, title: movie.title, posterPath: movie.posterPath }} />
               </div>
             );
           })}

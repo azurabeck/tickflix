@@ -31,6 +31,11 @@ export interface MovieDetail {
   status: string;
   directors: string[]; // filme: crew "Director"; série: created_by
   cast: MovieDetailCastMember[];
+  // Trailer oficial do YouTube — pedido explícito da Rebecca: "quando a
+  // gente abrir o detalhes do filme, vamos colocar uma tag trailer, e
+  // quando clicar roda o trailler em fullscreen". `null` quando o título
+  // não tem vídeo do YouTube cadastrado no TMDb (nem todo tem).
+  trailerKey: string | null;
 }
 
 export interface MovieDetailCastMember {
@@ -104,9 +109,32 @@ const CAST_LIMIT = 10;
 const mapCast = (cast: RawCastMember[]): MovieDetailCastMember[] =>
   cast.slice(0, CAST_LIMIT).map((c) => ({ id: c.id, name: c.name, character: c.character, profilePath: c.profile_path }));
 
+// --- Trailer (/{mediaType}/{id}/videos, via append_to_response) --------------
+// Mesma ideia de ranking já usada pelo carrossel da Home
+// (`pickBestTrailer`, home/dashboard/functions.ts — ali só filme, aqui
+// filme E série) — oficial > qualquer Trailer > Teaser > qualquer vídeo
+// do YouTube, nessa ordem de preferência. `append_to_response:
+// "credits,videos"` busca os dois juntos numa chamada só (mesma lição do
+// bug de disponibilidade duplicando `/watch/providers` — nunca pedir
+// endpoint a mais quando dá pra vir junto).
+interface RawTmdbVideo {
+  key: string;
+  site: string;
+  type: string;
+  official: boolean;
+}
+
+const pickTrailerKey = (videos: RawTmdbVideo[]): string | null => {
+  const youtube = videos.filter((v) => v.site === "YouTube");
+  const best = youtube.find((v) => v.type === "Trailer" && v.official) ?? youtube.find((v) => v.type === "Trailer") ?? youtube.find((v) => v.type === "Teaser") ?? youtube[0];
+  return best?.key ?? null;
+};
+
 export const fetchMovieDetail = async (id: number, mediaType: "movie" | "tv"): Promise<MovieDetail> => {
   if (mediaType === "movie") {
-    const data = await tmdbFetch<RawMovieDetail>(`/movie/${id}`, { append_to_response: "credits" });
+    const data = await tmdbFetch<RawMovieDetail & { videos: { results: RawTmdbVideo[] } }>(`/movie/${id}`, {
+      append_to_response: "credits,videos",
+    });
     return {
       id: data.id,
       mediaType: "movie",
@@ -126,10 +154,13 @@ export const fetchMovieDetail = async (id: number, mediaType: "movie" | "tv"): P
       status: data.status,
       directors: data.credits.crew.filter((c) => c.job === "Director").map((c) => c.name),
       cast: mapCast(data.credits.cast),
+      trailerKey: pickTrailerKey(data.videos.results),
     };
   }
 
-  const data = await tmdbFetch<RawTvDetail>(`/tv/${id}`, { append_to_response: "credits" });
+  const data = await tmdbFetch<RawTvDetail & { videos: { results: RawTmdbVideo[] } }>(`/tv/${id}`, {
+    append_to_response: "credits,videos",
+  });
   return {
     id: data.id,
     mediaType: "tv",
@@ -149,6 +180,7 @@ export const fetchMovieDetail = async (id: number, mediaType: "movie" | "tv"): P
     status: data.status,
     directors: data.created_by.map((c) => c.name),
     cast: mapCast(data.credits.cast),
+    trailerKey: pickTrailerKey(data.videos.results),
   };
 };
 
@@ -205,6 +237,26 @@ interface RawWatchProvidersResponse {
 const mapProviders = (list?: RawWatchProvider[]): WatchProvider[] =>
   (list ?? []).map((p) => ({ id: p.provider_id, name: p.provider_name, logoPath: p.logo_path }));
 
+const toWatchProviders = (country: RawCountryProviders | undefined, countryCode: string): WatchProviders | null => {
+  if (!country) return null;
+  return {
+    countryCode,
+    link: country.link ?? null,
+    flatrate: mapProviders(country.flatrate),
+    rent: mapProviders(country.rent),
+    buy: mapProviders(country.buy),
+  };
+};
+
+// `/watch/providers` do TMDb devolve TODOS os países numa resposta só
+// (`results: {BR: {...}, US: {...}, ...}`) — um fetch cru aqui, reusado
+// tanto por `fetchWatchProviders` (um país só, "onde assistir" do
+// MovieDetail) quanto por `fetchWatchProvidersBrUs` (BR+US juntos, a
+// claquete) pra nunca pedir o mesmo endpoint duas vezes à toa pro mesmo
+// filme.
+const fetchRawWatchProviders = (id: number, mediaType: "movie" | "tv"): Promise<RawWatchProvidersResponse> =>
+  tmdbFetch<RawWatchProvidersResponse>(`/${mediaType}/${id}/watch/providers`);
+
 // `null` = sem dado nenhum pra esse país (título pode até estar
 // disponível em algum serviço, o TMDb/JustWatch só não tem esse país
 // catalogado pra ele) — diferente de erro de rede, que joga (deixa o
@@ -214,17 +266,27 @@ export const fetchWatchProviders = async (
   mediaType: "movie" | "tv",
   countryCode: string
 ): Promise<WatchProviders | null> => {
-  const data = await tmdbFetch<RawWatchProvidersResponse>(`/${mediaType}/${id}/watch/providers`);
-  const country = data.results[countryCode];
-  if (!country) return null;
+  const data = await fetchRawWatchProviders(id, mediaType);
+  return toWatchProviders(data.results[countryCode], countryCode);
+};
 
-  return {
-    countryCode,
-    link: country.link ?? null,
-    flatrate: mapProviders(country.flatrate),
-    rent: mapProviders(country.rent),
-    buy: mapProviders(country.buy),
-  };
+// Resolve BR e US de UMA VEZ — bug real descoberto depois de a Rebecca
+// relatar que a claquete "às vezes aparece, às vezes não" pro mesmo
+// filme: `fetchAvailabilityMap`/`fetchRecentMajorReleases` chamavam
+// `fetchWatchProviders` duas vezes (uma pra BR, outra pra US), cada uma
+// batendo no MESMO endpoint `/watch/providers` — que já devolve os dois
+// países na MESMA resposta. Isso dobrava à toa o número de requisições
+// simultâneas numa página com várias fileiras carregando junto,
+// aumentando a chance de alguma falhar sob essa carga (e, quando falha,
+// o filme fica sem claquete silenciosamente — daí a inconsistência entre
+// recarregamentos). Com UMA chamada só por filme, menos requisição
+// concorrente, menos chance de falha transitória derrubar a claquete.
+export const fetchWatchProvidersBrUs = async (
+  id: number,
+  mediaType: "movie" | "tv"
+): Promise<{ br: WatchProviders | null; us: WatchProviders | null }> => {
+  const data = await fetchRawWatchProviders(id, mediaType);
+  return { br: toWatchProviders(data.results.BR, "BR"), us: toWatchProviders(data.results.US, "US") };
 };
 
 // --- Disponibilidade (claquete) ----------------------------------------------
@@ -243,18 +305,32 @@ export const isAvailableToWatch = (providers: WatchProviders | null): boolean =>
 // Busca disponibilidade de VÁRIOS títulos de uma vez, em paralelo — mesmo
 // padrão de `fetchWatchedMap` (service/WatchedSettings.ts): devolve um
 // Map pela chave de `movieKey`, PRESENÇA = disponível (não guarda quem
-// não está, só como `watchedMap` só guarda quem já foi visto). Falha em
-// resolver UM título não derruba os outros (cada chamada é independente,
-// `Promise.all` sobre promises que já tratam o próprio erro).
-export const fetchAvailabilityMap = async (
-  items: { id: number; mediaType: "movie" | "tv" }[],
-  countryCode: string
-): Promise<Map<string, true>> => {
+// não está, só como `watchedMap` só guarda quem já foi visto).
+//
+// BRASIL OU EUA — pedido explícito da Rebecca: "essa claquete deve
+// considerar se esta disponível no usa ou no brasil". Não usa mais a
+// localização do usuário pra decidir QUAL país checar (country code
+// chegou a ser um parâmetro aqui) — sempre checa os DOIS, fixo, igual
+// `fetchBrOrUsReleaseDate` já faz pra data de estreia (home/dashboard/
+// functions.ts) — mesmo raciocínio: Brasil e EUA são os dois mercados
+// que interessam, independente de onde o usuário esteja fisicamente.
+// UMA chamada só por item (`fetchWatchProvidersBrUs`, ver acima) — falha
+// em resolver um item não derruba os outros.
+export const fetchAvailabilityMap = async (items: { id: number; mediaType: "movie" | "tv" }[]): Promise<Map<string, true>> => {
   const keys = await Promise.all(
     items.map(async (item): Promise<string | null> => {
       try {
-        const providers = await fetchWatchProviders(item.id, item.mediaType, countryCode);
-        return isAvailableToWatch(providers) ? movieKey(item.mediaType, item.id) : null;
+        let result;
+        try {
+          result = await fetchWatchProvidersBrUs(item.id, item.mediaType);
+        } catch {
+          // Uma falha transitória (rede, instabilidade momentânea) não
+          // deveria apagar a claquete de um filme que está disponível de
+          // verdade — UMA nova tentativa antes de desistir de vez.
+          result = await fetchWatchProvidersBrUs(item.id, item.mediaType);
+        }
+        const available = isAvailableToWatch(result.br) || isAvailableToWatch(result.us);
+        return available ? movieKey(item.mediaType, item.id) : null;
       } catch (err) {
         console.error(`Erro ao buscar disponibilidade de ${item.mediaType}-${item.id}:`, err);
         return null;

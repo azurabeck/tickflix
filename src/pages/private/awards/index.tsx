@@ -17,7 +17,6 @@ import { X } from "lucide-react";
 import MovieDetail from "@/components/movieDetail";
 import { fetchAvailabilityMap } from "@/components/movieDetail/functions";
 import { auth } from "@/service/FirebaseSettings";
-import { fetchCurrentLocation } from "@/service/LocationSettings";
 import { fetchWatchedMap, setWatched } from "@/service/WatchedSettings";
 import type { AwardConfig } from "./awardConfigs";
 import {
@@ -132,8 +131,7 @@ const AwardPage = ({ config }: AwardPageProps) => {
     }
 
     let cancelled = false;
-    fetchCurrentLocation()
-      .then(({ countryCode }) => fetchAvailabilityMap(items, countryCode ?? "BR"))
+    fetchAvailabilityMap(items)
       .then((resolved) => {
         if (!cancelled) setAvailabilityMap(resolved);
       })

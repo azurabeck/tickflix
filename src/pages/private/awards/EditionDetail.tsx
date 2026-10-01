@@ -7,6 +7,7 @@
 import { ArrowLeft, Clapperboard, FileJson, Trophy } from "lucide-react";
 import WatchButton from "@/components/watchButton";
 import AvailabilityBadge from "@/components/availabilityBadge";
+import AddToTimelineButton from "@/components/addToTimelineButton";
 import { posterUrl } from "@/service/TMDbSettings";
 import type { AwardConfig } from "./awardConfigs";
 import { awardNomineeKey, type AwardEdition, type AwardNominee } from "./functions";
@@ -69,6 +70,13 @@ const NomineeCard = ({
       </button>
 
       <WatchButton isWatched={isWatched} onToggle={() => onToggleWatched(nominee)} disabled={!uid} />
+      {/* Sem tmdbId cadastrado não dá pra resolver um TimelineMovie de
+          verdade (ver @/components/addToTimelineButton/functions.ts) —
+          mesmo caso já tratado pro MovieDetail (ver index.tsx, "sem
+          tmdbId cadastrado"), aqui simplesmente não mostra o botão. */}
+      {nominee.tmdbId !== null && (
+        <AddToTimelineButton uid={uid} movie={{ id: nominee.tmdbId, mediaType: nominee.mediaType, title: nominee.filmTitle, posterPath: nominee.posterPath }} />
+      )}
     </div>
   );
 };

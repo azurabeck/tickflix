@@ -23,6 +23,7 @@ import { Check, Loader2, Plus, Star } from "lucide-react";
 import { posterUrl } from "@/service/TMDbSettings";
 import { movieKey } from "@/service/TimelineSettings";
 import AvailabilityBadge from "@/components/availabilityBadge";
+import AddToTimelineButton from "@/components/addToTimelineButton";
 import { countryFlagEmoji, type SeriesRowItem } from "./functions";
 import ScrollableRow from "./ScrollableRow";
 
@@ -104,6 +105,7 @@ const SeriesRow = ({
                 >
                   {isPending ? <Loader2 className="series-page__spinner" size={14} /> : isAdded ? <Check size={14} /> : <Plus size={14} />}
                 </button>
+                <AddToTimelineButton uid={uid} movie={{ id: item.id, mediaType: "tv", title: item.title, posterPath: item.posterPath }} />
               </div>
             );
           })}

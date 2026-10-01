@@ -194,18 +194,33 @@ const AppNav = () => {
               onToggle={() => setOpenDropdown((prev) => (prev === "timelines" ? null : "timelines"))}
             />
           </div>
-          <button type="button" className="app-nav__logout" onClick={handleLogout}>
+          {/* Painel mobile (hambúrguer) — pedido explícito da Rebecca: "o
+              botão sair no navbar deve ficar a esquerda do search e
+              devem estar agrupados". No desktop esse "Sair" não aparece
+              (CSS, `&__logout--panel`) — quem mostra lá é a versão
+              abaixo, agrupada com a busca; esta aqui só é visível ≤900px,
+              como rodapé do painel do hambúrguer (igual já era antes). */}
+          <button type="button" className="app-nav__logout app-nav__logout--panel" onClick={handleLogout}>
             <LogOut size={16} />
             Sair
           </button>
         </div>
 
-        {/* Busca + hambúrguer, agrupados — SEMPRE visíveis (desktop ou
+        {/* Busca + Sair + hambúrguer, agrupados à direita — pedido
+            explícito da Rebecca: "pra ficarem a esquerda direitinho
+            deixando o meio pra o menu". Dentro do grupo, busca primeiro
+            (esquerda) e Sair por último (direita, ponta): "só sair a
+            direita o search a esquerda". Sempre visíveis (desktop ou
             mobile), fora de `.app-nav__menu` de propósito: abrir o menu
-            inteiro só pra buscar seria um passo extra à toa. */}
+            inteiro só pra buscar/sair seria um passo extra à toa. */}
         <div className="app-nav__actions">
           <button type="button" className="app-nav__search-btn" onClick={() => setSearchOpen(true)} aria-label="Buscar">
             <Search size={20} />
+          </button>
+
+          <button type="button" className="app-nav__logout app-nav__logout--grouped" onClick={handleLogout}>
+            <LogOut size={16} />
+            Sair
           </button>
 
           {/* Hambúrguer — só existe visualmente ≤900px (CSS), mas fica no

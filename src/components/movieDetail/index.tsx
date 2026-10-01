@@ -13,8 +13,8 @@
 // episódios, não um modal genérico separado do de marcar episódio. Em
 // vez de duplicar esse JSX lá, `SeriesDetail` importa e reusa essas três
 // peças, encaixando a lista de temporadas entre a sinopse e o elenco.
-import { useEffect, useState } from "react";
-import { Loader2, Star, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Clapperboard, Loader2, Star, X } from "lucide-react";
 import { TMDB_BACKDROP_BASE, TMDB_LOGO_BASE, TMDB_PROFILE_BASE, posterUrl } from "@/service/TMDbSettings";
 import { fetchCurrentLocation } from "@/service/LocationSettings";
 import {
@@ -37,12 +37,61 @@ interface MovieDetailProps {
 // fallback já usado em "Em cartaz" (service/IngressoSettings.ts).
 const DEFAULT_COUNTRY_CODE = "BR";
 
+// --- Trailer em fullscreen ----------------------------------------------------
+// Pedido explícito da Rebecca: "quando a gente abrir o detalhes do
+// filme, vamos colocar uma tag trailer, e quando clicar roda o trailler
+// em fullscreen". Fullscreen de VERDADE (Fullscreen API do browser, não
+// só um modal que parece cheio) — pede fullscreen no WRAPPER inteiro
+// (não só no iframe) pra o botão de fechar continuar clicável depois de
+// entrar em fullscreen. `requestFullscreen` exige gesto do usuário; o
+// clique na tag é esse gesto, e chamar no useEffect do mount (logo
+// depois do clique abrir este componente) ainda conta como resposta a
+// esse gesto nos browsers testados. Se a API não existir/for negada
+// (ex.: iOS Safari restringe fullscreen em elemento qualquer), cai pro
+// fallback: um overlay comum, cheio de tela via CSS mesmo (position:
+// fixed; inset: 0), só sem o fullscreen nativo do SO.
+const TrailerPlayer = ({ youtubeKey, title, onClose }: { youtubeKey: string; title: string; onClose: () => void }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    containerRef.current?.requestFullscreen?.().catch(() => {
+      // Negado/indisponível — segue só com o overlay CSS mesmo.
+    });
+
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement) onClose();
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    };
+  }, [onClose]);
+
+  return (
+    <div className="movie-detail__trailer-overlay" ref={containerRef}>
+      <button type="button" className="movie-detail__trailer-close" onClick={onClose} aria-label="Fechar trailer">
+        <X size={22} />
+      </button>
+      <iframe
+        className="movie-detail__trailer-iframe"
+        src={`https://www.youtube.com/embed/${youtubeKey}?autoplay=1&rel=0&modestbranding=1`}
+        title={`Trailer de ${title}`}
+        allow="autoplay; encrypted-media; fullscreen"
+        allowFullScreen
+        frameBorder="0"
+      />
+    </div>
+  );
+};
+
 // --- Backdrop + pôster + título/tagline/meta/gêneros/criação/sinopse ---------
 export const MovieDetailHeader = ({ detail }: { detail: MovieDetailData }) => {
   const backdrop = detail.backdropPath ? `${TMDB_BACKDROP_BASE}${detail.backdropPath}` : null;
   const poster = posterUrl(detail.posterPath);
   const runtime = formatRuntime(detail.runtimeMinutes);
   const year = detail.releaseDate ? detail.releaseDate.slice(0, 4) : null;
+  const [trailerOpen, setTrailerOpen] = useState(false);
 
   return (
     <>
@@ -78,14 +127,24 @@ export const MovieDetailHeader = ({ detail }: { detail: MovieDetailData }) => {
             {detail.status && <span>{detail.status}</span>}
           </div>
 
-          {detail.genres.length > 0 && (
+          {(detail.genres.length > 0 || detail.trailerKey) && (
             <div className="movie-detail__genres">
+              {detail.trailerKey && (
+                <button type="button" className="movie-detail__trailer-tag" onClick={() => setTrailerOpen(true)}>
+                  <Clapperboard size={12} />
+                  Trailer
+                </button>
+              )}
               {detail.genres.map((genre) => (
                 <span key={genre} className="movie-detail__genre-tag">
                   {genre}
                 </span>
               ))}
             </div>
+          )}
+
+          {trailerOpen && detail.trailerKey && (
+            <TrailerPlayer youtubeKey={detail.trailerKey} title={detail.title} onClose={() => setTrailerOpen(false)} />
           )}
 
           {/* Pedido explícito da Rebecca: "vamos colocar ali na descrição

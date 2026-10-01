@@ -13,7 +13,13 @@
 // Diferente do WatchButton (sempre visível, pra poder ALTERNAR "já vi"),
 // essa aqui não renderiza nada quando `available` é false — é só um
 // SINAL, não tem ação nenhuma pra tomar clicando nela.
-import { Clapperboard } from "lucide-react";
+//
+// Ícone de PLAY, não mais a claquete — pedido explícito da Rebecca: "o
+// simbolo de claquete troca pra um simbolo de player... e o simbolo de
+// claquete passa a ser pra adicionar a uma timeline". A claquete virou o
+// ícone de @/components/addToTimelineButton (ação nova, abre um menu);
+// esse selo de disponibilidade ficou com o Play.
+import { Play } from "lucide-react";
 import "./styles.scss";
 
 interface AvailabilityBadgeProps {
@@ -25,7 +31,7 @@ const AvailabilityBadge = ({ available }: AvailabilityBadgeProps) => {
 
   return (
     <span className="availability-badge" title="Disponível em streaming ou aluguel">
-      <Clapperboard size={13} />
+      <Play size={12} fill="currentColor" />
     </span>
   );
 };

@@ -12,11 +12,12 @@
 // componente, não no mount da Home), evita pagar o custo de
 // `/watch/providers` por ~100 filmes pra quem nunca clica em "Ver tudo".
 import { useEffect, useState } from "react";
-import { Clapperboard, Loader2, X } from "lucide-react";
+import { Loader2, Play, X } from "lucide-react";
 import { movieKey } from "@/service/TimelineSettings";
 import { posterUrl } from "@/service/TMDbSettings";
 import WatchButton from "@/components/watchButton";
 import AvailabilityBadge from "@/components/availabilityBadge";
+import AddToTimelineButton from "@/components/addToTimelineButton";
 import { fetchRecentMajorReleases, type MajorReleaseMovie } from "./functions";
 import "./styles.scss";
 
@@ -130,7 +131,7 @@ const MajorReleasesModal = ({ watchedMap, uid, onClose, onSelectMovie, onToggleW
               className={filter === "available" ? "dashboard__major-releases-filter-btn dashboard__major-releases-filter-btn--active" : "dashboard__major-releases-filter-btn"}
               onClick={() => setFilter("available")}
             >
-              <Clapperboard size={13} /> Disponível
+              <Play size={12} fill="currentColor" /> Disponível
             </button>
           </div>
         )}
@@ -171,6 +172,7 @@ const MajorReleasesModal = ({ watchedMap, uid, onClose, onSelectMovie, onToggleW
                       <span className="dashboard__major-releases-item-title">{movie.title}</span>
                     </button>
                     <WatchButton isWatched={isWatched} onToggle={() => onToggleWatched(movie)} disabled={!uid} />
+                    <AddToTimelineButton uid={uid} movie={{ id: movie.id, mediaType: movie.mediaType, title: movie.title, posterPath: movie.posterPath }} />
                   </div>
                 );
               })}

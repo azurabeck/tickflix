@@ -8,9 +8,10 @@ export interface Highlight {
   info: string;
 }
 
-// Login so aceita e-mail/senha por enquanto (unico provider configurado no
-// Firebase do projeto) — o rotulo do campo diz "usuário" pra bater com o
-// mockup, mas o valor digitado e enviado como e-mail pro Firebase Auth.
+// Login aceita e-mail/senha E Google (pedido explícito da Rebecca: "vamos
+// criar uma area para usuário fazer uma conta, ou logar com google") — o
+// rotulo do campo de login diz "usuário" pra bater com o mockup, mas o
+// valor digitado e enviado como e-mail pro Firebase Auth.
 export const mapAuthError = (error: unknown): string => {
   const code = (error as AuthError)?.code;
   switch (code) {
@@ -22,10 +23,24 @@ export const mapAuthError = (error: unknown): string => {
       return "Usuário ou senha incorretos.";
     case "auth/too-many-requests":
       return "Muitas tentativas. Tente novamente em instantes.";
+    case "auth/email-already-in-use":
+      return "Já existe uma conta com esse e-mail — tente entrar.";
+    case "auth/weak-password":
+      return "Senha muito curta — use pelo menos 6 caracteres.";
+    case "auth/popup-blocked":
+      return "O navegador bloqueou a janela do Google — permita pop-ups e tente de novo.";
+    case "auth/account-exists-with-different-credential":
+      return "Já existe uma conta com esse e-mail usando outra forma de login.";
     default:
       return "Não foi possível entrar. Tente novamente.";
   }
 };
+
+// Cadastro — mesma validação mínima do Firebase (senha >= 6 caracteres,
+// ver auth/weak-password acima) conferida já no client pra não gastar
+// uma chamada ao Firebase com um pedido que ele mesmo vai recusar.
+export const isSignupFormValid = (email: string, senha: string, confirmarSenha: string): boolean =>
+  email.trim().length > 0 && email.includes("@") && senha.length >= 6 && senha === confirmarSenha;
 
 /** Sorteia um destaque entre os docs retornados pela collection "highlight". */
 export const pickRandomHighlight = (

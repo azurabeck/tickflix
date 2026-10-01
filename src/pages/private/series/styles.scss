@@ -155,15 +155,19 @@ $content-max-width: 1440px;
     position: relative;
     flex: 0 0 auto;
 
-    // Claquete global (@/components/availabilityBadge) por padrão mora no
-    // canto SUPERIOR esquerdo do pôster — aqui esse canto já é do selo de
-    // ranking ("1º", "2º"...), então ela desce pro INFERIOR esquerdo só
-    // nesta página (Séries/Animes reusam essa classe/CSS, "mesma lógica e
-    // layout" — ver pages/private/anime).
+    // Selo de disponibilidade (@/components/availabilityBadge) por padrão
+    // mora no canto SUPERIOR esquerdo do pôster — aqui esse canto já é do
+    // selo de ranking ("1º", "2º"...), então ele desce pro INFERIOR
+    // DIREITO só nesta página (Séries/Animes reusam essa classe/CSS,
+    // "mesma lógica e layout" — ver pages/private/anime). INFERIOR
+    // ESQUERDO fica reservado pro botão de "adicionar à timeline"
+    // (@/components/addToTimelineButton, sempre nesse canto em todo o
+    // site) — por isso não desce pro mesmo lado.
     .availability-badge {
       top: auto;
       bottom: 8px;
-      left: 8px;
+      left: auto;
+      right: 8px;
     }
   }
 
