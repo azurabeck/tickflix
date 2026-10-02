@@ -19,6 +19,7 @@
 // claquete passa a ser pra adicionar a uma timeline". A claquete virou o
 // ícone de @/components/addToTimelineButton (ação nova, abre um menu);
 // esse selo de disponibilidade ficou com o Play.
+import { useTranslation } from "react-i18next";
 import { Play } from "lucide-react";
 import "./styles.scss";
 
@@ -27,10 +28,11 @@ interface AvailabilityBadgeProps {
 }
 
 const AvailabilityBadge = ({ available }: AvailabilityBadgeProps) => {
+  const { t } = useTranslation();
   if (!available) return null;
 
   return (
-    <span className="availability-badge" title="Disponível em streaming ou aluguel">
+    <span className="availability-badge" title={t("availabilityBadge.title")}>
       <Play size={12} fill="currentColor" />
     </span>
   );

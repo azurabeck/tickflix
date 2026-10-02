@@ -4,6 +4,7 @@
 // tipo — mesma simplicidade já aceita pela timeline de franquia, que
 // mistura filme/série numa só), clicar numa adiciona o filme/série nela.
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Loader2, X } from "lucide-react";
 import { fetchTimelines, movieKey, updateTimelineMovies, type Timeline } from "@/service/TimelineSettings";
 import { posterUrl } from "@/service/TMDbSettings";
@@ -16,6 +17,7 @@ interface ExistingTimelineModalProps {
 }
 
 const ExistingTimelineModal = ({ uid, movie, onClose }: ExistingTimelineModalProps) => {
+  const { t } = useTranslation();
   const [timelines, setTimelines] = useState<Timeline[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [addingId, setAddingId] = useState<string | null>(null);
@@ -26,8 +28,9 @@ const ExistingTimelineModal = ({ uid, movie, onClose }: ExistingTimelineModalPro
       .then(setTimelines)
       .catch((err) => {
         console.error("Erro ao buscar timelines:", err);
-        setError("Não foi possível carregar suas timelines agora.");
+        setError(t("addToTimeline.existingModal.loadError"));
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uid]);
 
   const handleAdd = async (timeline: Timeline) => {
@@ -50,7 +53,7 @@ const ExistingTimelineModal = ({ uid, movie, onClose }: ExistingTimelineModalPro
       setAddedId(timeline.id);
     } catch (err) {
       console.error("Erro ao adicionar à timeline:", err);
-      setError("Não foi possível adicionar esse título agora.");
+      setError(t("addToTimeline.existingModal.addError"));
     } finally {
       setAddingId(null);
     }
@@ -59,23 +62,23 @@ const ExistingTimelineModal = ({ uid, movie, onClose }: ExistingTimelineModalPro
   return (
     <div className="add-to-timeline-modal__overlay" onClick={onClose}>
       <div className="add-to-timeline-modal__panel" onClick={(e) => e.stopPropagation()}>
-        <button type="button" className="add-to-timeline-modal__close" onClick={onClose} aria-label="Fechar">
+        <button type="button" className="add-to-timeline-modal__close" onClick={onClose} aria-label={t("close")}>
           <X size={20} />
         </button>
 
-        <h2 className="add-to-timeline-modal__title">Adicionar "{movie.title}" a uma timeline</h2>
+        <h2 className="add-to-timeline-modal__title">{t("addToTimeline.existingModal.title", { title: movie.title })}</h2>
 
         {error && <p className="add-to-timeline-modal__error">{error}</p>}
 
         {!timelines && !error && (
           <p className="add-to-timeline-modal__loading">
             <Loader2 className="add-to-timeline-modal__spinner" size={16} />
-            Carregando...
+            {t("addToTimeline.createModal.loading")}
           </p>
         )}
 
         {timelines && timelines.length === 0 && (
-          <p className="add-to-timeline-modal__empty">Você ainda não tem nenhuma timeline — crie uma nova.</p>
+          <p className="add-to-timeline-modal__empty">{t("addToTimeline.existingModal.empty")}</p>
         )}
 
         {timelines && timelines.length > 0 && (
@@ -103,9 +106,9 @@ const ExistingTimelineModal = ({ uid, movie, onClose }: ExistingTimelineModalPro
                     {isAdding ? (
                       <Loader2 className="add-to-timeline-modal__spinner" size={14} />
                     ) : isAdded ? (
-                      "Adicionado ✓"
+                      t("addToTimeline.existingModal.added")
                     ) : (
-                      `${timeline.movies.length} título${timeline.movies.length === 1 ? "" : "s"}`
+                      t("addToTimeline.existingModal.titleCount", { count: timeline.movies.length })
                     )}
                   </span>
                 </button>

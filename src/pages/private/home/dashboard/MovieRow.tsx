@@ -16,6 +16,7 @@
 // do TMDb, resolvido aqui via posterUrl() do service) quando os dois
 // vierem preenchidos.
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { movieKey } from "@/service/TimelineSettings";
 import { posterUrl as resolveTmdbPosterUrl } from "@/service/TMDbSettings";
@@ -61,6 +62,7 @@ interface MovieRowProps {
 const SCROLL_STEP_RATIO = 0.85;
 
 const MovieRow = ({ title, items, loading, error, watchedMap, availabilityMap, uid, onItemClick, onToggleWatched, onSeeAll }: MovieRowProps) => {
+  const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -102,12 +104,12 @@ const MovieRow = ({ title, items, loading, error, watchedMap, availabilityMap, u
           <h2 className="dashboard__row-title">{title}</h2>
           {onSeeAll && (
             <button type="button" className="dashboard__row-see-all" onClick={onSeeAll}>
-              Ver tudo
+              {t("dashboard.seeAll")}
             </button>
           )}
         </div>
 
-        {loading && <p className="dashboard__loading">Carregando...</p>}
+        {loading && <p className="dashboard__loading">{t("dashboard.loading")}</p>}
         {error && <p className="dashboard__error">{error}</p>}
 
         {!loading && !error && (
@@ -117,7 +119,7 @@ const MovieRow = ({ title, items, loading, error, watchedMap, availabilityMap, u
               className="dashboard__row-chevron dashboard__row-chevron--left"
               onClick={() => scrollByStep(-1)}
               disabled={!canScrollLeft}
-              aria-label="Ver anteriores"
+              aria-label={t("dashboard.prevItems")}
             >
               <ChevronLeft size={22} />
             </button>
@@ -159,7 +161,7 @@ const MovieRow = ({ title, items, loading, error, watchedMap, availabilityMap, u
               className="dashboard__row-chevron dashboard__row-chevron--right"
               onClick={() => scrollByStep(1)}
               disabled={!canScrollRight}
-              aria-label="Ver próximos"
+              aria-label={t("dashboard.nextItems")}
             >
               <ChevronRight size={22} />
             </button>

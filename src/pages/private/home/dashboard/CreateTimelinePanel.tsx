@@ -14,6 +14,7 @@
 // relevante, e o lock viaja até resolveTimelineMovies via
 // CreateTimelineModal.
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { ContentType } from "@/service/TimelineSettings";
 import CreateTimelineModal from "./CreateTimelineModal";
 
@@ -32,9 +33,8 @@ interface CreateTimelinePanelProps {
   placeholder?: string;
 }
 
-const DEFAULT_PLACEHOLDER = "Descreva a timeline que você quer. Exemplo: só os filmes do Tom Cruise, ou todos os filmes do The Rock";
-
-const CreateTimelinePanel = ({ uid, onCreated, categoryLock, placeholder = DEFAULT_PLACEHOLDER }: CreateTimelinePanelProps) => {
+const CreateTimelinePanel = ({ uid, onCreated, categoryLock, placeholder }: CreateTimelinePanelProps) => {
+  const { t } = useTranslation();
   const [description, setDescription] = useState("");
   const [modalDescription, setModalDescription] = useState<string | null>(null);
 
@@ -56,7 +56,7 @@ const CreateTimelinePanel = ({ uid, onCreated, categoryLock, placeholder = DEFAU
           <input
             type="text"
             className="dashboard__create-input"
-            placeholder={placeholder}
+            placeholder={placeholder ?? t("dashboard.createTimeline.placeholder")}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleOpenModal()}
@@ -68,7 +68,7 @@ const CreateTimelinePanel = ({ uid, onCreated, categoryLock, placeholder = DEFAU
             disabled={!uid || !description.trim()}
             onClick={handleOpenModal}
           >
-            criar timeline
+            {t("dashboard.createTimeline.button")}
           </button>
         </div>
       </section>

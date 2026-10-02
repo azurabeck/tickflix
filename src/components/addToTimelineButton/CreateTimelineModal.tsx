@@ -7,6 +7,7 @@
 // partir da claquete de qualquer pôster do site (@/components/
 // addToTimelineButton) — já entra com ESSE filme pré-adicionado.
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Check, Loader2, Plus, Search, X } from "lucide-react";
 import { createTimeline, movieKey, type TimelineMovie } from "@/service/TimelineSettings";
 import { posterUrl, searchTmdbMulti, type TmdbMovie } from "@/service/TMDbSettings";
@@ -20,6 +21,7 @@ interface CreateTimelineModalProps {
 }
 
 const CreateTimelineModal = ({ uid, initialMovie, onClose, onSaved }: CreateTimelineModalProps) => {
+  const { t } = useTranslation();
   const [name, setName] = useState(initialMovie.title);
   const [movies, setMovies] = useState<TimelineMovie[]>([]);
   const [seeding, setSeeding] = useState(true);
@@ -81,7 +83,7 @@ const CreateTimelineModal = ({ uid, initialMovie, onClose, onSaved }: CreateTime
       onSaved();
     } catch (err) {
       console.error("Erro ao criar timeline manualmente:", err);
-      setError("Não foi possível criar a timeline agora.");
+      setError(t("addToTimeline.createModal.saveError"));
     } finally {
       setSaving(false);
     }
@@ -90,16 +92,16 @@ const CreateTimelineModal = ({ uid, initialMovie, onClose, onSaved }: CreateTime
   return (
     <div className="add-to-timeline-modal__overlay" onClick={onClose}>
       <div className="add-to-timeline-modal__panel add-to-timeline-modal__panel--create" onClick={(e) => e.stopPropagation()}>
-        <button type="button" className="add-to-timeline-modal__close" onClick={onClose} aria-label="Fechar">
+        <button type="button" className="add-to-timeline-modal__close" onClick={onClose} aria-label={t("close")}>
           <X size={20} />
         </button>
 
-        <h2 className="add-to-timeline-modal__title">Criar timeline manualmente</h2>
+        <h2 className="add-to-timeline-modal__title">{t("addToTimeline.createModal.title")}</h2>
 
         <input
           type="text"
           className="add-to-timeline-modal__name-input"
-          placeholder="Nome da timeline"
+          placeholder={t("addToTimeline.createModal.namePlaceholder")}
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
@@ -108,7 +110,7 @@ const CreateTimelineModal = ({ uid, initialMovie, onClose, onSaved }: CreateTime
           <input
             type="text"
             className="add-to-timeline-modal__search-input"
-            placeholder="Procurar filme ou série pra adicionar"
+            placeholder={t("addToTimeline.createModal.searchPlaceholder")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -120,7 +122,7 @@ const CreateTimelineModal = ({ uid, initialMovie, onClose, onSaved }: CreateTime
 
         {results && (
           <div className="add-to-timeline-modal__search-results">
-            {results.length === 0 && <p className="add-to-timeline-modal__empty">Nada encontrado.</p>}
+            {results.length === 0 && <p className="add-to-timeline-modal__empty">{t("addToTimeline.createModal.empty")}</p>}
             {results.map((item) => {
               const poster = posterUrl(item.poster_path);
               const selected = isSelected(item);
@@ -142,7 +144,9 @@ const CreateTimelineModal = ({ uid, initialMovie, onClose, onSaved }: CreateTime
           </div>
         )}
 
-        <h3 className="add-to-timeline-modal__selected-title">{seeding ? "Carregando..." : `Selecionados (${movies.length})`}</h3>
+        <h3 className="add-to-timeline-modal__selected-title">
+          {seeding ? t("addToTimeline.createModal.loading") : t("addToTimeline.createModal.selectedTitle", { count: movies.length })}
+        </h3>
 
         <div className="add-to-timeline-modal__selected-grid">
           {movies.map((movie) => {
@@ -155,7 +159,7 @@ const CreateTimelineModal = ({ uid, initialMovie, onClose, onSaved }: CreateTime
                   type="button"
                   className="add-to-timeline-modal__selected-remove"
                   onClick={() => handleRemove(key)}
-                  aria-label={`Remover ${movie.title}`}
+                  aria-label={t("addToTimeline.createModal.remove", { title: movie.title })}
                 >
                   <X size={12} />
                 </button>
@@ -172,7 +176,7 @@ const CreateTimelineModal = ({ uid, initialMovie, onClose, onSaved }: CreateTime
           onClick={handleSave}
           disabled={saving || seeding || !name.trim() || movies.length === 0}
         >
-          {saving ? <Loader2 className="add-to-timeline-modal__spinner" size={18} /> : `Salvar timeline (${movies.length})`}
+          {saving ? <Loader2 className="add-to-timeline-modal__spinner" size={18} /> : t("addToTimeline.createModal.save", { count: movies.length })}
         </button>
       </div>
     </div>

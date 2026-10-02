@@ -7,6 +7,7 @@
 // relativa a séries. Esse componente é "burro" de propósito — quem
 // chama já filtra a lista (por categoria "filmes"/"series", ver
 // `Timeline.types`) e passa pronta; ele só sabe renderizar.
+import { useTranslation } from "react-i18next";
 import { timelineProgress, progressPercent, type Timeline } from "@/service/TimelineSettings";
 import { posterUrl } from "@/service/TMDbSettings";
 
@@ -17,6 +18,7 @@ interface FollowedTimelinesRowProps {
 }
 
 const FollowedTimelinesRow = ({ timelines, watchedMap, onSelect }: FollowedTimelinesRowProps) => {
+  const { t } = useTranslation();
   if (timelines.length === 0) return null;
 
   return (
@@ -36,9 +38,7 @@ const FollowedTimelinesRow = ({ timelines, watchedMap, onSelect }: FollowedTimel
                 <div className="dashboard__timeline-card-progress">
                   <div className="dashboard__timeline-card-progress-fill" style={{ width: `${pct}%` }} />
                 </div>
-                <span className="dashboard__timeline-card-count">
-                  visto: {watched}/{total}
-                </span>
+                <span className="dashboard__timeline-card-count">{t("watchedProgress", { watched, total })}</span>
               </button>
             );
           })}

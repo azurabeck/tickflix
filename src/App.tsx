@@ -14,6 +14,8 @@ import AwardPage from "@/pages/private/awards";
 import { OSCAR_CONFIG, GOLDEN_GLOBES_CONFIG, CANNES_CONFIG } from "@/pages/private/awards/awardConfigs";
 import Timelines from "@/pages/private/timelines";
 import Franchise from "@/pages/private/franchise";
+import Profile from "@/pages/private/profile";
+import Settings from "@/pages/private/settings";
 
 const App = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -56,6 +58,11 @@ const App = () => {
             não 9 rotas fixas repetidas. Primeira rota parametrizada do
             app (ver service/Routes.ts, ROUTES.FRANCHISES). */}
         <Route path={`${ROUTES.FRANCHISES}/:slug`} element={<Franchise />} />
+        {/* Menu da conta (avatar, @/components/userMenu) — "Meu perfil" e
+            "Configurações", mesma estrutura do projeto "mailbook" que a
+            Rebecca pediu pra replicar aqui. */}
+        <Route path={ROUTES.PROFILE} element={<Profile />} />
+        <Route path={ROUTES.SETTINGS} element={<Settings />} />
       </Route>
       {/* Página pública — acessível logado ou não, sem redirect por auth. */}
       <Route path={ROUTES.ABOUT} element={<About />} />

@@ -1,0 +1,268 @@
+{
+  "nav": {
+    "filmes": "Películas",
+    "series": "Series",
+    "animes": "Animes",
+    "oscar": "Oscar",
+    "franquias": "Franquicias",
+    "timelines": "Timelines",
+    "search": "Buscar",
+    "openMenu": "Abrir menú",
+    "closeMenu": "Cerrar menú",
+    "timelineCategory": {
+      "filmes": "Películas",
+      "series": "Series",
+      "animes": "Animes",
+      "franquias": "Franquicias",
+      "premiacoes": "Premiaciones"
+    }
+  },
+  "userMenu": {
+    "openAccount": "Abrir menú de la cuenta",
+    "profile": "Mi perfil",
+    "settings": "Configuración",
+    "signOut": "Cerrar sesión",
+    "defaultName": "Usuario"
+  },
+  "tagline": "tu aventura vive en el cine",
+  "close": "Cerrar",
+  "watchedProgress": "visto: {{watched}}/{{total}}",
+  "auth": {
+    "usernamePlaceholder": "ingresa tu usuario",
+    "passwordPlaceholder": "ingresa tu contraseña",
+    "accessButton": "Acceder",
+    "noAccount": "¿Todavía no tienes una cuenta?",
+    "openAccount": "Crea tu cuenta",
+    "emailPlaceholder": "tu correo electrónico",
+    "createPasswordPlaceholder": "crea una contraseña (mínimo 6 caracteres)",
+    "confirmPasswordPlaceholder": "confirma la contraseña",
+    "createAccountButton": "Crear cuenta",
+    "alreadyHaveAccount": "¿Ya tienes una cuenta?",
+    "signIn": "Entrar",
+    "passwordsDontMatch": "Las contraseñas no coinciden.",
+    "or": "o",
+    "continueWithGoogle": "Continuar con Google",
+    "movieLabel": "Película: {{name}}",
+    "errors": {
+      "invalidEmail": "Usuario inválido.",
+      "wrongCredentials": "Usuario o contraseña incorrectos.",
+      "tooManyRequests": "Demasiados intentos. Vuelve a intentarlo en unos instantes.",
+      "emailInUse": "Ya existe una cuenta con ese correo — intenta iniciar sesión.",
+      "weakPassword": "Contraseña muy corta — usa al menos 6 caracteres.",
+      "popupBlocked": "El navegador bloqueó la ventana de Google — permite las ventanas emergentes e intenta de nuevo.",
+      "accountExistsDifferentCredential": "Ya existe una cuenta con ese correo usando otra forma de inicio de sesión.",
+      "generic": "No fue posible iniciar sesión. Inténtalo de nuevo."
+    }
+  },
+  "profile": {
+    "title": "Mi perfil",
+    "nameLabel": "Nombre",
+    "namePlaceholder": "Tu nombre",
+    "emailLabel": "Correo electrónico",
+    "avatarLabel": "Enlace de la imagen de avatar",
+    "avatarPlaceholder": "https://...",
+    "genresTitle": "Categorías preferidas",
+    "genresHint": "Selecciona las que quieras.",
+    "memberSince": "Miembro desde {{date}}",
+    "save": "Guardar",
+    "saveError": "No fue posible guardar ahora. Inténtalo de nuevo.",
+    "saveSuccess": "Perfil actualizado.",
+    "statsTitle": "Estadísticas",
+    "statsError": "No fue posible cargar tus estadísticas ahora.",
+    "statsMovies": "películas vistas",
+    "statsSeries": "series vistas",
+    "statsAnimes": "animes vistos"
+  },
+  "settings": {
+    "title": "Configuración",
+    "language": {
+      "title": "Idioma",
+      "hint": "Cambia el idioma de la interfaz y de los datos de películas/series."
+    },
+    "gemini": {
+      "title": "Clave de Gemini",
+      "description": "La IA de TickFlix (panel \"Crear una nueva timeline\") usa Gemini, de Google. Con tu propia clave, el uso pasa a contar en tu cuenta de Google, no en la de la plataforma.",
+      "howToTitle": "Cómo generar tu clave",
+      "step1": "Accede a <1>Google AI Studio</1> e inicia sesión con tu cuenta de Google.",
+      "step2": "Haz clic en <1>Crear clave de API</1> (Create API key).",
+      "step3": "Elige un proyecto de Google Cloud o deja que AI Studio cree uno por ti.",
+      "step4": "Copia la clave generada (empieza con <1>AIza</1>) y pégala en el campo de abajo.",
+      "usingUserKey": "La IA está usando tu clave.",
+      "usingPlatformKey": "La IA está usando la clave predeterminada de la plataforma.",
+      "keyLabel": "Tu clave de Gemini",
+      "keyPlaceholder": "AIza...",
+      "showKey": "Mostrar clave",
+      "hideKey": "Ocultar clave",
+      "saveKey": "Guardar clave",
+      "removeKey": "Eliminar clave",
+      "footnote": "La clave se guarda solo en este navegador. En otra computadora, hay que pegarla de nuevo.",
+      "savedFeedback": "Clave guardada. La IA de TickFlix ya está usando tu clave.",
+      "removedFeedback": "Clave eliminada. La IA volvió a usar la clave de la plataforma.",
+      "invalidFeedback": "No fue posible validar esa clave."
+    }
+  },
+  "about": {
+    "back": "Volver",
+    "eyebrow": "Sobre TickFlix",
+    "heroTitle": "Toda timeline que quieras ver, armada por ti.",
+    "heroLead": "Sin categoría que marcar, sin paso que seguir. Describes lo que quieres ver con tus propias palabras y TickFlix arma la lista de verdad — completa, y con los títulos correctos.",
+    "startNow": "Empezar ahora",
+    "goToTickFlix": "Ir a TickFlix",
+    "featuresTitle": "Qué puedes hacer aquí",
+    "features": {
+      "feature1": {
+        "title": "Timelines por descripción",
+        "description": "Escribe lo que quieres ver en texto libre — entendemos el pedido y buscamos los títulos reales que coinciden, sin ningún formulario en el camino."
+      },
+      "feature2": {
+        "title": "Sigue lo que ya viste",
+        "description": "Marca cada título como \"Visto\" y sigue el progreso de cada timeline con una barra visual — siempre sabrás cuánto falta."
+      },
+      "feature3": {
+        "title": "En cartelera y taquilla",
+        "description": "Mira lo que está en cartelera en Brasil ahora y los campeones de taquilla del año, con el tráiler oficial reproduciéndose directo en el inicio."
+      },
+      "feature4": {
+        "title": "Detalles completos",
+        "description": "Haz clic en cualquier póster — de la timeline, de las filas o de la búsqueda — para ver sinopsis, elenco, calificación, géneros y dirección."
+      }
+    },
+    "stepsTitle": "Cómo crear una timeline",
+    "stepsHint": "Cuatro pasos — y el primero es el único que realmente escribes.",
+    "steps": {
+      "step1": {
+        "title": "Describe lo que quieres ver",
+        "description": "Puede ser un actor, una directora, una franquicia entera, un género, una década, un país, un estudio — o una mezcla de todo eso a la vez."
+      },
+      "step2": {
+        "title": "Haz clic en \"crear timeline\"",
+        "description": "Eso es todo. Sin elegir categoría por categoría, sin pantallas intermedias."
+      },
+      "step3": {
+        "title": "La búsqueda ocurre de verdad",
+        "description": "Tu pedido se convierte en criterios reales de búsqueda en el catálogo — no una lista inventada de memoria. Si no pides una cantidad específica, la timeline viene completa."
+      },
+      "step4": {
+        "title": "Mira y marca tu progreso",
+        "description": "Marca \"Visto\" en cada título a medida que lo vayas viendo y sigue cuánto has avanzado."
+      }
+    },
+    "examplesLabel": "ejemplos de descripción:",
+    "examples": {
+      "example1": "películas de Tom Cruise",
+      "example2": "toda la saga de Harry Potter",
+      "example3": "terror coreano de la última década",
+      "example4": "películas de animación de Pixar",
+      "example5": "solo las principales películas de Nicolas Cage"
+    },
+    "ctaTitle": "¿Listo para armar tu primera timeline?"
+  },
+  "dashboard": {
+    "seeAll": "Ver todo",
+    "loading": "Cargando...",
+    "prevItems": "Ver anteriores",
+    "nextItems": "Ver siguientes",
+    "buyTicket": "Comprar entrada",
+    "placeLabel": "N.º {{rank}}",
+    "rows": {
+      "recentlyWatched": "Vistos recientemente",
+      "nowPlayingCity": "En cartelera en {{city}}",
+      "nowPlayingBrazil": "En cartelera en Brasil",
+      "boxOffice": "Campeones de taquilla {{year}}",
+      "majorReleases": "Principales estrenos de los últimos 12 meses"
+    },
+    "errors": {
+      "nowPlaying": "No fue posible cargar las películas en cartelera.",
+      "boxOffice": "No fue posible cargar los campeones de taquilla.",
+      "majorReleases": "No fue posible cargar los principales estrenos."
+    },
+    "hero": {
+      "nowPlayingBadge": "EN CARTELERA",
+      "mute": "Activar sonido",
+      "unmute": "Silenciar",
+      "captionsOn": "Desactivar subtítulos",
+      "captionsOff": "Activar subtítulos",
+      "officialTrailer": "Tráiler oficial de {{title}}",
+      "watchTrailer": "Ver tráiler de {{title}}"
+    },
+    "createTimeline": {
+      "placeholder": "Describe la timeline que quieres. Ejemplo: solo las películas de Tom Cruise, o todas las películas de The Rock",
+      "placeholderSeries": "Describe la timeline de series que quieres. Ejemplo: solo las series de Marvel, o todas las series de Pedro Pascal",
+      "placeholderAnimes": "Describe la timeline de animes que quieres. Ejemplo: solo los animes de Studio Ghibli, o todo el universo de One Piece",
+      "button": "crear timeline",
+      "modalTitle": "Armando tu timeline...",
+      "searching": "buscando...",
+      "thinking": "pensando...",
+      "resultCount_one": "encontré {{count}} título",
+      "resultCount_other": "encontré {{count}} títulos",
+      "emptyResults": "Todavía no se encontró ningún título — ajusta el pedido abajo.",
+      "refinePlaceholder": "Pregunta o ajusta: ej. \"¿qué referencia usaste?\", \"quita los más flojos\"...",
+      "sendMessage": "Enviar mensaje",
+      "saveTimeline": "Guardar timeline ({{count}})",
+      "saveError": "No fue posible guardar la timeline ahora.",
+      "processError": "No pude procesar ese pedido. Intenta ajustar la descripción.",
+      "chatError": "No pude procesar ese mensaje. Inténtalo de nuevo."
+    },
+    "followedTimelines": {
+      "title": "Timelines que sigues"
+    },
+    "majorReleasesModal": {
+      "title": "Principales estrenos de los últimos 12 meses",
+      "filterAll": "Todo",
+      "filterAvailable": "Disponible",
+      "filterAriaLabel": "Filtrar por disponibilidad",
+      "emptyAvailable": "Todavía no hay estrenos disponibles para streaming o alquiler.",
+      "loadError": "No fue posible cargar la lista completa.",
+      "monthYearFormat": "{{month}} de {{year}}",
+      "months": [
+        "enero",
+        "febrero",
+        "marzo",
+        "abril",
+        "mayo",
+        "junio",
+        "julio",
+        "agosto",
+        "septiembre",
+        "octubre",
+        "noviembre",
+        "diciembre"
+      ]
+    }
+  },
+  "availabilityBadge": {
+    "title": "Disponible para streaming o alquiler"
+  },
+  "watchButton": {
+    "mark": "Marcar como visto",
+    "unmark": "Quitar de vistos"
+  },
+  "addToTimeline": {
+    "button": "Agregar a una timeline",
+    "addToExisting": "Agregar a timeline existente",
+    "createNew": "Crear nueva timeline",
+    "existingModal": {
+      "title": "Agregar \"{{title}}\" a una timeline",
+      "loadError": "No fue posible cargar tus timelines ahora.",
+      "addError": "No fue posible agregar ese título ahora.",
+      "empty": "Todavía no tienes ninguna timeline — crea una nueva.",
+      "added": "Agregado ✓",
+      "titleCount_one": "{{count}} título",
+      "titleCount_other": "{{count}} títulos"
+    },
+    "createModal": {
+      "title": "Crear timeline manualmente",
+      "namePlaceholder": "Nombre de la timeline",
+      "searchPlaceholder": "Buscar película o serie para agregar",
+      "selectedTitle": "Seleccionados ({{count}})",
+      "loading": "Cargando...",
+      "empty": "No se encontró nada.",
+      "save": "Guardar timeline ({{count}})",
+      "remove": "Quitar {{title}}",
+      "saveError": "No fue posible crear la timeline ahora."
+    }
+  },
+  "example": {
+    "hello": "¡Hola! Este es un ejemplo de texto traducido."
+  }
+}

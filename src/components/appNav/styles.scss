@@ -244,52 +244,9 @@ $content-max-width: 1440px;
     }
   }
 
-  &__logout {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    border: none;
-    background: none;
-    padding: 8px 12px;
-    border-radius: $radius-sm;
-    color: $color-primary;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-
-    &:hover {
-      background: rgba($color-primary, 0.08);
-    }
-  }
-
-  // Duas versões do MESMO botão — pedido explícito da Rebecca: "o botão
-  // sair no navbar deve ficar a esquerda do search e devem estar
-  // agrupados.. pra ficarem a esquerda direitinho deixando o meio pra o
-  // menu". No desktop, "Sair" solto dentro de `&__menu` (`display:
-  // contents`) virava mais um item espalhado por `justify-content:
-  // space-between` de `&__inner` — longe da busca, do lado errado.
-  // `&--grouped` (dentro de `&__actions`, mesmo grupo da busca/hambúrguer)
-  // resolve isso sem reestruturar o resto da nav; `&--panel` continua
-  // sendo o rodapé do painel mobile de sempre, cada uma visível só no seu
-  // breakpoint.
-  &__logout--panel {
-    @media (min-width: 901px) {
-      display: none;
-    }
-
-    // Fim do painel empilhado — linha divisória + afastado dos links
-    // acima, pra não parecer só mais um item da lista.
-    @media (max-width: 900px) {
-      margin-top: 12px;
-      padding-top: 16px;
-      border-top: 1px solid rgba($color-border, 0.3);
-      justify-content: center;
-    }
-  }
-
-  &__logout--grouped {
-    @media (max-width: 900px) {
-      display: none;
-    }
-  }
+  // "Sair" solto virou o menu da conta — @/components/userMenu (avatar +
+  // dropdown com Meu perfil/Configurações/Sair, mesma estrutura do
+  // projeto "mailbook" que a Rebecca pediu pra replicar). Vive dentro de
+  // `&__actions`, não precisa de CSS próprio aqui — o componente já cuida
+  // do próprio dropdown em qualquer tamanho de tela.
 }

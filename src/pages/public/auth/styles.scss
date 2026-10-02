@@ -164,6 +164,13 @@
     border: 1px solid $color-border;
   }
 
+  &__language {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 3;
+  }
+
   &__badge {
     position: fixed;
     right: 20px;

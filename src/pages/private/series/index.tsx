@@ -36,6 +36,7 @@
 // "já vi" global de sempre (service/WatchedSettings.ts) — é sobre
 // timeline, um conceito diferente do de série seguida.
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Loader2, Trash2 } from "lucide-react";
 import { auth } from "@/service/FirebaseSettings";
 import MovieDetail from "@/components/movieDetail";
@@ -84,6 +85,7 @@ const HERO_LIMIT = 5; // mesmo teto do carrossel da Home
 const TOP_OF_YEAR_LIMIT = 20;
 
 const SeriesPage = () => {
+  const { t } = useTranslation();
   const uid = auth.currentUser?.uid ?? null;
 
   const [providerRows, setProviderRows] = useState<Record<number, SeriesRowItem[]>>({});
@@ -343,7 +345,7 @@ const SeriesPage = () => {
       <CreateTimelinePanel
         uid={uid}
         categoryLock="series"
-        placeholder="Descreva a timeline de séries que você quer. Exemplo: só as séries da Marvel, ou todas as séries do Pedro Pascal"
+        placeholder={t("dashboard.createTimeline.placeholderSeries")}
       />
 
       <FollowedTimelinesRow timelines={followedTimelines} watchedMap={watchedMap} onSelect={setSelectedTimeline} />

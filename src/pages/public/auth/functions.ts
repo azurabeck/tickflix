@@ -12,27 +12,31 @@ export interface Highlight {
 // criar uma area para usuário fazer uma conta, ou logar com google") — o
 // rotulo do campo de login diz "usuário" pra bater com o mockup, mas o
 // valor digitado e enviado como e-mail pro Firebase Auth.
+//
+// Devolve uma CHAVE de tradução (`auth.errors.*`, ver src/locales), não o
+// texto final — i18n só funciona dentro de componente (`useTranslation`),
+// essa função fica fora de um. Quem chama faz `t(mapAuthError(err))`.
 export const mapAuthError = (error: unknown): string => {
   const code = (error as AuthError)?.code;
   switch (code) {
     case "auth/invalid-email":
-      return "Usuário inválido.";
+      return "auth.errors.invalidEmail";
     case "auth/user-not-found":
     case "auth/invalid-credential":
     case "auth/wrong-password":
-      return "Usuário ou senha incorretos.";
+      return "auth.errors.wrongCredentials";
     case "auth/too-many-requests":
-      return "Muitas tentativas. Tente novamente em instantes.";
+      return "auth.errors.tooManyRequests";
     case "auth/email-already-in-use":
-      return "Já existe uma conta com esse e-mail — tente entrar.";
+      return "auth.errors.emailInUse";
     case "auth/weak-password":
-      return "Senha muito curta — use pelo menos 6 caracteres.";
+      return "auth.errors.weakPassword";
     case "auth/popup-blocked":
-      return "O navegador bloqueou a janela do Google — permita pop-ups e tente de novo.";
+      return "auth.errors.popupBlocked";
     case "auth/account-exists-with-different-credential":
-      return "Já existe uma conta com esse e-mail usando outra forma de login.";
+      return "auth.errors.accountExistsDifferentCredential";
     default:
-      return "Não foi possível entrar. Tente novamente.";
+      return "auth.errors.generic";
   }
 };
 

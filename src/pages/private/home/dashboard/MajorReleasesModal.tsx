@@ -12,6 +12,8 @@
 // componente, não no mount da Home), evita pagar o custo de
 // `/watch/providers` por ~100 filmes pra quem nunca clica em "Ver tudo".
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { Loader2, Play, X } from "lucide-react";
 import { movieKey } from "@/service/TimelineSettings";
 import { posterUrl } from "@/service/TMDbSettings";
@@ -34,26 +36,14 @@ interface MajorReleasesModalProps {
 // functions.ts, que escala o teto de páginas do TMDb junto com isso).
 const MODAL_LIMIT = 120;
 
-const MONTH_NAMES = [
-  "Janeiro",
-  "Fevereiro",
-  "Março",
-  "Abril",
-  "Maio",
-  "Junho",
-  "Julho",
-  "Agosto",
-  "Setembro",
-  "Outubro",
-  "Novembro",
-  "Dezembro",
-];
-
 // `yyyymm` no formato "YYYY-MM" (recorte de `releaseDate`, que já vem
-// "YYYY-MM-DD" do TMDb).
-const monthLabel = (yyyymm: string): string => {
+// "YYYY-MM-DD" do TMDb). Nomes de mês + ordem "mês de ano" vêm de
+// `t()` (array `majorReleasesModal.months` + `monthYearFormat` — a ordem
+// muda por idioma, ex. inglês não usa "de").
+const monthLabel = (t: TFunction, yyyymm: string): string => {
   const [year, month] = yyyymm.split("-").map(Number);
-  return `${MONTH_NAMES[month - 1]} de ${year}`;
+  const monthName = t("dashboard.majorReleasesModal.months", { returnObjects: true }) as string[];
+  return t("dashboard.majorReleasesModal.monthYearFormat", { month: monthName[month - 1], year });
 };
 
 interface MonthGroup {
@@ -64,7 +54,7 @@ interface MonthGroup {
 
 // Mais recente primeiro — dentro de cada mês, mantém a ordem que já veio
 // de `fetchRecentMajorReleases` (popularidade), não reordena de novo.
-const groupByMonth = (movies: MajorReleaseMovie[]): MonthGroup[] => {
+const groupByMonth = (t: TFunction, movies: MajorReleaseMovie[]): MonthGroup[] => {
   const byMonth = new Map<string, MajorReleaseMovie[]>();
   for (const movie of movies) {
     const key = movie.releaseDate.slice(0, 7);
@@ -75,7 +65,7 @@ const groupByMonth = (movies: MajorReleaseMovie[]): MonthGroup[] => {
 
   return Array.from(byMonth.entries())
     .sort(([a], [b]) => b.localeCompare(a))
-    .map(([key, groupMovies]) => ({ key, label: monthLabel(key), movies: groupMovies }));
+    .map(([key, groupMovies]) => ({ key, label: monthLabel(t, key), movies: groupMovies }));
 };
 
 // Filtro "Tudo"/"Disponível" — pedido explícito da Rebecca: "vamos
@@ -86,6 +76,7 @@ const groupByMonth = (movies: MajorReleaseMovie[]): MonthGroup[] => {
 type AvailabilityFilter = "all" | "available";
 
 const MajorReleasesModal = ({ watchedMap, uid, onClose, onSelectMovie, onToggleWatched }: MajorReleasesModalProps) => {
+  const { t } = useTranslation();
   const [movies, setMovies] = useState<MajorReleaseMovie[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<AvailabilityFilter>("all");
@@ -98,52 +89,53 @@ const MajorReleasesModal = ({ watchedMap, uid, onClose, onSelectMovie, onToggleW
       })
       .catch((err) => {
         console.error("Erro ao buscar todos os lançamentos:", err);
-        if (!cancelled) setError("Não foi possível carregar a lista completa.");
+        if (!cancelled) setError(t("dashboard.majorReleasesModal.loadError"));
       });
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filteredMovies = movies ? (filter === "available" ? movies.filter((m) => m.available) : movies) : null;
-  const groups = filteredMovies ? groupByMonth(filteredMovies) : [];
+  const groups = filteredMovies ? groupByMonth(t, filteredMovies) : [];
 
   return (
     <div className="dashboard__major-releases-overlay" onClick={onClose}>
       <div className="dashboard__major-releases-panel" onClick={(e) => e.stopPropagation()}>
-        <button type="button" className="dashboard__major-releases-close" onClick={onClose} aria-label="Fechar">
+        <button type="button" className="dashboard__major-releases-close" onClick={onClose} aria-label={t("close")}>
           <X size={20} />
         </button>
 
-        <h2 className="dashboard__major-releases-title">Principais lançamentos dos últimos 12 meses</h2>
+        <h2 className="dashboard__major-releases-title">{t("dashboard.majorReleasesModal.title")}</h2>
 
         {movies !== null && (
-          <div className="dashboard__major-releases-filter" role="group" aria-label="Filtrar por disponibilidade">
+          <div className="dashboard__major-releases-filter" role="group" aria-label={t("dashboard.majorReleasesModal.filterAriaLabel")}>
             <button
               type="button"
               className={filter === "all" ? "dashboard__major-releases-filter-btn dashboard__major-releases-filter-btn--active" : "dashboard__major-releases-filter-btn"}
               onClick={() => setFilter("all")}
             >
-              Tudo
+              {t("dashboard.majorReleasesModal.filterAll")}
             </button>
             <button
               type="button"
               className={filter === "available" ? "dashboard__major-releases-filter-btn dashboard__major-releases-filter-btn--active" : "dashboard__major-releases-filter-btn"}
               onClick={() => setFilter("available")}
             >
-              <Play size={12} fill="currentColor" /> Disponível
+              <Play size={12} fill="currentColor" /> {t("dashboard.majorReleasesModal.filterAvailable")}
             </button>
           </div>
         )}
 
         {movies !== null && filteredMovies !== null && filteredMovies.length === 0 && (
-          <p className="dashboard__empty">Nenhum lançamento disponível em streaming ou aluguel ainda.</p>
+          <p className="dashboard__empty">{t("dashboard.majorReleasesModal.emptyAvailable")}</p>
         )}
 
         {movies === null && !error && (
           <p className="dashboard__loading">
             <Loader2 className="dashboard__spinner" size={18} />
-            Carregando...
+            {t("dashboard.loading")}
           </p>
         )}
         {error && <p className="dashboard__error">{error}</p>}

@@ -1,0 +1,218 @@
+// src/pages/private/settings/styles.scss
+@use "@/theme" as *;
+
+$content-max-width: 1440px;
+
+.settings-page {
+  min-height: calc(100vh - 60px);
+  padding: 48px 0;
+  background: $color-bg;
+
+  &__inner {
+    max-width: $content-max-width;
+    margin: 0 auto;
+    padding: 0 48px;
+
+    @media (max-width: 900px) {
+      padding: 0 20px;
+    }
+  }
+
+  &__title {
+    margin: 0 0 24px;
+    font-size: 22px;
+    font-weight: 700;
+    color: $color-text;
+  }
+
+  &__section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    width: 100%;
+    padding: 20px 24px;
+    border: 1px solid rgba($color-border, 0.4);
+    border-radius: $radius-lg;
+
+    @media (max-width: 480px) {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
+  &__section-text {
+    min-width: 0;
+  }
+
+  &__section-title {
+    margin: 0 0 4px;
+    font-size: 15px;
+    font-weight: 700;
+    color: $color-text;
+  }
+
+  &__section-hint {
+    margin: 0;
+    font-size: 13px;
+    color: $color-text-muted;
+  }
+
+  // --- Chave do Gemini (GeminiKeyCard.tsx) ---
+  // Card em si ocupa a largura TODA do `&__inner` (pedido explícito da
+  // Rebecca, vendo o tanto de espaço vazio sobrando ao lado: "full width
+  // em todas as páginas") — só o TEXTO (descrição/passos) trava um
+  // `max-width` próprio, pra não virar linha gigante numa tela larga; o
+  // formulário (campo da chave + botões) continua esticando com o card.
+  &__card {
+    width: 100%;
+    margin-top: 20px;
+    padding: 24px;
+    border: 1px solid rgba($color-border, 0.4);
+    border-radius: $radius-lg;
+  }
+
+  &__card-title {
+    margin: 0 0 8px;
+    font-size: 17px;
+    font-weight: 700;
+    color: $color-text;
+  }
+
+  &__card-description {
+    max-width: 640px;
+    margin: 0 0 18px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: $color-text-muted;
+  }
+
+  &__card-subtitle {
+    margin: 0 0 10px;
+    font-size: 13px;
+    font-weight: 700;
+    color: $color-text;
+  }
+
+  &__steps {
+    max-width: 640px;
+    margin: 0 0 18px;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: $color-text;
+
+    a {
+      color: $color-primary;
+      font-weight: 600;
+    }
+  }
+
+  &__status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+    padding: 10px 14px;
+    border-radius: $radius-sm;
+    background: rgba($color-primary, 0.08);
+    color: $color-primary;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  &__key-form {
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__label {
+    font-size: 12px;
+    font-weight: 700;
+    color: $color-text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  &__key-input-wrap {
+    position: relative;
+    display: flex;
+  }
+
+  &__input {
+    width: 100%;
+    padding: 12px 44px 12px 14px;
+    border: 1px solid $color-border;
+    border-radius: $radius-sm;
+    font-size: 14px;
+    font-family: monospace;
+    color: $color-text;
+
+    &:focus {
+      outline: none;
+      border-color: $color-primary;
+    }
+
+    &:disabled {
+      background: rgba($color-border, 0.12);
+    }
+  }
+
+  &__key-toggle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    border: none;
+    background: none;
+    color: $color-text-muted;
+    cursor: pointer;
+
+    &:hover {
+      color: $color-text;
+    }
+  }
+
+  &__key-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    .btn {
+      width: auto;
+    }
+  }
+
+  &__error {
+    margin: 0;
+    font-size: 13px;
+    color: $color-error;
+  }
+
+  &__success {
+    margin: 0;
+    font-size: 13px;
+    color: $color-success;
+  }
+
+  &__footnote {
+    margin: 18px 0 0;
+    font-size: 12px;
+    color: $color-text-muted;
+  }
+}

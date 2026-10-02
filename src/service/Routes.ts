@@ -29,6 +29,13 @@ export const ROUTES = {
   // timeline — acessível logado ou não (link "saiba mais" no estado vazio
   // do Dashboard), por isso não é gated por auth em App.tsx como HOME é.
   ABOUT: "/sobre",
+  // Menu da conta (avatar no navbar, @/components/userMenu) — pedido
+  // explícito da Rebecca: "da uma olhada lá no menu de usuário do
+  // projeto mailbook [livro-app]... vamos fazer o mesmo aqui no
+  // tickflix. inclusive o que ta no menu, podemos deixar igualzinho ta
+  // lá" (lá: avatar → Meu perfil / Configurações / Sair).
+  PROFILE: "/perfil",
+  SETTINGS: "/configuracoes",
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;

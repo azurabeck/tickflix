@@ -17,6 +17,7 @@
 // pelo mesmo pipeline determinístico de sempre (resolveTimelineMovies),
 // então cada ajuste herda as mesmas garantias de qualquer busca nova.
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Loader2, Send, X } from "lucide-react";
 import { createTimeline, type ContentType, type TimelineMovie } from "@/service/TimelineSettings";
 import { posterUrl } from "@/service/TMDbSettings";
@@ -53,6 +54,7 @@ const buildCombinedDescription = (messages: string[]): string => {
 };
 
 const CreateTimelineModal = ({ uid, initialDescription, onClose, onSaved, categoryLock }: CreateTimelineModalProps) => {
+  const { t } = useTranslation();
   const [turns, setTurns] = useState<Turn[]>([
     { message: initialDescription, reply: null, resultCount: null, error: null },
   ]);
@@ -85,7 +87,7 @@ const CreateTimelineModal = ({ uid, initialDescription, onClose, onSaved, catego
         // uma mensagem genérica — sem isso não dava pra saber o que
         // quebrou sem abrir o console do navegador (mesmo ajuste já
         // feito no botão "Resolver com IA" da página Oscar).
-        updateLastTurn({ error: err instanceof Error ? err.message : "Não consegui processar esse pedido. Tenta ajustar a descrição." });
+        updateLastTurn({ error: err instanceof Error ? err.message : t("dashboard.createTimeline.processError") });
       })
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -117,7 +119,7 @@ const CreateTimelineModal = ({ uid, initialDescription, onClose, onSaved, catego
       updateLastTurn({ reply: chat.reply, resultCount, error: null });
     } catch (err) {
       console.error("Erro na conversa da timeline:", err);
-      updateLastTurn({ error: err instanceof Error ? err.message : "Não consegui processar essa mensagem. Tenta de novo." });
+      updateLastTurn({ error: err instanceof Error ? err.message : t("dashboard.createTimeline.chatError") });
     } finally {
       setLoading(false);
     }
@@ -135,7 +137,7 @@ const CreateTimelineModal = ({ uid, initialDescription, onClose, onSaved, catego
       onSaved();
     } catch (err) {
       console.error("Erro ao salvar timeline:", err);
-      setSaveError("Não foi possível salvar a timeline agora.");
+      setSaveError(t("dashboard.createTimeline.saveError"));
     } finally {
       setSaving(false);
     }
@@ -146,11 +148,11 @@ const CreateTimelineModal = ({ uid, initialDescription, onClose, onSaved, catego
   return (
     <div className="dashboard__create-modal-overlay" onClick={onClose}>
       <div className="dashboard__create-modal-panel" onClick={(e) => e.stopPropagation()}>
-        <button type="button" className="dashboard__create-modal-close" onClick={onClose} aria-label="Fechar">
+        <button type="button" className="dashboard__create-modal-close" onClick={onClose} aria-label={t("close")}>
           <X size={20} />
         </button>
 
-        <h2 className="dashboard__create-modal-title">{draft?.name ?? "Montando sua timeline..."}</h2>
+        <h2 className="dashboard__create-modal-title">{draft?.name ?? t("dashboard.createTimeline.modalTitle")}</h2>
 
         <div className="dashboard__create-modal-conversation">
           {turns.map((turn, index) => {
@@ -165,13 +167,14 @@ const CreateTimelineModal = ({ uid, initialDescription, onClose, onSaved, catego
 
                 {!turn.error && turn.resultCount !== null && (
                   <p className="dashboard__create-modal-turn-result">
-                    encontrei {turn.resultCount} título{turn.resultCount === 1 ? "" : "s"}
+                    {t("dashboard.createTimeline.resultCount", { count: turn.resultCount })}
                   </p>
                 )}
 
                 {!turn.error && !turn.reply && turn.resultCount === null && isLast && loading && (
                   <p className="dashboard__create-modal-turn-result">
-                    <Loader2 className="dashboard__spinner" size={14} /> {index === 0 ? "buscando..." : "pensando..."}
+                    <Loader2 className="dashboard__spinner" size={14} />{" "}
+                    {index === 0 ? t("dashboard.createTimeline.searching") : t("dashboard.createTimeline.thinking")}
                   </p>
                 )}
               </div>
@@ -181,7 +184,7 @@ const CreateTimelineModal = ({ uid, initialDescription, onClose, onSaved, catego
 
         <div className="dashboard__create-modal-preview">
           {!loading && movies.length === 0 && (
-            <p className="dashboard__create-modal-empty">Nenhum título encontrado ainda — ajuste o pedido abaixo.</p>
+            <p className="dashboard__create-modal-empty">{t("dashboard.createTimeline.emptyResults")}</p>
           )}
           {movies.length > 0 && (
             <div className="dashboard__create-modal-poster-grid">
@@ -205,7 +208,7 @@ const CreateTimelineModal = ({ uid, initialDescription, onClose, onSaved, catego
           <input
             type="text"
             className="dashboard__create-modal-refine-input"
-            placeholder="Pergunte ou ajuste: ex. &quot;qual referência você usou?&quot;, &quot;tira os mais fracos&quot;..."
+            placeholder={t("dashboard.createTimeline.refinePlaceholder")}
             value={refinementInput}
             disabled={loading}
             onChange={(e) => setRefinementInput(e.target.value)}
@@ -216,7 +219,7 @@ const CreateTimelineModal = ({ uid, initialDescription, onClose, onSaved, catego
             className="dashboard__create-modal-refine-button"
             onClick={handleSendRefinement}
             disabled={loading || !refinementInput.trim()}
-            aria-label="Enviar mensagem"
+            aria-label={t("dashboard.createTimeline.sendMessage")}
           >
             <Send size={16} />
           </button>
@@ -230,7 +233,7 @@ const CreateTimelineModal = ({ uid, initialDescription, onClose, onSaved, catego
           onClick={handleSave}
           disabled={loading || saving || movies.length === 0}
         >
-          {saving ? <Loader2 className="dashboard__spinner" size={18} /> : `Salvar timeline (${movies.length})`}
+          {saving ? <Loader2 className="dashboard__spinner" size={18} /> : t("dashboard.createTimeline.saveTimeline", { count: movies.length })}
         </button>
       </div>
     </div>

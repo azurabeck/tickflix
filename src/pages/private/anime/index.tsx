@@ -28,6 +28,7 @@
 // gravado ao seguir (service/FollowingSettings.ts) — cada página só
 // mostra a própria categoria na coleção COMPARTILHADA `users/{uid}/following`.
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Loader2, Trash2 } from "lucide-react";
 import { auth } from "@/service/FirebaseSettings";
 import MovieDetail from "@/components/movieDetail";
@@ -63,6 +64,7 @@ const HERO_LIMIT = 5;
 const TOP_OF_YEAR_LIMIT = 20;
 
 const AnimePage = () => {
+  const { t } = useTranslation();
   const uid = auth.currentUser?.uid ?? null;
 
   const [providerRows, setProviderRows] = useState<Record<number, SeriesRowItem[]>>({});
@@ -279,7 +281,7 @@ const AnimePage = () => {
       <CreateTimelinePanel
         uid={uid}
         categoryLock="animes"
-        placeholder="Descreva a timeline de animes que você quer. Exemplo: só os animes do Studio Ghibli, ou todo o universo de One Piece"
+        placeholder={t("dashboard.createTimeline.placeholderAnimes")}
       />
 
       <FollowedTimelinesRow timelines={followedTimelines} watchedMap={watchedMap} onSelect={setSelectedTimeline} />

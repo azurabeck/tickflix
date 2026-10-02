@@ -13,7 +13,8 @@
 // (nenhuma hoje — Séries/Animes/Awards empurraram o PLAYER pro
 // inferior-direito exatamente pra deixar esse canto livre pra claquete,
 // ver styles.scss de cada uma), fica sempre aqui.
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Clapperboard, FolderPlus, ListPlus } from "lucide-react";
 import ExistingTimelineModal from "./ExistingTimelineModal";
 import CreateTimelineModal from "./CreateTimelineModal";
@@ -26,10 +27,23 @@ interface AddToTimelineButtonProps {
 }
 
 const AddToTimelineButton = ({ uid, movie }: AddToTimelineButtonProps) => {
+  const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
+  // Desloca o menu (via `transform: translateX`, não troca de lado) o
+  // tanto que precisar pra caber inteiro na viewport — bug real visto ao
+  // vivo testando mobile: ancorado sempre na ESQUERDA do botão, o menu
+  // vazava pra fora da tela em qualquer card que não fosse o primeiro de
+  // uma fileira que rola horizontalmente. Um flip binário (virar pra
+  // direita quando vaza à direita) NÃO bastava — testado ao vivo: pra um
+  // botão perto do MEIO de uma tela estreita, virar pra direita só
+  // trocava de lado o vazamento (passava a vazar pela esquerda). Medido
+  // depois de abrir (`useEffect` abaixo), não dá pra saber de antemão
+  // sem o menu já estar no DOM pra medir `getBoundingClientRect`.
+  const [menuOffsetX, setMenuOffsetX] = useState(0);
   const [existingOpen, setExistingOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   // Fecha ao clicar fora — mesmo padrão já usado pelos dropdowns da nav
   // (@/components/appNav, NavDropdown).
@@ -40,6 +54,27 @@ const AddToTimelineButton = ({ uid, movie }: AddToTimelineButtonProps) => {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuOpen]);
+
+  // `useLayoutEffect` (não `useEffect`) — mede e corrige a posição ANTES
+  // do navegador pintar a tela, senão o usuário veria o menu "pular" da
+  // posição vazando pra posição corrigida por um instante.
+  useLayoutEffect(() => {
+    if (!menuOpen) {
+      setMenuOffsetX(0);
+      return;
+    }
+    const rect = menuRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const EDGE_MARGIN = 8; // mesma folga das outras bordas de tela do app
+    let offset = 0;
+    if (rect.right > window.innerWidth - EDGE_MARGIN) {
+      offset = window.innerWidth - EDGE_MARGIN - rect.right;
+    } else if (rect.left < EDGE_MARGIN) {
+      offset = EDGE_MARGIN - rect.left;
+    }
+    if (offset !== 0) setMenuOffsetX(offset);
   }, [menuOpen]);
 
   return (
@@ -53,14 +88,19 @@ const AddToTimelineButton = ({ uid, movie }: AddToTimelineButtonProps) => {
           setMenuOpen((prev) => !prev);
         }}
         disabled={!uid}
-        title="Adicionar a uma timeline"
-        aria-label="Adicionar a uma timeline"
+        title={t("addToTimeline.button")}
+        aria-label={t("addToTimeline.button")}
       >
         <Clapperboard size={13} />
       </button>
 
       {uid && menuOpen && (
-        <div className="add-to-timeline__menu" onClick={(e) => e.stopPropagation()}>
+        <div
+          ref={menuRef}
+          className="add-to-timeline__menu"
+          style={menuOffsetX ? { transform: `translateX(${menuOffsetX}px)` } : undefined}
+          onClick={(e) => e.stopPropagation()}
+        >
           <button
             type="button"
             className="add-to-timeline__menu-item"
@@ -70,7 +110,7 @@ const AddToTimelineButton = ({ uid, movie }: AddToTimelineButtonProps) => {
             }}
           >
             <ListPlus size={14} />
-            Adicionar a timeline existente
+            {t("addToTimeline.addToExisting")}
           </button>
           <button
             type="button"
@@ -81,7 +121,7 @@ const AddToTimelineButton = ({ uid, movie }: AddToTimelineButtonProps) => {
             }}
           >
             <FolderPlus size={14} />
-            Criar nova timeline
+            {t("addToTimeline.createNew")}
           </button>
         </div>
       )}

@@ -18,6 +18,7 @@
 // aqui; a grade "Minhas timelines" também saiu daqui, virou a página
 // própria @/pages/private/timelines.
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import Logo from "@/components/logo";
 import MovieDetail from "@/components/movieDetail";
 import { fetchAvailabilityMap } from "@/components/movieDetail/functions";
@@ -67,6 +68,7 @@ const MAJOR_RELEASES_LIMIT = 20;
 const INGRESSO_LIMIT = 40;
 
 const Dashboard = ({ uid }: DashboardProps) => {
+  const { t } = useTranslation();
   // "Já vi" é estado global por filme (service/WatchedSettings.ts,
   // users/{uid}/watched) — usado aqui só pra colorir o ícone de bookmark
   // de cada card (`.has(key)`).
@@ -229,14 +231,14 @@ const Dashboard = ({ uid }: DashboardProps) => {
           title: movie.title,
           posterPath: movie.posterPath,
           href: buildIngressoMovieUrl(movie.title),
-          rankLabel: "Comprar ingresso",
+          rankLabel: t("dashboard.buyTicket"),
         }));
         setNowPlaying(mapped);
         loadHeroTrailers(mapped);
         mergeAvailability(mapped);
       } catch (fallbackErr) {
         console.error("Erro ao buscar em cartaz (fallback TMDb):", fallbackErr);
-        setNowPlayingError("Não foi possível carregar os filmes em cartaz.");
+        setNowPlayingError(t("dashboard.errors.nowPlaying"));
       }
     };
 
@@ -249,15 +251,16 @@ const Dashboard = ({ uid }: DashboardProps) => {
       })
       .catch((err) => {
         console.error("Erro ao buscar bilheteria:", err);
-        setBoxOfficeError("Não foi possível carregar os campeões de bilheteria.");
+        setBoxOfficeError(t("dashboard.errors.boxOffice"));
       });
 
     fetchRecentMajorReleases(MAJOR_RELEASES_LIMIT)
       .then(setMajorReleases)
       .catch((err) => {
         console.error("Erro ao buscar principais lançamentos:", err);
-        setMajorReleasesError("Não foi possível carregar os principais lançamentos.");
+        setMajorReleasesError(t("dashboard.errors.majorReleases"));
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Toggle "já vi" de qualquer card de filme da home (fileiras) — mesmo
@@ -295,7 +298,7 @@ const Dashboard = ({ uid }: DashboardProps) => {
 
       {recentlyWatched.length > 0 && (
         <MovieRow
-          title="Últimos vistos"
+          title={t("dashboard.rows.recentlyWatched")}
           items={recentlyWatched.map((movie) => ({
             id: movie.id,
             mediaType: movie.mediaType,
@@ -311,7 +314,7 @@ const Dashboard = ({ uid }: DashboardProps) => {
       )}
 
       <MovieRow
-        title={cityName ? `Em cartaz em ${cityName}` : "Em cartaz Brazil"}
+        title={cityName ? t("dashboard.rows.nowPlayingCity", { city: cityName }) : t("dashboard.rows.nowPlayingBrazil")}
         items={nowPlaying ?? []}
         loading={nowPlaying === null && !nowPlayingError}
         error={nowPlayingError}
@@ -330,13 +333,13 @@ const Dashboard = ({ uid }: DashboardProps) => {
       />
 
       <MovieRow
-        title="Campeões de bilheteria 2026"
+        title={t("dashboard.rows.boxOffice", { year: new Date().getFullYear() })}
         items={(boxOffice ?? []).map((movie, index) => ({
           id: movie.id,
           mediaType: movie.mediaType,
           title: movie.title,
           posterPath: movie.posterPath,
-          rankLabel: `${index + 1}º lugar`,
+          rankLabel: t("dashboard.placeLabel", { rank: index + 1 }),
         }))}
         loading={boxOffice === null && !boxOfficeError}
         error={boxOfficeError}
@@ -348,7 +351,7 @@ const Dashboard = ({ uid }: DashboardProps) => {
       />
 
       <MovieRow
-        title="Principais lançamentos dos últimos 12 meses"
+        title={t("dashboard.rows.majorReleases")}
         items={(majorReleases ?? []).map((movie) => ({
           id: movie.id,
           mediaType: movie.mediaType,

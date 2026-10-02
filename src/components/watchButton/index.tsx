@@ -12,6 +12,7 @@
 // etc.); `stopPropagation` no clique porque o pôster costuma estar
 // dentro (ou ao lado) de um botão "abrir detalhes" que não pode disparar
 // junto.
+import { useTranslation } from "react-i18next";
 import { Bookmark } from "lucide-react";
 import "./styles.scss";
 
@@ -27,26 +28,31 @@ interface WatchButtonProps {
   variant?: "overlay" | "inline";
 }
 
-const WatchButton = ({ isWatched, onToggle, disabled, size = 15, variant = "overlay" }: WatchButtonProps) => (
-  <button
-    type="button"
-    className={[
-      "watch-button",
-      variant === "inline" && "watch-button--inline",
-      isWatched && "watch-button--active",
-    ]
-      .filter(Boolean)
-      .join(" ")}
-    onClick={(e) => {
-      e.stopPropagation();
-      onToggle();
-    }}
-    disabled={disabled}
-    title={isWatched ? "Remover de vistos" : "Marcar como visto"}
-    aria-label={isWatched ? "Remover de vistos" : "Marcar como visto"}
-  >
-    <Bookmark size={size} fill={isWatched ? "currentColor" : "none"} />
-  </button>
-);
+const WatchButton = ({ isWatched, onToggle, disabled, size = 15, variant = "overlay" }: WatchButtonProps) => {
+  const { t } = useTranslation();
+  const label = t(isWatched ? "watchButton.unmark" : "watchButton.mark");
+
+  return (
+    <button
+      type="button"
+      className={[
+        "watch-button",
+        variant === "inline" && "watch-button--inline",
+        isWatched && "watch-button--active",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      onClick={(e) => {
+        e.stopPropagation();
+        onToggle();
+      }}
+      disabled={disabled}
+      title={label}
+      aria-label={label}
+    >
+      <Bookmark size={size} fill={isWatched ? "currentColor" : "none"} />
+    </button>
+  );
+};
 
 export default WatchButton;

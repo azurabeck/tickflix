@@ -13,6 +13,7 @@
 // carrossel não travar pra sempre num trailer se o evento nunca disparar
 // (autoplay bloqueado, vídeo restrito etc.).
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Captions, CaptionsOff, Volume2, VolumeX } from "lucide-react";
 import type { HeroTrailer } from "./functions";
 
@@ -81,6 +82,7 @@ const loadYouTubeApi = (): Promise<void> => {
 const FALLBACK_MAX_MS = 150_000; // rede de segurança — nenhum trailer oficial passa disso
 
 const HeroCarousel = ({ items }: HeroCarouselProps) => {
+  const { t } = useTranslation();
   const [index, setIndex] = useState(0);
   // Preferência do usuário — persiste entre trocas de trailer (cada troca
   // recria o iframe/player do zero, sempre mudo por padrão, então
@@ -192,7 +194,7 @@ const HeroCarousel = ({ items }: HeroCarouselProps) => {
           ref={iframeRef}
           className="dashboard__hero-video"
           src={embedSrc}
-          title={`Trailer oficial de ${current.title}`}
+          title={t("dashboard.hero.officialTrailer", { title: current.title })}
           allow="autoplay; encrypted-media"
           frameBorder="0"
         />
@@ -201,12 +203,12 @@ const HeroCarousel = ({ items }: HeroCarouselProps) => {
         <div className="dashboard__hero-caption dashboard__inner">
           <span className="dashboard__hero-title">{current.title}</span>
           <div className="dashboard__hero-controls">
-            <span className="dashboard__hero-badge">EM CARTAZ</span>
+            <span className="dashboard__hero-badge">{t("dashboard.hero.nowPlayingBadge")}</span>
             <button
               type="button"
               className="dashboard__hero-icon-btn"
               onClick={toggleMute}
-              aria-label={muted ? "Ativar som" : "Silenciar"}
+              aria-label={muted ? t("dashboard.hero.mute") : t("dashboard.hero.unmute")}
               aria-pressed={!muted}
             >
               {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
@@ -216,7 +218,7 @@ const HeroCarousel = ({ items }: HeroCarouselProps) => {
                 type="button"
                 className="dashboard__hero-icon-btn"
                 onClick={toggleCaptions}
-                aria-label={captionsOn ? "Desativar legenda" : "Ativar legenda"}
+                aria-label={captionsOn ? t("dashboard.hero.captionsOn") : t("dashboard.hero.captionsOff")}
                 aria-pressed={captionsOn}
                 data-active={captionsOn}
               >
@@ -234,7 +236,7 @@ const HeroCarousel = ({ items }: HeroCarouselProps) => {
                 type="button"
                 className={i === index ? "dashboard__hero-dot dashboard__hero-dot--active" : "dashboard__hero-dot"}
                 onClick={() => setIndex(i)}
-                aria-label={`Ver trailer de ${item.title}`}
+                aria-label={t("dashboard.hero.watchTrailer", { title: item.title })}
               />
             ))}
           </div>

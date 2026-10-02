@@ -1,4 +1,4 @@
-// src/components/appNav/functions.ts
+// src/components/userMenu/functions.ts
 import { signOut } from "firebase/auth";
 import { auth } from "@/service/FirebaseSettings";
 

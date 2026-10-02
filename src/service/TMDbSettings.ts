@@ -7,6 +7,8 @@
 // abuso é o próprio TMDb por rate limit — então chamamos direto do
 // browser sem precisar de Cloud Function.
 
+import i18n, { TMDB_LANGUAGE_BY_APP_LANGUAGE, type SupportedLanguage } from "./i18n";
+
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 export const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w342";
 // Imagem maior — só pro fundo do modal de detalhes do filme/série
@@ -23,6 +25,86 @@ export const TMDB_LOGO_BASE = "https://image.tmdb.org/t/p/w92";
 // pra IA externa pesquisar no TMDb.
 export const READ_ACCESS_TOKEN = import.meta.env.VITE_TMDB_API_KEY;
 
+// Idioma dos dados (título/sinopse/gênero etc.) acompanha o idioma do
+// site — pedido explícito da Rebecca: "os dados que vêm do TMDb...
+// [devem] acompanha[r] o idioma do site". `i18n.language` pode vir como
+// código curto ("pt") ou locale completo do navegador ("en-US"); só os 2
+// primeiros caracteres importam aqui pra achar o código TMDb certo
+// (`TMDB_LANGUAGE_BY_APP_LANGUAGE`, service/i18n.ts). Sem idioma
+// suportado reconhecido, cai pro português (mesmo padrão de sempre).
+const DEFAULT_TMDB_LANGUAGE = "pt-BR";
+
+const currentTmdbLanguage = (): string => {
+  const short = (i18n.language ?? "pt").slice(0, 2) as SupportedLanguage;
+  return TMDB_LANGUAGE_BY_APP_LANGUAGE[short] ?? DEFAULT_TMDB_LANGUAGE;
+};
+
+// --- Limite de concorrência -------------------------------------------------
+// Bug real, visto ao vivo testando a Home logo após logar: a página
+// dispara "Últimos vistos" + "Em cartaz" + "Campeões de bilheteria" +
+// "Principais lançamentos" praticamente juntas, cada uma com várias
+// chamadas por filme (disponibilidade BR/US, data de estreia, trailer
+// etc.) — tudo em paralelo, sem limite nenhum. Na prática isso soma
+// bem mais de 100 requisições simultâneas pro TMDb logo no primeiro
+// carregamento, e o TMDb responde boa parte com 429 (Too Many Requests)
+// — causa raiz real da claquete "às vezes aparece, às vezes não"
+// relatada pela Rebecca (ver @/components/movieDetail/functions.ts):
+// não é falha de rede aleatória, é throttling de verdade, sistemático,
+// toda vez que várias fileiras carregam juntas.
+//
+// DUAS garantias, não só uma — testado ao vivo: um semáforo de
+// concorrência sozinho (15 em voo ao mesmo tempo) ainda gerava uma
+// enxurrada de 429 real (confirmado: ~200 erros no console só de abrir a
+// Home) — o limite do TMDb parece ser de TAXA (quantas requisições por
+// segundo, não só quantas em paralelo nesse instante); com round-trips
+// rápidos, até "só" 15 concorrentes disparam dezenas por segundo.
+//
+// 1) Concorrência: no máximo `MAX_CONCURRENT_REQUESTS` chamadas em voo
+//    ao mesmo tempo pro TMDb inteiro, não por fileira — o resto espera
+//    na fila (`waitQueue`).
+// 2) Espaçamento: nenhuma chamada DISPARA menos de `MIN_DISPATCH_GAP_MS`
+//    depois da anterior, não importa a concorrência disponível —
+//    `nextDispatchAt` é um relógio compartilhado que todo mundo respeita
+//    antes de seguir. Isso cap a TAXA de disparo em ~1000/MIN_DISPATCH_GAP_MS
+//    por segundo, independente de quantos slots de concorrência estejam
+//    livres.
+const MAX_CONCURRENT_REQUESTS = 6;
+const MIN_DISPATCH_GAP_MS = 120; // ~8 disparos/s no máximo, bem abaixo de qualquer limite informal conhecido do TMDb
+
+let activeRequests = 0;
+const waitQueue: (() => void)[] = [];
+let nextDispatchAt = 0;
+
+const acquireSlot = (): Promise<void> => {
+  if (activeRequests < MAX_CONCURRENT_REQUESTS) {
+    activeRequests++;
+    return Promise.resolve();
+  }
+  return new Promise((resolve) => waitQueue.push(resolve));
+};
+
+const releaseSlot = (): void => {
+  const next = waitQueue.shift();
+  if (next) next(); // repassa o lugar direto pro próximo da fila, sem decrementar
+  else activeRequests--;
+};
+
+const waitForDispatchGap = async (): Promise<void> => {
+  const now = Date.now();
+  const scheduledAt = Math.max(now, nextDispatchAt);
+  nextDispatchAt = scheduledAt + MIN_DISPATCH_GAP_MS;
+  const delay = scheduledAt - now;
+  if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay));
+};
+
+const requestTmdb = (url: string): Promise<Response> =>
+  fetch(url, {
+    headers: {
+      Authorization: `Bearer ${READ_ACCESS_TOKEN}`,
+      accept: "application/json",
+    },
+  });
+
 export const tmdbFetch = async <T>(
   path: string,
   params: Record<string, string> = {}
@@ -31,21 +113,33 @@ export const tmdbFetch = async <T>(
     throw new Error("VITE_TMDB_API_KEY não configurada — ver .env.example.");
   }
 
-  const query = new URLSearchParams({ language: "pt-BR", ...params });
-  const response = await fetch(`${TMDB_BASE_URL}${path}?${query.toString()}`, {
-    headers: {
-      Authorization: `Bearer ${READ_ACCESS_TOKEN}`,
-      accept: "application/json",
-    },
-  });
+  const query = new URLSearchParams({ language: currentTmdbLanguage(), ...params });
+  const url = `${TMDB_BASE_URL}${path}?${query.toString()}`;
 
-  if (!response.ok) {
-    const body = await response.json().catch(() => null);
-    const detail = body?.status_message;
-    throw new Error(`TMDb respondeu ${response.status} em ${path}${detail ? `: ${detail}` : ""}`);
+  await acquireSlot();
+  try {
+    await waitForDispatchGap();
+    let response = await requestTmdb(url);
+
+    // Mesmo com o limite de concorrência, um 429 isolado ainda pode
+    // acontecer (ex.: pico breve de outra aba/sessão) — uma nova
+    // tentativa DENTRO do mesmo slot (não libera o lugar antes, senão
+    // outra chamada da fila entra e mantém o mesmo estrangulamento).
+    if (response.status === 429) {
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      response = await requestTmdb(url);
+    }
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      const detail = body?.status_message;
+      throw new Error(`TMDb respondeu ${response.status} em ${path}${detail ? `: ${detail}` : ""}`);
+    }
+
+    return response.json() as Promise<T>;
+  } finally {
+    releaseSlot();
   }
-
-  return response.json() as Promise<T>;
 };
 
 export const posterUrl = (path: string | null): string | null => (path ? `${TMDB_IMAGE_BASE}${path}` : null);

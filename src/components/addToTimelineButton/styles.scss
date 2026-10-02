@@ -38,11 +38,19 @@
     z-index: 3;
     display: flex;
     flex-direction: column;
+    width: max-content;
     min-width: 200px;
+    // Rede de segurança em telas bem estreitas (ex.: 320px) — mesmo com
+    // `--flip` escolhendo o lado certo, o menu não pode ser mais largo
+    // que a própria viewport.
+    max-width: calc(100vw - 24px);
     padding: 6px;
     border-radius: $radius-md;
     background: $color-bg;
     box-shadow: 0 12px 30px rgba(#000000, 0.35);
+    // Deslocamento horizontal pra caber na viewport é aplicado via JS
+    // (`transform: translateX(...)`, index.tsx) depois de medir — ver o
+    // comentário lá pro porquê de não dar pra resolver só com CSS.
   }
 
   &__menu-item {

@@ -57,25 +57,28 @@
 // `@/components/searchModal`, o MESMO modal em qualquer página (o modal
 // em si é global, não pertence a nenhuma tela específica).
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, LogOut, Menu, Search, X } from "lucide-react";
+import { ChevronDown, Menu, Search, X } from "lucide-react";
 import { Link, NavLink, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Logo from "@/components/logo";
+import UserMenu from "@/components/userMenu";
 import SearchModal from "@/components/searchModal";
 import { ROUTES } from "@/service/Routes";
 import type { TimelineCategoryFilter } from "@/service/TimelineSettings";
 import { AWARD_CONFIGS } from "@/pages/private/awards/awardConfigs";
 import { FRANCHISE_CONFIGS } from "@/pages/private/franchise/franchiseConfigs";
-import { handleLogout } from "./functions";
 import "./styles.scss";
 
 // ROUTES.HOME continua sendo a mesma página (Dashboard) — só o RÓTULO da
 // aba virou "Filmes" (pedido explícito da Rebecca: "home vai ser outra
 // coisa [no futuro]... por enquanto só mudar home para filmes"). Quando
 // "Home" virar uma tela própria de verdade, aí sim entra uma rota nova.
-const NAV_LINKS = [
-  { to: ROUTES.HOME, label: "Filmes" },
-  { to: ROUTES.SERIES, label: "Séries" },
-  { to: ROUTES.ANIMES, label: "Animes" },
+// Rótulos vêm de `t()` (ver dentro do componente) — aqui só a rota +
+// chave de tradução, já que i18n só funciona dentro de um componente.
+const NAV_LINK_ROUTES: { to: string; key: "filmes" | "series" | "animes" }[] = [
+  { to: ROUTES.HOME, key: "filmes" },
+  { to: ROUTES.SERIES, key: "series" },
+  { to: ROUTES.ANIMES, key: "animes" },
 ];
 
 interface DropdownItem {
@@ -85,15 +88,10 @@ interface DropdownItem {
   isActive: boolean;
 }
 
-const TIMELINE_CATEGORIES: { category: TimelineCategoryFilter; label: string }[] = [
-  { category: "filmes", label: "Filmes" },
-  { category: "series", label: "Séries" },
-  { category: "animes", label: "Animes" },
-  { category: "franquias", label: "Franquias" },
-  { category: "premiacoes", label: "Premiações" },
-];
+const TIMELINE_CATEGORY_KEYS: TimelineCategoryFilter[] = ["filmes", "series", "animes", "franquias", "premiacoes"];
 
 const AppNav = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   // Um dropdown aberto por vez — guarda a KEY do dropdown ("timelines" |
   // "oscar" | "franquias"), não um boolean por dropdown, senão abrir um
@@ -128,11 +126,11 @@ const AppNav = () => {
 
   const activeCategory = new URLSearchParams(location.search).get("category");
 
-  const timelineItems: DropdownItem[] = TIMELINE_CATEGORIES.map((item) => ({
-    key: item.category,
-    to: `${ROUTES.TIMELINES}?category=${item.category}`,
-    label: item.label,
-    isActive: location.pathname === ROUTES.TIMELINES && activeCategory === item.category,
+  const timelineItems: DropdownItem[] = TIMELINE_CATEGORY_KEYS.map((category) => ({
+    key: category,
+    to: `${ROUTES.TIMELINES}?category=${category}`,
+    label: t(`nav.timelineCategory.${category}`),
+    isActive: location.pathname === ROUTES.TIMELINES && activeCategory === category,
   }));
 
   const awardItems: DropdownItem[] = AWARD_CONFIGS.map((config) => {
@@ -156,20 +154,20 @@ const AppNav = () => {
 
         <div className={mobileMenuOpen ? "app-nav__menu app-nav__menu--open" : "app-nav__menu"}>
           <div className="app-nav__tabs">
-            {NAV_LINKS.map((link) => (
+            {NAV_LINK_ROUTES.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
                 end
                 className={({ isActive }) => (isActive ? "app-nav__tab app-nav__tab--active" : "app-nav__tab")}
               >
-                {link.label}
+                {t(`nav.${link.key}`)}
               </NavLink>
             ))}
 
             <NavDropdown
               id="oscar"
-              label="Oscar"
+              label={t("nav.oscar")}
               items={awardItems}
               isActive={isAwardsActive}
               isOpen={openDropdown === "oscar"}
@@ -178,7 +176,7 @@ const AppNav = () => {
 
             <NavDropdown
               id="franquias"
-              label="Franquias"
+              label={t("nav.franquias")}
               items={franchiseItems}
               isActive={isFranchiseActive}
               isOpen={openDropdown === "franquias"}
@@ -187,41 +185,42 @@ const AppNav = () => {
 
             <NavDropdown
               id="timelines"
-              label="Timelines"
+              label={t("nav.timelines")}
               items={timelineItems}
               isActive={isTimelinesActive}
               isOpen={openDropdown === "timelines"}
               onToggle={() => setOpenDropdown((prev) => (prev === "timelines" ? null : "timelines"))}
             />
           </div>
-          {/* Painel mobile (hambúrguer) — pedido explícito da Rebecca: "o
-              botão sair no navbar deve ficar a esquerda do search e
-              devem estar agrupados". No desktop esse "Sair" não aparece
-              (CSS, `&__logout--panel`) — quem mostra lá é a versão
-              abaixo, agrupada com a busca; esta aqui só é visível ≤900px,
-              como rodapé do painel do hambúrguer (igual já era antes). */}
-          <button type="button" className="app-nav__logout app-nav__logout--panel" onClick={handleLogout}>
-            <LogOut size={16} />
-            Sair
-          </button>
         </div>
 
-        {/* Busca + Sair + hambúrguer, agrupados à direita — pedido
-            explícito da Rebecca: "pra ficarem a esquerda direitinho
-            deixando o meio pra o menu". Dentro do grupo, busca primeiro
-            (esquerda) e Sair por último (direita, ponta): "só sair a
-            direita o search a esquerda". Sempre visíveis (desktop ou
-            mobile), fora de `.app-nav__menu` de propósito: abrir o menu
-            inteiro só pra buscar/sair seria um passo extra à toa. */}
+        {/* Busca + avatar da conta + hambúrguer, agrupados à direita —
+            pedido explícito da Rebecca: "pra ficarem a esquerda
+            direitinho deixando o meio pra o menu". O "Sair" solto virou
+            o menu da conta (@/components/userMenu, mesma estrutura do
+            projeto "mailbook" que a Rebecca pediu pra replicar — avatar
+            → Meu perfil/Configurações/Sair), por isso não precisa mais
+            de duas versões (painel mobile vs. agrupado desktop) como
+            antes: o dropdown do UserMenu já se vira sozinho em qualquer
+            tamanho de tela.
+
+            Seletor de idioma SAIU daqui — pedido explícito da Rebecca
+            depois de ver tudo junto: "precisamos melhorar o visual do
+            menu... esta estranho agora que tem coisa demais". Busca +
+            3 botões de idioma + avatar+chevron + hambúrguer, em cima dos
+            3 dropdowns do menu central, ficou pesado. O idioma não
+            desapareceu — continua em Configurações
+            (@/pages/private/settings, mesmo @/components/languageSwitcher),
+            só não fica mais fixo no navbar à toa pra quem raramente troca.
+            Sempre visíveis (desktop ou mobile), fora de `.app-nav__menu`
+            de propósito: abrir o menu inteiro só pra buscar seria um
+            passo extra à toa. */}
         <div className="app-nav__actions">
-          <button type="button" className="app-nav__search-btn" onClick={() => setSearchOpen(true)} aria-label="Buscar">
+          <button type="button" className="app-nav__search-btn" onClick={() => setSearchOpen(true)} aria-label={t("nav.search")}>
             <Search size={20} />
           </button>
 
-          <button type="button" className="app-nav__logout app-nav__logout--grouped" onClick={handleLogout}>
-            <LogOut size={16} />
-            Sair
-          </button>
+          <UserMenu />
 
           {/* Hambúrguer — só existe visualmente ≤900px (CSS), mas fica no
               DOM sempre; o botão em si nunca precisa sumir de verdade,
@@ -231,7 +230,7 @@ const AppNav = () => {
             className="app-nav__burger"
             onClick={() => setMobileMenuOpen((prev) => !prev)}
             aria-expanded={mobileMenuOpen}
-            aria-label={mobileMenuOpen ? "Fechar menu" : "Abrir menu"}
+            aria-label={mobileMenuOpen ? t("nav.closeMenu") : t("nav.openMenu")}
           >
             {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>

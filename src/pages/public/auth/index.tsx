@@ -15,12 +15,13 @@
 // pra Home sozinho assim que qualquer um dos três fluxos resolve — essa
 // página não navega manualmente em sucesso nenhum.
 import { useEffect, useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { Ticket, Info, Loader2 } from "lucide-react";
 import { collection, getDocs, type FirestoreError } from "firebase/firestore";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, type AuthError } from "firebase/auth";
 import { auth, db } from "@/service/FirebaseSettings";
-import { APP_TAGLINE } from "@/service/IASettings";
 import Button from "@/components/button";
+import LanguageSwitcher from "@/components/languageSwitcher";
 import { mapAuthError, pickRandomHighlight, isLoginFormValid, isSignupFormValid, type Highlight } from "./functions";
 import "./styles.scss";
 
@@ -58,6 +59,7 @@ const GoogleIcon = ({ size = 18 }: { size?: number }) => (
 );
 
 const Auth = () => {
+  const { t } = useTranslation();
   const [mode, setMode] = useState<AuthMode>("login");
   const [usuario, setUsuario] = useState("");
   const [senha, setSenha] = useState("");
@@ -108,7 +110,7 @@ const Auth = () => {
     try {
       await signInWithEmailAndPassword(auth, usuario.trim(), senha);
     } catch (err) {
-      setError(mapAuthError(err));
+      setError(t(mapAuthError(err)));
     } finally {
       setSubmitting(false);
     }
@@ -123,7 +125,7 @@ const Auth = () => {
     try {
       await createUserWithEmailAndPassword(auth, signupEmail.trim(), signupSenha);
     } catch (err) {
-      setError(mapAuthError(err));
+      setError(t(mapAuthError(err)));
     } finally {
       setSubmitting(false);
     }
@@ -135,7 +137,7 @@ const Auth = () => {
     try {
       await signInWithPopup(auth, new GoogleAuthProvider());
     } catch (err) {
-      if (!isDismissedPopupError(err)) setError(mapAuthError(err));
+      if (!isDismissedPopupError(err)) setError(t(mapAuthError(err)));
     } finally {
       setGoogleSubmitting(false);
     }
@@ -149,6 +151,10 @@ const Auth = () => {
       />
       <div className="auth-page__overlay" />
 
+      <div className="auth-page__language">
+        <LanguageSwitcher />
+      </div>
+
       <div className="auth-page__content">
         <div className="auth-page__brand">
           <span className="auth-page__brand-tick">Tick</span>
@@ -156,7 +162,7 @@ const Auth = () => {
         </div>
 
         <p className="auth-page__tagline">
-          {APP_TAGLINE} <Ticket className="auth-page__tagline-icon" size={22} />
+          {t("tagline")} <Ticket className="auth-page__tagline-icon" size={22} />
         </p>
 
         {mode === "login" ? (
@@ -166,7 +172,7 @@ const Auth = () => {
               type="text"
               value={usuario}
               onChange={(e) => setUsuario(e.target.value)}
-              placeholder="informe seu usuário"
+              placeholder={t("auth.usernamePlaceholder")}
               autoComplete="username"
               disabled={submitting}
             />
@@ -175,7 +181,7 @@ const Auth = () => {
               type="password"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
-              placeholder="informe sua senha"
+              placeholder={t("auth.passwordPlaceholder")}
               autoComplete="current-password"
               disabled={submitting}
             />
@@ -184,13 +190,13 @@ const Auth = () => {
 
             <div className="auth-page__footer">
               <Button type="submit" disabled={!isLoginValid} loading={submitting}>
-                Acessar
+                {t("auth.accessButton")}
               </Button>
 
               <p className="auth-page__signup">
-                Ainda não tem uma conta?{" "}
+                {t("auth.noAccount")}{" "}
                 <button type="button" className="auth-page__signup-link" onClick={() => switchMode("signup")}>
-                  Abra sua conta
+                  {t("auth.openAccount")}
                 </button>
               </p>
             </div>
@@ -202,7 +208,7 @@ const Auth = () => {
               type="email"
               value={signupEmail}
               onChange={(e) => setSignupEmail(e.target.value)}
-              placeholder="seu e-mail"
+              placeholder={t("auth.emailPlaceholder")}
               autoComplete="email"
               disabled={submitting}
             />
@@ -211,7 +217,7 @@ const Auth = () => {
               type="password"
               value={signupSenha}
               onChange={(e) => setSignupSenha(e.target.value)}
-              placeholder="crie uma senha (mínimo 6 caracteres)"
+              placeholder={t("auth.createPasswordPlaceholder")}
               autoComplete="new-password"
               disabled={submitting}
             />
@@ -220,25 +226,25 @@ const Auth = () => {
               type="password"
               value={signupConfirmarSenha}
               onChange={(e) => setSignupConfirmarSenha(e.target.value)}
-              placeholder="confirme a senha"
+              placeholder={t("auth.confirmPasswordPlaceholder")}
               autoComplete="new-password"
               disabled={submitting}
             />
 
             {signupSenha.length > 0 && signupConfirmarSenha.length > 0 && signupSenha !== signupConfirmarSenha && (
-              <p className="auth-page__error">As senhas não são iguais.</p>
+              <p className="auth-page__error">{t("auth.passwordsDontMatch")}</p>
             )}
             {error && <p className="auth-page__error">{error}</p>}
 
             <div className="auth-page__footer">
               <Button type="submit" disabled={!isSignupValid} loading={submitting}>
-                Criar conta
+                {t("auth.createAccountButton")}
               </Button>
 
               <p className="auth-page__signup">
-                Já tem uma conta?{" "}
+                {t("auth.alreadyHaveAccount")}{" "}
                 <button type="button" className="auth-page__signup-link" onClick={() => switchMode("login")}>
-                  Entrar
+                  {t("auth.signIn")}
                 </button>
               </p>
             </div>
@@ -246,7 +252,7 @@ const Auth = () => {
         )}
 
         <div className="auth-page__divider">
-          <span>ou</span>
+          <span>{t("auth.or")}</span>
         </div>
 
         <Button
@@ -258,14 +264,14 @@ const Auth = () => {
           disabled={submitting}
         >
           {!googleSubmitting && <GoogleIcon size={18} />}
-          Entrar com Google
+          {t("auth.continueWithGoogle")}
         </Button>
       </div>
 
       {highlight && (
         <div className="auth-page__badge" title={highlight.info}>
           <Info size={16} />
-          <span>Filme: {highlight.name}</span>
+          <span>{t("auth.movieLabel", { name: highlight.name })}</span>
         </div>
       )}
 
