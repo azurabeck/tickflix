@@ -51,6 +51,7 @@ import {
 } from "@/service/TimelineSettings";
 import { posterUrl } from "@/service/TMDbSettings";
 import { useMediaCards } from "@/components/mediaCard";
+import { useConfirm } from "@/components/confirmDialog";
 import TimelineDetail from "./TimelineDetail";
 import "./styles.scss";
 
@@ -129,6 +130,7 @@ const TimelinesPage = () => {
   // essa marcação (pedido explícito da Rebecca — "a timeline é um
   // agrupamento", não dona do estado de visto).
   const { checkedMap: watchedMap } = useMediaCards();
+  const confirm = useConfirm();
 
   useEffect(() => {
     if (!uid) {
@@ -163,7 +165,13 @@ const TimelinesPage = () => {
 
   const handleDeleteTimeline = async (timeline: Timeline) => {
     if (!uid || deletingId) return;
-    if (!window.confirm(`Apagar a timeline "${timeline.name}"? Essa ação não pode ser desfeita.`)) return;
+    const ok = await confirm({
+      title: "Apagar timeline",
+      message: `Apagar a timeline "${timeline.name}"? Essa ação não pode ser desfeita.`,
+      confirmLabel: "Apagar",
+      danger: true,
+    });
+    if (!ok) return;
 
     setDeletingId(timeline.id);
     setDeleteError(null);

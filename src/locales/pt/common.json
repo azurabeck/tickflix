@@ -319,12 +319,29 @@
     "emptyMine": "Marque o ✓ no card de uma série que você está assistindo pra ela aparecer aqui com o progresso dos episódios.",
     "mostWatched": "Mais vistas em",
     "bestRatedOn": "Melhor avaliadas na {{provider}}",
-    "confirmUnfollow": "Deixar de acompanhar \"{{title}}\"? Seu progresso de episódios se perde."
+    "confirmUnfollow": "Deixar de acompanhar \"{{title}}\"? Seu progresso de episódios se perde.",
+    "confirmMarkPrevious": "Você tem {{count}} episódios anteriores (até a T1 E1) que ainda não foram marcados como vistos. Quer marcar todos?",
+    "confirmUnfollowTitle": "Deixar de acompanhar",
+    "confirmUnfollowYes": "Deixar de acompanhar",
+    "confirmMarkPreviousTitle": "Marcar episódios anteriores?",
+    "confirmMarkPreviousYes": "Sim, marcar todos",
+    "confirmMarkPreviousNo": "Só este"
   },
   "animePage": {
     "myAnime": "Meus animes",
     "emptyMine": "Marque o ✓ no card de um anime que você está assistindo pra ele aparecer aqui com o progresso dos episódios.",
     "mostWatched": "Mais vistos em",
     "bestRatedOn": "Melhor avaliados na {{provider}}"
+  },
+  "followFilter": {
+    "completed": "Concluídos",
+    "inProgress": "Em Progresso",
+    "notStarted": "Não iniciado",
+    "empty": "Nenhum título nesse filtro."
+  },
+  "confirmDialog": {
+    "title": "Confirmar",
+    "confirm": "Confirmar",
+    "cancel": "Cancelar"
   }
 }

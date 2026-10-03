@@ -11,14 +11,17 @@
 // página.
 import { Outlet } from "react-router-dom";
 import AppNav from "@/components/appNav";
+import { ConfirmProvider } from "@/components/confirmDialog";
 import { MediaCardsProvider } from "@/components/mediaCard";
 
 const PrivateLayout = () => (
   <div className="private-layout">
-    <MediaCardsProvider>
-      <AppNav />
-      <Outlet />
-    </MediaCardsProvider>
+    <ConfirmProvider>
+      <MediaCardsProvider>
+        <AppNav />
+        <Outlet />
+      </MediaCardsProvider>
+    </ConfirmProvider>
   </div>
 );
 

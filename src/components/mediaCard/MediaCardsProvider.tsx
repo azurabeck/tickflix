@@ -19,12 +19,15 @@ import { auth } from "@/service/FirebaseSettings";
 import MovieDetail from "@/components/movieDetail";
 import { fetchAvailabilityMap } from "@/components/movieDetail/functions";
 import TrailerModal from "@/components/trailerModal";
+import { useConfirm } from "@/components/confirmDialog";
 import { movieKey } from "@/service/TimelineSettings";
 import { fetchTitleById } from "@/service/TMDbSettings";
 import {
   fetchFollowedSeries,
   followSeries,
+  episodeAiringInfo,
   followedSeriesProgress,
+  setEpisodesWatched,
   setEpisodeWatched,
   setSeasonWatched,
   unfollowSeries,
@@ -81,6 +84,7 @@ export const useMediaCards = (): MediaCardsApi => {
 
 const MediaCardsProvider = ({ children }: { children: ReactNode }) => {
   const { t } = useTranslation();
+  const confirm = useConfirm();
   const uid = auth.currentUser?.uid ?? null;
 
   const [watchedMap, setWatchedMap] = useState<Map<string, number>>(new Map());
@@ -194,7 +198,13 @@ const MediaCardsProvider = ({ children }: { children: ReactNode }) => {
     const current = followed.get(id);
 
     if (current && followedSeriesProgress(current).watched > 0) {
-      if (!window.confirm(t("seriesPage.confirmUnfollow", { title: current.title }))) return;
+      const ok = await confirm({
+        title: t("seriesPage.confirmUnfollowTitle"),
+        message: t("seriesPage.confirmUnfollow", { title: current.title }),
+        confirmLabel: t("seriesPage.confirmUnfollowYes"),
+        danger: true,
+      });
+      if (!ok) return;
     }
 
     setPendingIds((prev) => new Set(prev).add(id));
@@ -206,13 +216,15 @@ const MediaCardsProvider = ({ children }: { children: ReactNode }) => {
       } else {
         // Linhas de rank só conhecem id/título: completa com o pôster do TMDb.
         const needsMeta = !item.title || item.posterPath === undefined;
-        const [{ status, seasons }, meta] = await Promise.all([fetchSeriesWithEpisodes(id), needsMeta ? fetchTitleById("tv", id) : null]);
+        const [{ status, isAnime, seasons }, meta] = await Promise.all([fetchSeriesWithEpisodes(id), needsMeta ? fetchTitleById("tv", id) : null]);
         await followSeries(uid, {
           id,
           title: item.title || meta?.title || "",
           posterPath: item.posterPath ?? meta?.posterPath ?? null,
           status,
-          category: item.category ?? "series",
+          // Quem sabe a categoria (páginas Séries/Animes) passa; os outros
+          // (busca, ranks) deixam o TMDb decidir: anime vai pra "Meus animes".
+          category: item.category ?? (isAnime ? "animes" : "series"),
           seasons,
         });
         loadFollowed();
@@ -277,25 +289,60 @@ const MediaCardsProvider = ({ children }: { children: ReactNode }) => {
   // --- Episódios (SeriesDetail) --------------------------------------------
   const patchFollowed = (series: FollowedSeries) => setFollowedList((prev) => prev.map((s) => (s.id === series.id ? series : s)));
 
-  const toggleEpisode = async (series: FollowedSeries, season: number, episode: number) => {
-    if (!uid) return;
-    const key = String(season);
-    const epKey = String(episode);
-    const nextWatched = !series.seasons[key].episodes[epKey].watched;
+  // Episódios JÁ LANÇADOS e ainda não vistos ANTES de (temporada, episódio) — em
+  // ordem. `beforeEpisode = 0` = tudo das temporadas anteriores (usado ao marcar
+  // uma temporada inteira: os episódios da própria temporada não contam).
+  const unwatchedBefore = (series: FollowedSeries, season: number, beforeEpisode: number) => {
+    const previous: { season: number; episode: number }[] = [];
+    for (const [seasonKey, seasonData] of Object.entries(series.seasons)) {
+      const seasonNumber = Number(seasonKey);
+      if (seasonNumber > season) continue;
+      for (const [episodeKey, ep] of Object.entries(seasonData.episodes)) {
+        const episodeNumber = Number(episodeKey);
+        if (seasonNumber === season && episodeNumber >= beforeEpisode) continue;
+        if (!ep.watched && episodeAiringInfo(ep, series.status).aired) previous.push({ season: seasonNumber, episode: episodeNumber });
+      }
+    }
+    return previous;
+  };
 
-    patchFollowed({
-      ...series,
-      seasons: {
-        ...series.seasons,
-        [key]: {
-          ...series.seasons[key],
-          episodes: { ...series.seasons[key].episodes, [epKey]: { ...series.seasons[key].episodes[epKey], watched: nextWatched } },
-        },
-      },
+  const askMarkPrevious = (count: number) =>
+    confirm({
+      title: t("seriesPage.confirmMarkPreviousTitle"),
+      message: t("seriesPage.confirmMarkPrevious", { count }),
+      confirmLabel: t("seriesPage.confirmMarkPreviousYes"),
+      cancelLabel: t("seriesPage.confirmMarkPreviousNo"),
     });
 
+  // Estado otimista: marca/desmarca esses episódios de uma vez sobre o MESMO
+  // snapshot de `series`.
+  const withEpisodes = (series: FollowedSeries, toggled: { season: number; episode: number }[], watched: boolean): FollowedSeries => {
+    const seasons = { ...series.seasons };
+    for (const { season, episode } of toggled) {
+      const key = String(season);
+      const current = seasons[key];
+      seasons[key] = { ...current, episodes: { ...current.episodes, [String(episode)]: { ...current.episodes[String(episode)], watched } } };
+    }
+    return { ...series, seasons };
+  };
+
+  // Marcar um episódio mais à frente pergunta se quer marcar TODOS os anteriores
+  // (até T1 E1) — vale pra série e anime. Só entram os que já foram ao ar e
+  // ainda não estavam vistos. Desmarcar nunca pergunta nada.
+  const toggleEpisode = async (series: FollowedSeries, season: number, episode: number) => {
+    if (!uid) return;
+    const nextWatched = !series.seasons[String(season)].episodes[String(episode)].watched;
+
+    let toggled = [{ season, episode }];
+    if (nextWatched) {
+      const previous = unwatchedBefore(series, season, episode);
+      if (previous.length > 0 && (await askMarkPrevious(previous.length))) toggled = [...previous, ...toggled];
+    }
+
+    patchFollowed(withEpisodes(series, toggled, nextWatched));
     try {
-      await setEpisodeWatched(uid, series.id, season, episode, nextWatched);
+      if (toggled.length === 1) await setEpisodeWatched(uid, series.id, season, episode, nextWatched);
+      else await setEpisodesWatched(uid, series.id, toggled, nextWatched);
     } catch (err) {
       console.error("Erro ao marcar episódio:", err);
       patchFollowed(series); // desfaz
@@ -305,17 +352,21 @@ const MediaCardsProvider = ({ children }: { children: ReactNode }) => {
   // "Marcar temporada inteira" — resolve TODOS os episódios de uma vez sobre
   // o MESMO snapshot de `series` (sem loop de toggleEpisode: cada chamada
   // pegaria a mesma `series` stale e cada setState sobrescreveria o
-  // anterior — bug real já visto ao vivo).
+  // anterior — bug real já visto ao vivo). Marcar uma temporada também
+  // pergunta pelos episódios das temporadas ANTERIORES que ficaram pra trás.
   const toggleSeason = async (series: FollowedSeries, season: number, episodes: number[], watched: boolean) => {
     if (!uid) return;
-    const key = String(season);
-    const updatedEpisodes = { ...series.seasons[key].episodes };
-    for (const ep of episodes) updatedEpisodes[String(ep)] = { ...updatedEpisodes[String(ep)], watched };
 
-    patchFollowed({ ...series, seasons: { ...series.seasons, [key]: { ...series.seasons[key], episodes: updatedEpisodes } } });
+    let toggled = episodes.map((episode) => ({ season, episode }));
+    if (watched) {
+      const previous = unwatchedBefore(series, season, 0);
+      if (previous.length > 0 && (await askMarkPrevious(previous.length))) toggled = [...previous, ...toggled];
+    }
 
+    patchFollowed(withEpisodes(series, toggled, watched));
     try {
-      await setSeasonWatched(uid, series.id, season, episodes, watched);
+      if (toggled.every((item) => item.season === season)) await setSeasonWatched(uid, series.id, season, episodes, watched);
+      else await setEpisodesWatched(uid, series.id, toggled, watched);
     } catch (err) {
       console.error("Erro ao marcar temporada:", err);
       patchFollowed(series); // desfaz

@@ -91,7 +91,7 @@ const AnimePage = () => {
       <FollowedTimelinesRow timelines={followedTimelines} watchedMap={media.checkedMap} onSelect={setSelectedTimeline} />
 
       <HomeGroup>
-        <SeriesRailSection title={t("animePage.myAnime")} items={myAnimeItems} emptyMessage={t("animePage.emptyMine")} />
+        <SeriesRailSection title={t("animePage.myAnime")} items={myAnimeItems} emptyMessage={t("animePage.emptyMine")} progressFilters />
 
         <RankSection
           mediaKind="tv"

@@ -319,12 +319,29 @@
     "emptyMine": "Tick the ✓ on a series you're watching to see it here with your episode progress.",
     "mostWatched": "Most watched in",
     "bestRatedOn": "Best rated on {{provider}}",
-    "confirmUnfollow": "Stop following \"{{title}}\"? Your episode progress will be lost."
+    "confirmUnfollow": "Stop following \"{{title}}\"? Your episode progress will be lost.",
+    "confirmMarkPrevious": "You have {{count}} earlier episodes (back to S1 E1) not marked as watched yet. Mark them all?",
+    "confirmUnfollowTitle": "Stop following",
+    "confirmUnfollowYes": "Stop following",
+    "confirmMarkPreviousTitle": "Mark previous episodes?",
+    "confirmMarkPreviousYes": "Yes, mark all",
+    "confirmMarkPreviousNo": "Just this one"
   },
   "animePage": {
     "myAnime": "My anime",
     "emptyMine": "Tick the ✓ on an anime you're watching to see it here with your episode progress.",
     "mostWatched": "Most watched in",
     "bestRatedOn": "Best rated on {{provider}}"
+  },
+  "followFilter": {
+    "completed": "Completed",
+    "inProgress": "In progress",
+    "notStarted": "Not started",
+    "empty": "No titles in this filter."
+  },
+  "confirmDialog": {
+    "title": "Confirm",
+    "confirm": "Confirm",
+    "cancel": "Cancel"
   }
 }

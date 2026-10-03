@@ -142,6 +142,17 @@ export const setSeasonWatched = (uid: string, seriesId: number, season: number, 
   return updateDoc(doc(followingCollection(uid), String(seriesId)), updates);
 };
 
+// Marca/desmarca episódios SOLTOS (de temporadas diferentes) de uma vez — um
+// `updateDoc` só com um dot-path por episódio. Usado por "marcar também os
+// episódios anteriores" (ver MediaCardsProvider.tsx, toggleEpisode).
+export const setEpisodesWatched = (uid: string, seriesId: number, episodes: { season: number; episode: number }[], watched: boolean): Promise<void> => {
+  const updates: Record<string, boolean> = {};
+  for (const { season, episode } of episodes) {
+    updates[`seasons.${season}.episodes.${episode}.watched`] = watched;
+  }
+  return updateDoc(doc(followingCollection(uid), String(seriesId)), updates);
+};
+
 // Usado pela grade "Minhas séries" (barra de progresso do card) e por
 // SeriesDetail (header do dialog) — soma episódios de todas as
 // temporadas, não só a temporada aberta no momento.

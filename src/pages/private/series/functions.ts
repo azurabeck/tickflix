@@ -49,6 +49,9 @@ interface RawTvSeasonSummary {
 interface RawTvSummary {
   status: string;
   seasons: RawTvSeasonSummary[];
+  genres?: { id: number }[];
+  original_language?: string;
+  origin_country?: string[];
 }
 
 interface SeriesSeasonSummary {
@@ -59,6 +62,7 @@ interface SeriesSeasonSummary {
 
 interface SeriesSeasonsResult {
   status: string;
+  isAnime: boolean;
   seasons: SeriesSeasonSummary[];
 }
 
@@ -68,7 +72,10 @@ const fetchSeriesSeasons = async (seriesId: number): Promise<SeriesSeasonsResult
     .filter((s) => s.season_number > 0)
     .map((s) => ({ seasonNumber: s.season_number, episodeCount: s.episode_count, name: s.name }))
     .sort((a, b) => a.seasonNumber - b.seasonNumber);
-  return { status: data.status, seasons };
+  // Mesma definição de anime do resto do app (api/_lib/seriesData.ts):
+  // gênero Animação + produzido/falado em japonês.
+  const isAnime = (data.genres ?? []).some((g) => g.id === 16) && (data.original_language === "ja" || (data.origin_country ?? []).includes("JP"));
+  return { status: data.status, isAnime, seasons };
 };
 
 // --- Episódios de uma temporada ------------------------------------------------
@@ -105,11 +112,14 @@ const fetchSeasonEpisodeNames = async (seriesId: number, seasonNumber: number): 
 // atômico e direcionado, sem reescrever o array inteiro.
 export interface SeriesWithEpisodes {
   status: string;
+  // O TMDb diz se é anime — quem segue SEM saber a categoria (busca, rank)
+  // usa isso pra ir pra "Meus animes" em vez de "Minhas séries".
+  isAnime: boolean;
   seasons: Record<string, FollowedSeason>;
 }
 
 export const fetchSeriesWithEpisodes = async (seriesId: number): Promise<SeriesWithEpisodes> => {
-  const { status, seasons } = await fetchSeriesSeasons(seriesId);
+  const { status, isAnime, seasons } = await fetchSeriesSeasons(seriesId);
   const episodesPerSeason = await Promise.all(seasons.map((season) => fetchSeasonEpisodeNames(seriesId, season.seasonNumber)));
 
   const result: Record<string, FollowedSeason> = {};
@@ -120,7 +130,7 @@ export const fetchSeriesWithEpisodes = async (seriesId: number): Promise<SeriesW
     }
     result[String(season.seasonNumber)] = { name: season.name, episodes };
   });
-  return { status, seasons: result };
+  return { status, isAnime, seasons: result };
 };
 
 // --- País de origem (badge do card) --------------------------------------------
