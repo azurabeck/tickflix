@@ -11,7 +11,7 @@
 // PageCache.ts) — pedido original da Rebecca era sobre a experiência do
 // usuário ("o cache só fazer reload de 10 em 10 dias", depois ajustado pra 7), que vale igual
 // aqui, só que agora o relógio é compartilhado.
-import { adminDb } from "./firebaseAdmin";
+import { adminDb } from "./firebaseAdmin.js";
 
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const COLLECTION = "sharedCache";

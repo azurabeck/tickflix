@@ -18,7 +18,7 @@
 //   refresh: "1" força ignorar o cache (botão "Atualizar" do UserMenu)
 //   part: "main" (padrão: em cartaz + trailers + bilheteria) | "releases" (os 120 lançamentos do "Ver tudo", bem mais pesado)
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { cachedOrFetch } from "./_lib/sharedCache";
+import { cachedOrFetch } from "./_lib/sharedCache.js";
 import {
   fetchBoxOfficeChampions,
   fetchHeroTrailers,
@@ -30,7 +30,7 @@ import {
   type HeroTrailer,
   type MajorReleaseMovie,
   type MovieRowItem,
-} from "./_lib/dashboardData";
+} from "./_lib/dashboardData.js";
 
 const ALLOWED_LANGS = new Set(["pt-BR", "en-US", "es-ES"]);
 const ROW_LIMIT = 8;

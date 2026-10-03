@@ -18,7 +18,7 @@
 // do navegador, sem passar por aqui (ver src/service/IASettings.ts).
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getAuth } from "firebase-admin/auth";
-import { getAdminApp } from "./_lib/firebaseAdmin";
+import { getAdminApp } from "./_lib/firebaseAdmin.js";
 
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
 const GEMINI_FALLBACK_MODEL = "gemini-flash-latest";

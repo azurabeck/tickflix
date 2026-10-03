@@ -6,8 +6,8 @@
 //
 // GET /api/series?kind=series|anime&lang=pt-BR&refresh=<qualquer valor>
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { cachedOrFetch } from "./_lib/sharedCache";
-import type { HeroTrailer } from "./_lib/dashboardData";
+import { cachedOrFetch } from "./_lib/sharedCache.js";
+import type { HeroTrailer } from "./_lib/dashboardData.js";
 import {
   STREAMING_PROVIDERS,
   fetchTopByProvider,
@@ -15,7 +15,7 @@ import {
   fetchTvHeroTrailers,
   type DiscoveryKind,
   type SeriesRowItem,
-} from "./_lib/seriesData";
+} from "./_lib/seriesData.js";
 
 const ALLOWED_LANGS = new Set(["pt-BR", "en-US", "es-ES"]);
 const ROW_LIMIT = 20;

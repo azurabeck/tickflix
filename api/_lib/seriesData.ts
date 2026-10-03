@@ -30,8 +30,8 @@
 // Duplicado de propósito do que sobrou em src/ (STREAMING_PROVIDERS,
 // `SeriesRowItem`): `src/` é código de browser com alias `@/` que o
 // bundler da Vercel não resolve.
-import { tmdbFetchServer } from "./tmdbServer";
-import { isLikelyDubbed, pickBestTrailer, type HeroTrailer, type RawTmdbVideo } from "./dashboardData";
+import { tmdbFetchServer } from "./tmdbServer.js";
+import { isLikelyDubbed, pickBestTrailer, type HeroTrailer, type RawTmdbVideo } from "./dashboardData.js";
 
 export type DiscoveryKind = "series" | "anime";
 

@@ -7,7 +7,7 @@
 // alias `@/` que o bundler da Vercel não resolve): qualquer ajuste de
 // COMPORTAMENTO num dos dois lados (ex.: mudar o piso de voto da
 // bilheteria) precisa ser espelhado aqui manualmente.
-import { tmdbFetchServer } from "./tmdbServer";
+import { tmdbFetchServer } from "./tmdbServer.js";
 
 const INGRESSO_BASE_URL = "https://www.ingresso.com";
 const READER_PROXY_URL = "https://r.jina.ai/";
