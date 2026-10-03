@@ -528,6 +528,56 @@ $content-max-width: 1440px;
     padding: 8px;
   }
 
+  // Linha do episódio = [botão de marcar (flex) | (i) descrição]; o texto da
+  // descrição abre logo abaixo.
+  &__episode-item {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__episode-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    > .series-page__episode {
+      flex: 1;
+      min-width: 0;
+      width: auto;
+    }
+  }
+
+  &__episode-info-button {
+    display: inline-flex;
+    flex: 0 0 auto;
+    width: 28px;
+    height: 28px;
+    padding: 4px;
+    border: none;
+    border-radius: 50%;
+    background: none;
+    color: $color-text-muted;
+    cursor: pointer;
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    &:hover,
+    &--open {
+      color: $color-primary;
+      background: rgba($color-primary, 0.1);
+    }
+  }
+
+  &__episode-info {
+    margin: 2px 8px 8px 38px; // alinhado com o título (depois do check e do número)
+    color: $color-text-muted;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
   &__episode {
     display: flex;
     align-items: center;

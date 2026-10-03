@@ -83,6 +83,7 @@ interface RawEpisode {
   episode_number: number;
   name: string;
   air_date: string | null;
+  overview?: string;
 }
 
 interface RawSeasonDetail {
@@ -92,6 +93,32 @@ interface RawSeasonDetail {
 const fetchSeasonEpisodeNames = async (seriesId: number, seasonNumber: number): Promise<RawEpisode[]> => {
   const data = await tmdbFetch<RawSeasonDetail>(`/tv/${seriesId}/season/${seasonNumber}`);
   return data.episodes;
+};
+
+// --- Descrição (sinopse) dos episódios de uma temporada ---------------------
+// O doc de "seguir" só guarda nome/data/visto; a sinopse é buscada sob demanda
+// quando o usuário clica no ícone de informação do episódio (SeriesDetail.tsx)
+// e fica em memória por temporada — abrir vários episódios da mesma temporada
+// faz UMA chamada só.
+const overviewMemo = new Map<string, Promise<Record<number, string>>>();
+
+export const fetchEpisodeOverviews = (seriesId: number, seasonNumber: number): Promise<Record<number, string>> => {
+  const memoKey = `${seriesId}-${seasonNumber}`;
+  const existing = overviewMemo.get(memoKey);
+  if (existing) return existing;
+
+  const request = fetchSeasonEpisodeNames(seriesId, seasonNumber)
+    .then((episodes) => {
+      const overviews: Record<number, string> = {};
+      for (const ep of episodes) overviews[ep.episode_number] = (ep.overview ?? "").trim();
+      return overviews;
+    })
+    .catch((err) => {
+      overviewMemo.delete(memoKey); // falha não fica em cache: tenta de novo no próximo clique
+      throw err;
+    });
+  overviewMemo.set(memoKey, request);
+  return request;
 };
 
 // --- Temporadas + episódios completos (na hora de SEGUIR uma série) ---------

@@ -325,7 +325,13 @@
     "confirmUnfollowYes": "Stop following",
     "confirmMarkPreviousTitle": "Mark previous episodes?",
     "confirmMarkPreviousYes": "Yes, mark all",
-    "confirmMarkPreviousNo": "Just this one"
+    "confirmMarkPreviousNo": "Just this one",
+    "episodeInfo": {
+      "button": "Show description of episode {{name}}",
+      "loading": "Loading description...",
+      "empty": "This episode has no description yet.",
+      "error": "Couldn't load the description right now."
+    }
   },
   "animePage": {
     "myAnime": "My anime",

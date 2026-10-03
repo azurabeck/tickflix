@@ -30,6 +30,8 @@
 // marcar como visto algo que não existe ainda.
 import { useEffect, useState } from "react";
 import { Check, ChevronDown, ChevronRight, Loader2, X } from "lucide-react";
+import { InformationCircleIcon } from "@heroicons/react/24/outline";
+import { useTranslation } from "react-i18next";
 import { MovieDetailCast, MovieDetailHeader, MovieDetailProviders } from "@/components/movieDetail";
 import { fetchMovieDetail, fetchWatchProviders, type MovieDetail as MovieDetailData, type WatchProviders } from "@/components/movieDetail/functions";
 import { fetchCurrentLocation } from "@/service/LocationSettings";
@@ -40,7 +42,11 @@ import {
   type FollowedSeries,
 } from "@/service/FollowingSettings";
 import { progressPercent } from "@/service/TimelineSettings";
+import { fetchEpisodeOverviews } from "./functions";
 import "./styles.scss";
+
+// Qual episódio está com a descrição aberta e o que já foi carregado.
+type OverviewState = { status: "loading" } | { status: "ready"; text: string } | { status: "error" };
 
 interface SeriesDetailProps {
   series: FollowedSeries;
@@ -77,6 +83,54 @@ const seasonAiredProgress = (season: FollowedSeason, seriesStatus: string): { wa
 };
 
 const SeriesDetail = ({ series, uid, onClose, onToggleEpisode, onToggleSeason }: SeriesDetailProps) => {
+  const { t } = useTranslation();
+  // Descrição de episódio: o ícone (i) de cada linha abre/fecha o texto logo
+  // abaixo; a sinopse vem do TMDb sob demanda (fetchEpisodeOverviews).
+  const [openInfo, setOpenInfo] = useState<string | null>(null);
+  const [overviews, setOverviews] = useState<Record<string, OverviewState>>({});
+
+  const toggleInfo = (seasonNumber: number, episodeNumber: number) => {
+    const key = `${seasonNumber}-${episodeNumber}`;
+    if (openInfo === key) {
+      setOpenInfo(null);
+      return;
+    }
+    setOpenInfo(key);
+    if (overviews[key]?.status === "ready" || overviews[key]?.status === "loading") return;
+
+    setOverviews((prev) => ({ ...prev, [key]: { status: "loading" } }));
+    fetchEpisodeOverviews(series.id, seasonNumber)
+      .then((bySeason) => setOverviews((prev) => ({ ...prev, [key]: { status: "ready", text: bySeason[episodeNumber] ?? "" } })))
+      .catch((err) => {
+        console.error("Erro ao buscar a descrição do episódio:", err);
+        setOverviews((prev) => ({ ...prev, [key]: { status: "error" } }));
+      });
+  };
+
+  const renderInfo = (seasonNumber: number, episodeNumber: number, episodeName: string) => {
+    const key = `${seasonNumber}-${episodeNumber}`;
+    const state = overviews[key];
+    const isOpen = openInfo === key;
+    const label = t("seriesPage.episodeInfo.button", { name: episodeName });
+
+    return {
+      button: (
+        <button type="button" className={isOpen ? "series-page__episode-info-button series-page__episode-info-button--open" : "series-page__episode-info-button"} onClick={() => toggleInfo(seasonNumber, episodeNumber)} title={label} aria-label={label} aria-expanded={isOpen}>
+          <InformationCircleIcon />
+        </button>
+      ),
+      text: isOpen && (
+        <p className="series-page__episode-info">
+          {!state || state.status === "loading"
+            ? t("seriesPage.episodeInfo.loading")
+            : state.status === "error"
+              ? t("seriesPage.episodeInfo.error")
+              : state.text || t("seriesPage.episodeInfo.empty")}
+        </p>
+      ),
+    };
+  };
+
   const [detail, setDetail] = useState<MovieDetailData | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
   const [providers, setProviders] = useState<WatchProviders | null>(null);
@@ -240,29 +294,42 @@ const SeriesDetail = ({ series, uid, onClose, onToggleEpisode, onToggleSeason }:
                             const episode = season.episodes[String(ep)];
                             const airing = episodeAiringInfo(episode, series.status);
 
+                            const info = renderInfo(seasonNumber, ep, episode.name);
+
                             if (!airing.aired) {
                               return (
-                                <div key={ep} className="series-page__episode series-page__episode--unaired">
-                                  <span className="series-page__episode-check" />
-                                  <span className="series-page__episode-number">{ep}.</span>
-                                  <span className="series-page__episode-name">{episode.name}</span>
-                                  <span className="series-page__episode-airing">{airing.label}</span>
+                                <div key={ep} className="series-page__episode-item">
+                                  <div className="series-page__episode-row">
+                                    <div className="series-page__episode series-page__episode--unaired">
+                                      <span className="series-page__episode-check" />
+                                      <span className="series-page__episode-number">{ep}.</span>
+                                      <span className="series-page__episode-name">{episode.name}</span>
+                                      <span className="series-page__episode-airing">{airing.label}</span>
+                                    </div>
+                                    {info.button}
+                                  </div>
+                                  {info.text}
                                 </div>
                               );
                             }
 
                             return (
-                              <button
-                                key={ep}
-                                type="button"
-                                className={episode.watched ? "series-page__episode series-page__episode--watched" : "series-page__episode"}
-                                onClick={() => onToggleEpisode(series, seasonNumber, ep)}
-                                disabled={!uid}
-                              >
-                                <span className="series-page__episode-check">{episode.watched && <Check size={14} />}</span>
-                                <span className="series-page__episode-number">{ep}.</span>
-                                <span className="series-page__episode-name">{episode.name}</span>
-                              </button>
+                              <div key={ep} className="series-page__episode-item">
+                                <div className="series-page__episode-row">
+                                  <button
+                                    type="button"
+                                    className={episode.watched ? "series-page__episode series-page__episode--watched" : "series-page__episode"}
+                                    onClick={() => onToggleEpisode(series, seasonNumber, ep)}
+                                    disabled={!uid}
+                                  >
+                                    <span className="series-page__episode-check">{episode.watched && <Check size={14} />}</span>
+                                    <span className="series-page__episode-number">{ep}.</span>
+                                    <span className="series-page__episode-name">{episode.name}</span>
+                                  </button>
+                                  {info.button}
+                                </div>
+                                {info.text}
+                              </div>
                             );
                           })}
                           {!allAired && <p className="series-page__season-hint">Episódios sem marcação ainda não foram ao ar.</p>}

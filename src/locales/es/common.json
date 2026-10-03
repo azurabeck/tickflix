@@ -325,7 +325,13 @@
     "confirmUnfollowYes": "Dejar de seguir",
     "confirmMarkPreviousTitle": "¿Marcar episodios anteriores?",
     "confirmMarkPreviousYes": "Sí, marcar todos",
-    "confirmMarkPreviousNo": "Solo este"
+    "confirmMarkPreviousNo": "Solo este",
+    "episodeInfo": {
+      "button": "Ver descripción del episodio {{name}}",
+      "loading": "Cargando descripción...",
+      "empty": "Este episodio aún no tiene descripción.",
+      "error": "No se pudo cargar la descripción ahora."
+    }
   },
   "animePage": {
     "myAnime": "Mis animes",
