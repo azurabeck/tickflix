@@ -48,10 +48,9 @@ import {
   progressPercent,
   type Timeline,
   type TimelineCategoryFilter,
-  type TimelineMovie,
 } from "@/service/TimelineSettings";
 import { posterUrl } from "@/service/TMDbSettings";
-import { fetchWatchedMap, setWatched } from "@/service/WatchedSettings";
+import { useMediaCards } from "@/components/mediaCard";
 import TimelineDetail from "./TimelineDetail";
 import "./styles.scss";
 
@@ -125,11 +124,11 @@ const TimelinesPage = () => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  // "Já vi" — estado GLOBAL por filme (service/WatchedSettings.ts), não
+  // "Já vi"/"seguindo" — estado GLOBAL por título (MediaCardsProvider), não
   // por timeline: o mesmo filme em duas timelines diferentes compartilha
   // essa marcação (pedido explícito da Rebecca — "a timeline é um
   // agrupamento", não dona do estado de visto).
-  const [watchedMap, setWatchedMapState] = useState<Map<string, number>>(new Map());
+  const { checkedMap: watchedMap } = useMediaCards();
 
   useEffect(() => {
     if (!uid) {
@@ -142,29 +141,7 @@ const TimelinesPage = () => {
         console.error("Erro ao buscar timelines:", err);
         setError("Não foi possível carregar suas timelines agora.");
       });
-
-    fetchWatchedMap(uid)
-      .then(setWatchedMapState)
-      .catch((err) => console.error("Erro ao buscar filmes vistos:", err));
   }, [uid]);
-
-  const handleToggleWatched = async (movie: TimelineMovie) => {
-    if (!uid) return;
-    const key = timelineMovieKey(movie);
-    const nextWatched = !watchedMap.has(key);
-
-    const nextMap = new Map(watchedMap);
-    if (nextWatched) nextMap.set(key, Date.now());
-    else nextMap.delete(key);
-    setWatchedMapState(nextMap);
-
-    try {
-      await setWatched(uid, key, nextWatched);
-    } catch (err) {
-      console.error("Erro ao marcar filme como visto:", err);
-      setWatchedMapState(watchedMap); // desfaz
-    }
-  };
 
   // "Seguir" — timeline seguida passa a aparecer na página de descoberta
   // da própria categoria (ver home/dashboard, series/index.tsx,
@@ -306,13 +283,7 @@ const TimelinesPage = () => {
       </div>
 
       {selectedTimeline && (
-        <TimelineDetail
-          timeline={selectedTimeline}
-          watchedMap={watchedMap}
-          uid={uid}
-          onClose={() => setSelectedTimeline(null)}
-          onToggleWatched={handleToggleWatched}
-        />
+        <TimelineDetail timeline={selectedTimeline} onClose={() => setSelectedTimeline(null)} />
       )}
     </div>
   );

@@ -1,0 +1,102 @@
+// src/tooltip.scss
+// Tooltip em balão branco do Figma (Rebecca), compartilhado entre o card de
+// filme (home/dashboard/rail-card.scss) e o RankComponent. Uso:
+//   @use "@/tooltip" as *;
+//   .meu-bloco { @include data-tooltips; }
+// e cada controle ganha `data-tooltip="texto"`.
+//
+// Padrão: balão EMBAIXO, centrado no elemento. Variações por atributo:
+//   data-tooltip-align="start" — balão alinhado à ESQUERDA do elemento
+//   data-tooltip-align="end"   — balão alinhado à DIREITA do elemento
+//   data-tooltip-side="right"  — balão ao LADO direito (seta apontando pra esquerda)
+// Medidas do SVG: balão 23px de altura, raio 8, texto 10px, seta 10x10 a
+// 1px do elemento.
+@mixin data-tooltips {
+  [data-tooltip] {
+    position: relative;
+  }
+
+  [data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: calc(100% + 11px);
+    left: 50%;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    height: 23px;
+    padding: 0 8px;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #000000;
+    font-size: 10px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(#000000, 0.2);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-50%);
+    transition: opacity 0.15s ease;
+  }
+
+  // Seta 10x10 apontando pro elemento.
+  [data-tooltip]::before {
+    content: "";
+    position: absolute;
+    top: calc(100% + 1px);
+    left: 50%;
+    z-index: 5;
+    border-right: 5px solid transparent;
+    border-bottom: 10px solid #ffffff;
+    border-left: 5px solid transparent;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-50%);
+    transition: opacity 0.15s ease;
+  }
+
+  [data-tooltip-align="start"]::after {
+    left: -6px;
+    transform: none;
+  }
+
+  [data-tooltip-align="end"]::after {
+    right: -6px;
+    left: auto;
+    transform: none;
+  }
+
+  [data-tooltip-side="right"]::after {
+    top: 50%;
+    left: calc(100% + 11px);
+    transform: translateY(-50%);
+  }
+
+  [data-tooltip-side="right"]::before {
+    top: 50%;
+    left: calc(100% + 1px);
+    border-top: 5px solid transparent;
+    border-right: 10px solid #ffffff;
+    border-bottom: 5px solid transparent;
+    border-left: 0;
+    transform: translateY(-50%);
+  }
+
+  [data-tooltip]:hover::after,
+  [data-tooltip]:hover::before,
+  [data-tooltip]:focus-visible::after,
+  [data-tooltip]:focus-visible::before {
+    opacity: 1;
+  }
+
+  // Celular/touch: não existe hover, e o balão (posição absoluta) só alargava
+  // a página, abrindo rolagem horizontal. Some por completo.
+  @media (hover: none), (max-width: 700px) {
+    [data-tooltip]::after,
+    [data-tooltip]::before {
+      display: none;
+    }
+  }
+}

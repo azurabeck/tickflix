@@ -3,38 +3,33 @@
 // pedido explícito da Rebecca: "coloca um botão ver tudo ali, nos
 // lançamentos dos ultimos 12 meses, os fillmes deve estar agrupados por
 // mes". A fileira em si (`index.tsx`) mostra só os 20 primeiros
-// (MAJOR_RELEASES_LIMIT) num scroll horizontal; esse modal busca uma
-// lista bem maior (MODAL_LIMIT) e agrupa em seções por mês — ordem mais
-// recente primeiro, já que é "dos últimos 12 meses pra trás".
+// (MAJOR_RELEASES_LIMIT) num scroll horizontal; esse modal agrupa a
+// lista INTEIRA (`majorReleasesFull`, até MAJOR_RELEASES_MODAL_LIMIT=120)
+// em seções por mês — ordem mais recente primeiro, já que é "dos últimos
+// 12 meses pra trás".
 //
-// Busca PRÓPRIA (não reaproveita o resultado da fileira) — abre só
-// quando clicado (`fetchRecentMajorReleases(MODAL_LIMIT)` no mount deste
-// componente, não no mount da Home), evita pagar o custo de
-// `/watch/providers` por ~100 filmes pra quem nunca clica em "Ver tudo".
-import { useEffect, useState } from "react";
+// SEM busca própria — recebe `movies`/`error` por prop, já resolvidos
+// (e cacheados, service/PageCache.ts) pelo `index.tsx`, que busca essa
+// lista grande UMA vez, junto com o resto da home. ANTES esse componente
+// buscava sozinho ao montar (só quando clicado) — pedido explícito da
+// Rebecca pra mudar: "o modal ver tudo... tem que ser cacheado... e tem
+// que loadar junto com o inicio da página" (também elimina uma duplicata
+// real: a fileira e esse modal buscavam, cada um por conta própria,
+// basicamente os MESMOS primeiros filmes — ver comentário longo em
+// `majorReleasesFull`, index.tsx).
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import { Loader2, Play, X } from "lucide-react";
-import { movieKey } from "@/service/TimelineSettings";
-import { posterUrl } from "@/service/TMDbSettings";
-import WatchButton from "@/components/watchButton";
-import AvailabilityBadge from "@/components/availabilityBadge";
-import AddToTimelineButton from "@/components/addToTimelineButton";
-import { fetchRecentMajorReleases, type MajorReleaseMovie } from "./functions";
+import { ConnectedMediaCard, cardKey, useOpenCard } from "@/components/mediaCard";
+import type { MajorReleaseMovie } from "./functions";
 import "./styles.scss";
 
 interface MajorReleasesModalProps {
-  watchedMap: Map<string, number>;
-  uid: string | null;
+  movies: MajorReleaseMovie[] | null;
+  error: string | null;
   onClose: () => void;
-  onSelectMovie: (movie: { id: number; mediaType: "movie" | "tv" }) => void;
-  onToggleWatched: (movie: MajorReleaseMovie) => void;
 }
-
-// Bem mais que os 20 da fileira — "ver tudo" de verdade, com densidade
-// real em cada mês depois de agrupar (ver `releasesCandidatePages` em
-// functions.ts, que escala o teto de páginas do TMDb junto com isso).
-const MODAL_LIMIT = 120;
 
 // `yyyymm` no formato "YYYY-MM" (recorte de `releaseDate`, que já vem
 // "YYYY-MM-DD" do TMDb). Nomes de mês + ordem "mês de ano" vêm de
@@ -75,27 +70,22 @@ const groupByMonth = (t: TFunction, movies: MajorReleaseMovie[]): MonthGroup[] =
 // filme, `fetchRecentMajorReleases`).
 type AvailabilityFilter = "all" | "available";
 
-const MajorReleasesModal = ({ watchedMap, uid, onClose, onSelectMovie, onToggleWatched }: MajorReleasesModalProps) => {
-  const { t } = useTranslation();
-  const [movies, setMovies] = useState<MajorReleaseMovie[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<AvailabilityFilter>("all");
+// Grade de UM mês — cada mês tem o próprio "um card aberto por vez".
+const MonthGrid = ({ movies }: { movies: MajorReleaseMovie[] }) => {
+  const open = useOpenCard(movies);
+  return (
+    <div className="media-grid media-grid--modal">
+      {movies.map((movie, index) => {
+        const id = cardKey(movie, index);
+        return <ConnectedMediaCard isModal key={id} item={movie} isOpen={open.openKey === id} onSelect={() => open.setOpenKey(id)} available={movie.available} />;
+      })}
+    </div>
+  );
+};
 
-  useEffect(() => {
-    let cancelled = false;
-    fetchRecentMajorReleases(MODAL_LIMIT)
-      .then((result) => {
-        if (!cancelled) setMovies(result);
-      })
-      .catch((err) => {
-        console.error("Erro ao buscar todos os lançamentos:", err);
-        if (!cancelled) setError(t("dashboard.majorReleasesModal.loadError"));
-      });
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+const MajorReleasesModal = ({ movies, error, onClose }: MajorReleasesModalProps) => {
+  const { t } = useTranslation();
+  const [filter, setFilter] = useState<AvailabilityFilter>("all");
 
   const filteredMovies = movies ? (filter === "available" ? movies.filter((m) => m.available) : movies) : null;
   const groups = filteredMovies ? groupByMonth(t, filteredMovies) : [];
@@ -143,32 +133,7 @@ const MajorReleasesModal = ({ watchedMap, uid, onClose, onSelectMovie, onToggleW
         {groups.map((group) => (
           <section key={group.key} className="dashboard__major-releases-group">
             <h3 className="dashboard__major-releases-month">{group.label}</h3>
-            <div className="dashboard__major-releases-grid">
-              {group.movies.map((movie) => {
-                const poster = posterUrl(movie.posterPath);
-                const isWatched = watchedMap.has(movieKey(movie.mediaType, movie.id));
-
-                return (
-                  <div key={movie.id} className="dashboard__major-releases-item">
-                    <button
-                      type="button"
-                      className="dashboard__major-releases-item-open"
-                      onClick={() => onSelectMovie({ id: movie.id, mediaType: movie.mediaType })}
-                    >
-                      {poster ? (
-                        <img src={poster} alt={movie.title} className="dashboard__major-releases-poster" />
-                      ) : (
-                        <div className="dashboard__major-releases-poster dashboard__major-releases-poster--empty" />
-                      )}
-                      <AvailabilityBadge available={movie.available} />
-                      <span className="dashboard__major-releases-item-title">{movie.title}</span>
-                    </button>
-                    <WatchButton isWatched={isWatched} onToggle={() => onToggleWatched(movie)} disabled={!uid} />
-                    <AddToTimelineButton uid={uid} movie={{ id: movie.id, mediaType: movie.mediaType, title: movie.title, posterPath: movie.posterPath }} />
-                  </div>
-                );
-              })}
-            </div>
+            <MonthGrid movies={group.movies} />
           </section>
         ))}
       </div>

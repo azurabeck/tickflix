@@ -14,6 +14,10 @@ export const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w342";
 // Imagem maior — só pro fundo do modal de detalhes do filme/série
 // (MovieDetail), onde um pôster em w342 ficaria borrado esticado full-width.
 export const TMDB_BACKDROP_BASE = "https://image.tmdb.org/t/p/w1280";
+// Backdrop (imagem de cena, paisagem) em tamanho de CARD — w780 é o
+// meio-termo do TMDb (w300 fica borrado em tela retina, w1280 é pesado
+// demais pra dezenas de cards numa fileira).
+export const TMDB_BACKDROP_CARD_BASE = "https://image.tmdb.org/t/p/w780";
 export const TMDB_PROFILE_BASE = "https://image.tmdb.org/t/p/w185";
 // Logo de provedor de streaming ("onde assistir") — w92 é o menor
 // tamanho oficial do TMDb pra isso, mais que suficiente pro ícone
@@ -144,6 +148,8 @@ export const tmdbFetch = async <T>(
 
 export const posterUrl = (path: string | null): string | null => (path ? `${TMDB_IMAGE_BASE}${path}` : null);
 
+export const backdropCardUrl = (path: string | null | undefined): string | null => (path ? `${TMDB_BACKDROP_CARD_BASE}${path}` : null);
+
 // --- Busca de título solto ---------------------------------------------------
 // Usado sempre que já se sabe o nome/ano/tipo de um título (vindo de uma
 // lista da IA ou digitado no rodapé) e falta só resolver o id/pôster reais
@@ -224,21 +230,50 @@ export const searchTmdbMulti = async (query: string, limit: number): Promise<Tmd
 // título/pôster pra exibir. Usado por "Últimos vistos"
 // (home/dashboard/functions.ts) pra listar sem duplicar esse dado no
 // Firestore.
-export const fetchTitleById = async (
-  mediaType: "movie" | "tv",
-  id: number
-): Promise<{ title: string; posterPath: string | null; year: string } | null> => {
-  try {
-    const data = await tmdbFetch<{ title?: string; name?: string; poster_path: string | null; release_date?: string; first_air_date?: string }>(
-      `/${mediaType}/${id}`
-    );
-    return {
-      title: data.title ?? data.name ?? "Sem título",
-      posterPath: data.poster_path,
-      year: (data.release_date ?? data.first_air_date ?? "").slice(0, 4),
-    };
-  } catch (err) {
-    console.error(`Erro ao resolver ${mediaType}/${id} no TMDb:`, err);
-    return null;
-  }
+export interface ResolvedTitle {
+  title: string;
+  posterPath: string | null;
+  backdropPath: string | null;
+  year: string;
+  voteAverage: number;
+}
+
+// Título/pôster de um id NÃO muda de uma visita pra outra — memo em memória
+// (vale a sessão do app) evita re-resolver os mesmos ids toda vez que
+// "Últimos vistos"/"Seu rank" remontam; guarda a Promise, então chamadas
+// simultâneas pro mesmo id também viram uma só.
+const titleMemo = new Map<string, Promise<ResolvedTitle | null>>();
+
+export const fetchTitleById = (mediaType: "movie" | "tv", id: number): Promise<ResolvedTitle | null> => {
+  const memoKey = `${mediaType}-${id}`;
+  const existing = titleMemo.get(memoKey);
+  if (existing) return existing;
+
+  const request = (async (): Promise<ResolvedTitle | null> => {
+    try {
+      const data = await tmdbFetch<{
+        title?: string;
+        name?: string;
+        poster_path: string | null;
+        backdrop_path: string | null;
+        release_date?: string;
+        first_air_date?: string;
+        vote_average?: number;
+      }>(`/${mediaType}/${id}`);
+      return {
+        title: data.title ?? data.name ?? "Sem título",
+        posterPath: data.poster_path,
+        backdropPath: data.backdrop_path,
+        year: (data.release_date ?? data.first_air_date ?? "").slice(0, 4),
+        voteAverage: data.vote_average ?? 0,
+      };
+    } catch (err) {
+      console.error(`Erro ao resolver ${mediaType}/${id} no TMDb:`, err);
+      titleMemo.delete(memoKey); // falha não fica em cache — próxima tentativa refaz
+      return null;
+    }
+  })();
+
+  titleMemo.set(memoKey, request);
+  return request;
 };

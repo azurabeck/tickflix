@@ -77,6 +77,38 @@
   }
 }
 
+// Variante em linha (＋ 24px, card de sugestão): sem posição absoluta nem
+// fundo; o menu abre pra cima alinhado à direita do botão.
+.add-to-timeline--icon {
+  position: relative;
+  bottom: auto;
+  left: auto;
+  z-index: auto;
+  display: inline-flex;
+
+  .add-to-timeline__button {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: none;
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    &:hover:not(:disabled) {
+      background: none;
+      color: #d0c6e6;
+    }
+  }
+
+  .add-to-timeline__menu {
+    right: 0;
+    left: auto;
+  }
+}
+
 // --- Modais (existente / criar manualmente) ----------------------------------
 // Mesmo padrão visual de @/components/movieDetail e @/components/searchModal
 // (overlay escuro, painel claro, canto de fechar).

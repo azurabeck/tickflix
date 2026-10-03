@@ -5,7 +5,7 @@ import { createTimeline, timelineMovieKey, type ContentType, type TimelineMovie 
 import { fetchRecentlyWatchedKeys } from "@/service/WatchedSettings";
 import { fetchIngressoNowPlaying } from "@/service/IngressoSettings";
 import { fetchWatchProvidersBrUs, isAvailableToWatch } from "@/components/movieDetail/functions";
-import type { MovieRowItem } from "./MovieRow";
+import type { MovieRowItem } from "./types";
 
 // Único lugar que ainda cria timeline a partir de um TmdbMovie "solto"
 // (resultado de busca) — desde que o wizard saiu, a criação é só por
@@ -32,18 +32,29 @@ const toTimelineMovie = (movie: TmdbMovie): TimelineMovie => ({
 // o que escondia qualquer filme marcado "já vi" fora de timeline
 // nenhuma (Em cartaz, busca, bilheteria) — bug real, silencioso.
 
+// SÓ FILMES — a Home é a página "Filmes"; série marcada como vista (chave
+// `tv-{id}`) mora na página Séries/Animes e não pode aparecer aqui. A
+// collection guarda filme e série juntos e o `limit` do Firestore conta os
+// dois, então busca uma janela maior de chaves (RECENT_KEYS_WINDOW_FACTOR),
+// filtra os filmes e só então resolve título/imagem no TMDb — nenhuma
+// chamada gasta com série.
+const RECENT_KEYS_WINDOW_FACTOR = 5;
+
 export const getRecentlyWatched = async (uid: string, limit: number): Promise<DashboardMovie[]> => {
-  const recent = await fetchRecentlyWatchedKeys(uid, limit);
+  const recent = await fetchRecentlyWatchedKeys(uid, limit * RECENT_KEYS_WINDOW_FACTOR);
+
+  const movieIds = recent
+    .map(({ key }) => key.split("-"))
+    .filter(([mediaType, idText]) => mediaType === "movie" && Number.isFinite(Number(idText)))
+    .map(([, idText]) => Number(idText))
+    .slice(0, limit);
 
   const resolved = await Promise.all(
-    recent.map(async ({ key }): Promise<DashboardMovie | null> => {
-      const [mediaType, idText] = key.split("-");
-      if (mediaType !== "movie" && mediaType !== "tv") return null;
-      const id = Number(idText);
-      if (!Number.isFinite(id)) return null;
-
-      const title = await fetchTitleById(mediaType, id);
-      return title ? { id, mediaType, title: title.title, posterPath: title.posterPath } : null;
+    movieIds.map(async (id): Promise<DashboardMovie | null> => {
+      const title = await fetchTitleById("movie", id);
+      return title
+        ? { id, mediaType: "movie", title: title.title, posterPath: title.posterPath, backdropPath: title.backdropPath, voteAverage: title.voteAverage }
+        : null;
     })
   );
 
@@ -59,6 +70,10 @@ export interface DashboardMovie {
   mediaType: "movie" | "tv";
   title: string;
   posterPath: string | null;
+  // Imagem de cena (paisagem) pros cards novos da Home — opcional porque
+  // cópias antigas em cache e o fallback do ingresso.com podem não ter.
+  backdropPath?: string | null;
+  voteAverage?: number;
 }
 
 interface RawTmdbMovie {
@@ -291,6 +306,15 @@ export const fetchRecentMajorReleases = async (limit: number): Promise<MajorRele
   twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
 
   const collected: RawTmdbMovieWithGenres[] = [];
+  // `/discover` pode repetir um filme em páginas vizinhas quando dois
+  // itens empatam exatamente no campo de ordenação (popularity.desc) —
+  // o TMDb não garante ordem estável em empate, então a mesma entrada às
+  // vezes "escorrega" pra página seguinte também. Bug real, visto ao vivo
+  // (key duplicada no React depois de juntar a lista do modal "Ver tudo"
+  // com a da fileira, MAJOR_RELEASES_MODAL_LIMIT=120 → 8 páginas
+  // candidatas, chance bem maior de empate que o limite de 20 da fileira
+  // sozinha). `seenIds` deduplica entre páginas.
+  const seenIds = new Set<number>();
   let page = 1;
   let totalPages = 1;
   const candidatePages = releasesCandidatePages(limit);
@@ -306,7 +330,11 @@ export const fetchRecentMajorReleases = async (limit: number): Promise<MajorRele
       page: String(page),
     });
     totalPages = data.total_pages;
-    collected.push(...data.results.filter(isWesternMovie));
+    for (const movie of data.results.filter(isWesternMovie)) {
+      if (seenIds.has(movie.id)) continue;
+      seenIds.add(movie.id);
+      collected.push(movie);
+    }
     page += 1;
   }
 
@@ -442,6 +470,30 @@ export const fetchHeroTrailers = async (movies: { id: number; title: string }[])
   );
 
   return withTrailers.filter((item): item is HeroTrailer => item !== null);
+};
+
+// Trailer de UM filme/série sob demanda (botão de play do card) —
+// diferente de `fetchHeroTrailers` acima (só filme, em lote, pro carrossel).
+// `include_video_language` amplia a busca (português, inglês e sem idioma):
+// com só o idioma do site muito título ficava "sem trailer". Memo por
+// título (o trailer não muda durante a sessão).
+const trailerMemo = new Map<string, Promise<string | null>>();
+
+export const fetchTrailerKey = (mediaType: "movie" | "tv", id: number): Promise<string | null> => {
+  const memoKey = `${mediaType}-${id}`;
+  const existing = trailerMemo.get(memoKey);
+  if (existing) return existing;
+
+  const request = tmdbFetch<{ results: RawTmdbVideo[] }>(`/${mediaType}/${id}/videos`, { include_video_language: "pt,en,null" })
+    .then((data) => pickBestTrailer(data.results)?.key ?? null)
+    .catch((err) => {
+      console.error(`Erro ao buscar trailer de ${mediaType}/${id}:`, err);
+      trailerMemo.delete(memoKey);
+      return null;
+    });
+
+  trailerMemo.set(memoKey, request);
+  return request;
 };
 
 // --- Busca ------------------------------------------------------------------

@@ -8,7 +8,7 @@
 // pedido explícito da Rebecca pra virar só esse ícone em todo canto.
 //
 // Pensado pra ficar de sobreposição no canto do pôster — o pai precisa
-// de `position: relative` (ver dashboard__row-item, timelines-page__movie
+// de `position: relative` (ver rail-card, timelines-page__movie
 // etc.); `stopPropagation` no clique porque o pôster costuma estar
 // dentro (ou ao lado) de um botão "abrir detalhes" que não pode disparar
 // junto.

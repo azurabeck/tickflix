@@ -11,6 +11,9 @@ $color-primary-dark: #150241;
 
 
 $color-success: #12e251;
+// Marcação de "já vi" (check do card, bookmark) — amarelo, não o verde de
+// sucesso acima (que continua nas mensagens de sucesso e no progresso).
+$color-watched: #ffc107;
 
 $color-bg: #ffffff;
 $color-text: #16111f;

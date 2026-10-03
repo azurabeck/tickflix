@@ -21,8 +21,12 @@
     "openAccount": "Abrir menu da conta",
     "profile": "Meu perfil",
     "settings": "Configurações",
+    "refresh": "Atualizar",
     "signOut": "Sair",
     "defaultName": "Usuário"
+  },
+  "pageLoader": {
+    "loading": "Carregando..."
   },
   "tagline": "sua aventura vive no cinema",
   "close": "Fechar",
@@ -174,7 +178,8 @@
     "errors": {
       "nowPlaying": "Não foi possível carregar os filmes em cartaz.",
       "boxOffice": "Não foi possível carregar os campeões de bilheteria.",
-      "majorReleases": "Não foi possível carregar os principais lançamentos."
+      "majorReleases": "Não foi possível carregar os principais lançamentos.",
+      "watchedAll": "Não foi possível carregar o que você viu."
     },
     "hero": {
       "nowPlayingBadge": "EM CARTAZ",
@@ -228,6 +233,30 @@
         "Novembro",
         "Dezembro"
       ]
+    },
+    "seeAllShort": "ver todos",
+    "seeUntil12Months": "ver até 12 meses",
+    "watchedAllTitle": "Tudo que você viu",
+    "watchedAllEmpty": "Você ainda não marcou nenhum título como visto.",
+    "rank": {
+      "yoursEmpty": "Dê notas aos filmes que você já viu e o seu rank aparece aqui.",
+      "yoursEmptyTv": "Dê notas às séries que você assiste (não precisa terminar) e o seu rank aparece aqui.",
+      "popularityLabel": "Rank Popularidade",
+      "yoursLabel": "Seu Rank de",
+      "yoursStrong": "Notas",
+      "yoursEmptyAnime": "Dê notas aos animes que você assiste (não precisa terminar) e o seu rank aparece aqui."
+    },
+    "ai": {
+      "title": "Sugestão da IA",
+      "empty": "Dê notas e marque o que você assiste — a IA sugere o que ver a seguir com base no seu gosto.",
+      "loading": "Pensando em sugestões pra você...",
+      "error": "Não foi possível gerar sugestões agora.",
+      "retry": "Tentar de novo",
+      "basisRatings": "Com base nas suas notas",
+      "basisWatched": "Com base no que você assistiu",
+      "refresh": "Pedir outra sugestão",
+      "refreshing": "Buscando sugestão...",
+      "quota": "A cota diária da IA acabou. Tente de novo amanhã (ou use sua própria chave em Configurações)."
     }
   },
   "availabilityBadge": {
@@ -264,5 +293,38 @@
   },
   "example": {
     "hello": "Olá! Isso é um exemplo de texto traduzido."
+  },
+  "rating": {
+    "label": "Sua nota:",
+    "edit": "Clique para dar ou mudar sua nota (de 1 a 10)",
+    "needWatched": "Marque como assistido para dar sua nota",
+    "invalid": "Use uma nota de 1 a 10 (pode ser 8,5)"
+  },
+  "card": {
+    "availableStreaming": "Disponível em streaming",
+    "watchTrailer": "Ver trailer",
+    "markWatched": "Marcar como assistido",
+    "unmarkWatched": "Remover de assistidos",
+    "noTrailer": "Trailer não encontrado.",
+    "progress": "{{watched}} de {{total}} episódios vistos",
+    "markFollowing": "Marcar como assistindo",
+    "unmarkFollowing": "Deixar de assistir"
+  },
+  "rank": {
+    "top": "TOP {{count}} -",
+    "seeTop": "VER TOP {{count}}"
+  },
+  "seriesPage": {
+    "mySeries": "Minhas séries",
+    "emptyMine": "Marque o ✓ no card de uma série que você está assistindo pra ela aparecer aqui com o progresso dos episódios.",
+    "mostWatched": "Mais vistas em",
+    "bestRatedOn": "Melhor avaliadas na {{provider}}",
+    "confirmUnfollow": "Deixar de acompanhar \"{{title}}\"? Seu progresso de episódios se perde."
+  },
+  "animePage": {
+    "myAnime": "Meus animes",
+    "emptyMine": "Marque o ✓ no card de um anime que você está assistindo pra ele aparecer aqui com o progresso dos episódios.",
+    "mostWatched": "Mais vistos em",
+    "bestRatedOn": "Melhor avaliados na {{provider}}"
   }
 }

@@ -15,9 +15,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ChevronDown, LogOut, Settings, UserRound } from "lucide-react";
+import { ChevronDown, LogOut, RefreshCw, Settings, UserRound } from "lucide-react";
 import { auth } from "@/service/FirebaseSettings";
 import { ROUTES } from "@/service/Routes";
+import { clearPageCache, requestRefresh } from "@/service/PageCache";
 import Avatar from "@/components/avatar";
 import { handleLogout } from "./functions";
 import "./styles.scss";
@@ -61,6 +62,18 @@ const UserMenu = () => {
     navigate(ROUTES.AUTH);
   };
 
+  // "Atualizar" — pedido explícito da Rebecca: "poe um botão de atualizar
+  // lá no menu do usuário antes de sair". Limpa o cache de 7 dias
+  // (@/service/PageCache) do usuário atual e recarrega a página inteira
+  // — mais simples e confiável do que tentar avisar cada página montada
+  // pra refazer a busca sozinha (o reload já refaz tudo do zero, lendo o
+  // cache agora vazio).
+  const handleRefresh = () => {
+    if (user) clearPageCache(user.uid);
+    requestRefresh();
+    window.location.reload();
+  };
+
   return (
     <div className="user-menu" ref={rootRef}>
       <button
@@ -90,6 +103,10 @@ const UserMenu = () => {
             <Settings size={16} />
             {t("userMenu.settings")}
           </Link>
+          <button type="button" className="user-menu__item" role="menuitem" onClick={handleRefresh}>
+            <RefreshCw size={16} />
+            {t("userMenu.refresh")}
+          </button>
           <button type="button" className="user-menu__item user-menu__item--danger" role="menuitem" onClick={handleSignOut}>
             <LogOut size={16} />
             {t("userMenu.signOut")}

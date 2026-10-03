@@ -7,27 +7,27 @@
 $section-bg: #edeffd;
 // Teto de largura só do CONTEÚDO de cada seção — cada seção em si é
 // full-bleed (100% da tela, com a própria cor de fundo), senão a home
-// vira uma caixa estreita boiando numa tela grande. 1440 dá bastante
-// respiro em monitores grandes sem virar uma linha de texto esticada.
-$content-max-width: 1440px;
+// vira uma caixa estreita boiando numa tela grande. 1920 (a largura do
+// Figma) em vez dos 1440 de antes — ajuste da Rebecca.
+$content-max-width: 1920px;
 
 .dashboard {
   min-height: 100vh;
-  background: $color-bg;
+  // Fundo geral da Home: #F5F5F5 (ajuste da Rebecca) — aparece nas laterais
+  // e entre os painéis #EFEFEF das seções (HomeGroup.tsx).
+  background: #f5f5f5;
 
   &__inner {
     max-width: $content-max-width;
     margin: 0 auto;
-    padding: 0 48px;
-
-    @media (max-width: 900px) {
-      padding: 0 20px;
-    }
+    // 16px de recuo (ajuste da Rebecca; eram 75px) — vale em qualquer
+    // largura, então saiu o override de tela estreita.
+    padding: 0 16px;
   }
 
   &__row-timelines {
     background: linear-gradient(307deg, #242329 3%, #51279b 64%);
-    padding: 32px 0;
+    padding: 32px;
 
     &-title {
       color: #fff;
@@ -111,6 +111,7 @@ $content-max-width: 1440px;
     display: flex;
     flex-direction: column;
     gap: 8px;
+    padding: 0 32px;
   }
 
   &__hero-title {
@@ -207,6 +208,7 @@ $content-max-width: 1440px;
     align-items: center;
     gap: 0px;
     width: 100%;
+    padding: 0 32px;
   }
 
   &__create-input {
@@ -217,7 +219,7 @@ $content-max-width: 1440px;
     // `min-width: 0` deixa o `flex: 1` de verdade mandar.
     min-width: 0;
     border: none;
-    padding: 12px 16px;
+    padding: 12px 0;
     font-size: 14px;
     color: #fff;
     background: $color-primary;
@@ -473,177 +475,6 @@ $content-max-width: 1440px;
     }
   }
 
-  // --- Fileiras de pôsteres (últimos vistos / em cartaz / bilheteria) ---
-  &__row {
-    padding: 32px 0;
-
-    &:nth-of-type(even) {
-      background: $section-bg;
-    }
-  }
-
-  // Título + botão "Ver tudo" (opcional, `MovieRow.tsx`) na mesma linha —
-  // o recuo/espaçamento que antes vivia direto em `&__row-title` morou
-  // pra cá, já que agora o título é só um dos dois filhos do cabeçalho.
-  &__row-header {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 16px;
-    margin: 0 0 30px;
-    margin-left: 50px;
-
-    // 50px de recuo (além do padding de `&__inner`) é desenho de tela
-    // grande — num viewport de celular isso sozinho já come uma fatia
-    // enorme da largura útil, sem ganhar nada em troca.
-    @media (max-width: 900px) {
-      margin-left: 0;
-      margin-bottom: 16px;
-    }
-  }
-
-  &__row-title {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: $color-primary;
-    text-transform: uppercase;
-  }
-
-  // "Ver tudo" — pedido explícito da Rebecca, abre `MajorReleasesModal.tsx`
-  // (fileira "Principais lançamentos", agrupado por mês). `flex: 0 0 auto`
-  // pra nunca encolher nem quebrar linha, mesmo com título grande ao lado.
-  &__row-see-all {
-    flex: 0 0 auto;
-    border: none;
-    background: none;
-    padding: 0;
-    color: $color-primary;
-    font-size: 13px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-    cursor: pointer;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-
-  &__row-content {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    @media (max-width: 900px) {
-      gap: 6px;
-    }
-  }
-
-  &__row-chevron {
-    flex: 0 0 auto;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border: 1px solid rgba($color-border, 0.4);
-    border-radius: 50%;
-    background: $color-bg;
-    color: $color-primary;
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-
-    &:hover:not(:disabled) {
-      background: rgba($color-primary, 0.08);
-    }
-
-    &:disabled {
-      opacity: 0.3;
-      box-shadow: none;
-      cursor: not-allowed;
-    }
-
-    // Menor no mobile — libera espaço de verdade pros pôsteres; a
-    // fileira já rola por toque de qualquer forma, a seta é só um
-    // atalho extra ali.
-    @media (max-width: 900px) {
-      width: 30px;
-      height: 30px;
-
-      svg {
-        width: 16px;
-        height: 16px;
-      }
-    }
-  }
-
-  &__row-posters {
-    display: flex;
-    flex: 1;
-    min-width: 0; // sem isso a fileira empurra o flex pai e quebra o layout com as setas
-    gap: 16px;
-    overflow-x: auto;
-    scroll-behavior: smooth;
-    padding-bottom: 4px;
-
-    // a navegação agora é pelas setas — some a scrollbar nativa
-    scrollbar-width: none;
-    &::-webkit-scrollbar {
-      display: none;
-    }
-
-    &--centered {
-      justify-content: center;
-    }
-  }
-
-  &__row-item {
-    position: relative;
-    flex: 0 0 auto;
-  }
-
-  &__row-item-open {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    width: 100%;
-    border: none;
-    background: none;
-    padding: 0;
-    cursor: pointer;
-
-    &:hover .dashboard__row-poster {
-      opacity: 0.85;
-    }
-  }
-
-  &__row-poster {
-    width: 120px;
-    aspect-ratio: 2 / 3;
-    border-radius: $radius-sm;
-    object-fit: cover;
-    background: rgba($color-border, 0.3);
-
-    &--empty {
-      display: block;
-    }
-  }
-
-  &__row-rank {
-    font-size: 12px;
-    font-weight: 700;
-    color: $color-primary-dark;
-  }
-
-  // Claquete ("já disponível em streaming/aluguel") virou componente
-  // global — @/components/availabilityBadge — pedido explícito da
-  // Rebecca: "deve aparecer em todos os lugares do site, pode virar um
-  // padrão do componente global de details". CSS mora lá agora; `&__row-item`
-  // só precisa continuar `position: relative` (já era, por causa do
-  // WatchButton) pra ela se ancorar certo.
-
   // --- "Timelines que você segue" — timeline com a estrela marcada em
   // @/pages/private/timelines. Abre o mesmo TimelineDetail de lá.
   &__timeline-row {
@@ -731,18 +562,6 @@ $content-max-width: 1440px;
   }
 
   // --- Rodapé ---
-  &__footer {
-    padding: 40px 0 56px;
-    border-top: 1px solid rgba($color-border, 0.3);
-  }
-
-  &__footer-inner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-  }
-
   &__search {
     display: flex;
     align-items: center;
@@ -856,10 +675,10 @@ $content-max-width: 1440px;
     background: $color-bg;
     border-radius: $radius-lg;
     box-shadow: 0 20px 60px rgba(#000000, 0.35);
-    padding: 32px;
+    padding: 20px;
 
     @media (max-width: 600px) {
-      padding: 20px;
+      padding: 16px;
       max-height: calc(100vh - 60px);
     }
   }
@@ -882,6 +701,18 @@ $content-max-width: 1440px;
 
     &:hover {
       background: rgba($color-border, 0.35);
+    }
+  }
+
+  // Variante do painel em que o painel NÃO rola e só a grade de cards rola
+  // (PosterGridModal) — o título fica fixo no topo.
+  &__major-releases-panel--fixed {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    .dashboard__major-releases-title {
+      flex: 0 0 auto;
     }
   }
 

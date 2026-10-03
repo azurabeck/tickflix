@@ -3,472 +3,131 @@
 // fazer a aba de séries... primeiro a visualização das séries mais
 // vistas de cada streaming... uma barra de procurar, quando eu adicionar
 // uma série eu posso marcar quais episódios eu já assisti daquela
-// série." Segue o mesmo layout full-bleed da Home
-// (@/pages/private/home/dashboard): cada seção ocupa 100% da largura com
-// a própria cor de fundo, só o CONTEÚDO fica limitado por dentro
-// (.series-page__inner).
+// série." Depois ganhou a MESMA estrutura inicial da Home (Hero + painel
+// "criar timeline" + timelines seguidas, peças REUSADAS de
+// @/pages/private/home/dashboard) e, por último, o MESMO layout de blocos da
+// Home (Figma da Rebecca), em um grupo de seções:
 //
-// Ganhou depois a MESMA estrutura inicial da Home — pedido explícito da
-// Rebecca: "vamos fazer essa mesma estrutura inicial da página de filmes
-// para a página de séries... trailer das séries mais populares da
-// atualidade (com mais avaliações) depois a barra para criar timeline, e
-// a área de timelines... olho em filmes, é o mesmo só que relativo a
-// séries". Três peças REUSADAS de @/pages/private/home/dashboard (mesmos
-// componentes, mesmo CSS `dashboard__*` já global — nenhuma cópia):
-// `HeroCarousel` (trailer, dados vêm de fetchSeriesHeroTrailers,
-// functions.ts — mesma ponderação por voto das fileiras de streaming,
-// sem filtro de streaming nenhum), `CreateTimelinePanel` (com
-// `categoryLock="series"`: resultado só série, timeline sai com
-// categoria "series") e `FollowedTimelinesRow` (só timelines seguidas de
-// categoria "series" — a mesma fileira na Home mostra só "filmes", a da
-// página Animes mostra só "animes").
+//   Minhas séries            — fileira de cards (um aberto por vez) com a
+//                              barra de episódios vistos (10 / 300)
+//   [ Rank | Seu Rank | IA ] — o "Top 20 mais vistas no ano" virou o rank
+//                              (RankComponent), mais "Seu Rank de Notas" e a
+//                              "Sugestão da IA", só de séries
+//   Melhor avaliadas na {streaming} × 6 — fileiras iguais a "Minhas séries"
 //
-// Ordem completa: Hero → criar timeline → timelines seguidas (série) →
-// "Minhas séries" (séries seguidas pra marcar episódio, ver
-// service/FollowingSettings.ts) → fileiras "Melhor avaliadas na
-// {streaming}" → busca (rodapé).
-//
-// Diferente do resto do app, "Minhas séries"/as fileiras de streaming
-// NÃO têm o @/components/watchButton global de "já vi" — o que importa
-// ali é "seguir" a série (libera marcar episódio por episódio via
-// SeriesDetail), ação mais específica que o toggle genérico. Já a
-// fileira "timelines que você segue" (herdada da Home) SEGUE usando o
-// "já vi" global de sempre (service/WatchedSettings.ts) — é sobre
-// timeline, um conceito diferente do de série seguida.
+// Os cards são o CARD GLOBAL (@/components/mediaCard, tipo `serie`): o check
+// é "estou assistindo" (segue a série → ela entra em "Minhas séries"), a
+// nota vale a qualquer momento. Todo o estado e as ações (seguir, nota,
+// trailer, episódios, detalhe) vêm do MediaCardsProvider — esta página só
+// monta as fileiras e a descoberta do TMDb.
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Loader2, Trash2 } from "lucide-react";
 import { auth } from "@/service/FirebaseSettings";
-import MovieDetail from "@/components/movieDetail";
-import { fetchAvailabilityMap } from "@/components/movieDetail/functions";
-import AvailabilityBadge from "@/components/availabilityBadge";
-import AddToTimelineButton from "@/components/addToTimelineButton";
-import { posterUrl } from "@/service/TMDbSettings";
-import { fetchTimelines, movieKey, progressPercent, type Timeline } from "@/service/TimelineSettings";
-import { fetchWatchedMap, setWatched } from "@/service/WatchedSettings";
+import PageLoader from "@/components/pageLoader";
+import { useMediaCards } from "@/components/mediaCard";
+import { fetchTimelines, movieKey, type Timeline } from "@/service/TimelineSettings";
 import CreateTimelinePanel from "@/pages/private/home/dashboard/CreateTimelinePanel";
 import FollowedTimelinesRow from "@/pages/private/home/dashboard/FollowedTimelinesRow";
 import HeroCarousel from "@/pages/private/home/dashboard/HeroCarousel";
-import type { HeroTrailer } from "@/pages/private/home/dashboard/functions";
+import RankSection from "@/pages/private/home/dashboard/RankSection";
+import { HomeGroup } from "@/pages/private/home/dashboard/HomeGroup";
+import type { DashboardMovie } from "@/pages/private/home/dashboard/functions";
+import { useResolvedTitles } from "@/pages/private/home/dashboard/useResolvedTitles";
 import TimelineDetail from "@/pages/private/timelines/TimelineDetail";
-import {
-  fetchFollowedSeries,
-  followSeries,
-  followedSeriesProgress,
-  setEpisodeWatched,
-  setSeasonWatched,
-  unfollowSeries,
-  type FollowedSeries,
-} from "@/service/FollowingSettings";
-import {
-  STREAMING_PROVIDERS,
-  fetchSeriesHeroTrailers,
-  fetchSeriesWithEpisodes,
-  fetchTopSeriesByProvider,
-  fetchTopSeriesOfTheYear,
-  type SeriesRowItem,
-} from "./functions";
-import ScrollableRow from "./ScrollableRow";
-import SeriesRow from "./SeriesRow";
-import SeriesDetail from "./SeriesDetail";
+import { STREAMING_PROVIDERS } from "./functions";
+import { useDiscovery } from "./useDiscovery";
+import SeriesRailSection, { toSeriesCardItem } from "./SeriesRailSection";
 import "./styles.scss";
-
-// Pedido explícito da Rebecca: "vamos fazer top 20" — top 20 melhor
-// avaliadas por streaming, não o ROW_LIMIT=8 genérico das fileiras da
-// Home.
-const ROW_LIMIT = 20;
-const HERO_LIMIT = 5; // mesmo teto do carrossel da Home
-// "Top 20 mais vistas no ano" — pedido explícito da Rebecca: "que segue
-// o mesmo critério dos trailers" (fetchTopSeriesOfTheYear, functions.ts:
-// first_air_date_year do ano atual + sort_by=vote_count.desc, sem
-// ponderar nota).
-const TOP_OF_YEAR_LIMIT = 20;
 
 const SeriesPage = () => {
   const { t } = useTranslation();
   const uid = auth.currentUser?.uid ?? null;
+  const media = useMediaCards();
 
-  const [providerRows, setProviderRows] = useState<Record<number, SeriesRowItem[]>>({});
-  const [providerErrors, setProviderErrors] = useState<Record<number, string>>({});
-
-  // "Top 20 mais vistas no ano" — mesmo critério do carrossel de
-  // trailers (fetchTopSeriesOfTheYear), abaixo de "Minhas séries".
-  const [topOfYear, setTopOfYear] = useState<SeriesRowItem[] | null>(null);
-  const [topOfYearError, setTopOfYearError] = useState<string | null>(null);
-
-  const [followedSeries, setFollowedSeries] = useState<FollowedSeries[]>([]);
-  // Ids em processo de seguir (aguardando resolver temporadas + episódios
-  // no TMDb antes de gravar) — desabilita o botão pra não disparar duas
-  // vezes.
-  const [pendingIds, setPendingIds] = useState<Set<number>>(new Set());
-  const [deletingId, setDeletingId] = useState<number | null>(null);
-
-  const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
-  const [selectedSeriesId, setSelectedSeriesId] = useState<number | null>(null);
-
-  // --- Estrutura herdada da Home (Hero + criar timeline + timelines
-  // seguidas) — ver comentário no topo do arquivo.
-  const [heroTrailers, setHeroTrailers] = useState<HeroTrailer[]>([]);
   const [followedTimelines, setFollowedTimelines] = useState<Timeline[]>([]);
   const [selectedTimeline, setSelectedTimeline] = useState<Timeline | null>(null);
-  // "Já vi" global (service/WatchedSettings.ts) — só usado aqui pra
-  // calcular o progresso das timelines seguidas (TimelineDetail/
-  // FollowedTimelinesRow), igual a Home faz. Sem relação nenhuma com o
-  // progresso de EPISÓDIO das séries seguidas (esse é outro conceito,
-  // service/FollowingSettings.ts).
-  const [watchedMap, setWatchedMapState] = useState<Map<string, number>>(new Map());
-  // Claquete ("disponível em streaming/aluguel") — pedido explícito da
-  // Rebecca: "deve aparecer em todos os lugares do site". Mesmo padrão
-  // de @/pages/private/home/dashboard/index.tsx: UM Map compartilhado
-  // entre todas as fileiras desta página, cada uma soma o próprio pedaço
-  // assim que os itens chegam (`mergeAvailability`).
-  const [availabilityMap, setAvailabilityMap] = useState<Map<string, true>>(new Map());
 
-  const mergeAvailability = async (items: { id: number }[]) => {
-    if (items.length === 0) return;
-    try {
-      const resolved = await fetchAvailabilityMap(items.map((item) => ({ id: item.id, mediaType: "tv" as const })));
-      setAvailabilityMap((prev) => new Map([...prev, ...resolved]));
-    } catch (err) {
-      console.error("Erro ao buscar disponibilidade (streaming/aluguel):", err);
-    }
-  };
-
-  // Só categoria "series" — a mesma collection agora também guarda anime
-  // seguido pela página Animes (service/FollowingSettings.ts,
-  // `FollowedCategory`); cada página filtra a própria.
-  const loadFollowedSeries = () => {
-    if (!uid) return;
-    fetchFollowedSeries(uid)
-      .then((all) => {
-        const mine = all.filter((s) => s.category === "series");
-        setFollowedSeries(mine);
-        mergeAvailability(mine);
-      })
-      .catch((err) => console.error("Erro ao buscar séries seguidas:", err));
-  };
+  // Descoberta (fileiras por streaming, top do ano, trailers) vinda do
+  // backend + cópia local de 7 dias — ver ./useDiscovery.ts. Cada lote
+  // pede a disponibilidade dos próprios itens (ícone de streaming das
+  // linhas do rank).
+  const { providerRows, providerErrors, topOfYear, topOfYearError, heroTrailers, pageReady } = useDiscovery("series", uid, (items) =>
+    media.loadAvailability(items.map((item) => ({ id: item.id, mediaType: "tv" as const })))
+  );
 
   useEffect(() => {
     if (!uid) return;
-    loadFollowedSeries();
-    fetchWatchedMap(uid)
-      .then(setWatchedMapState)
-      .catch((err) => console.error("Erro ao buscar filmes/séries vistos:", err));
-    // Categoria "series" só — pedido explícito da Rebecca: a mesma
-    // fileira na Home mostra só as de categoria "filmes".
     fetchTimelines(uid)
       .then((all) => setFollowedTimelines(all.filter((t) => t.followed && t.types.includes("series"))))
       .catch((err) => console.error("Erro ao buscar timelines seguidas:", err));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uid]);
 
-  useEffect(() => {
-    STREAMING_PROVIDERS.forEach((provider) => {
-      fetchTopSeriesByProvider(provider.id, ROW_LIMIT)
-        .then((items) => {
-          setProviderRows((prev) => ({ ...prev, [provider.id]: items }));
-          mergeAvailability(items);
-        })
-        .catch((err) => {
-          console.error(`Erro ao buscar séries mais vistas na ${provider.label}:`, err);
-          setProviderErrors((prev) => ({ ...prev, [provider.id]: "Não foi possível carregar agora." }));
-        });
-    });
+  // Só categoria "series" — a mesma collection também guarda anime seguido
+  // pela página Animes (service/FollowingSettings.ts, `FollowedCategory`);
+  // cada página filtra a própria.
+  const followedSeries = media.followedList.filter((s) => s.category === "series");
 
-    fetchSeriesHeroTrailers(HERO_LIMIT)
-      .then(setHeroTrailers)
-      .catch((err) => console.error("Erro ao buscar trailers do topo:", err));
+  // Backdrop das séries seguidas (o doc seguido só guarda o pôster) —
+  // resolvido no TMDb; `fetchTitleById` tem memo, não refaz a cada render.
+  const { titles: followedTitles } = useResolvedTitles(followedSeries.map((s) => movieKey("tv", s.id)));
 
-    fetchTopSeriesOfTheYear(TOP_OF_YEAR_LIMIT)
-      .then((items) => {
-        setTopOfYear(items);
-        mergeAvailability(items);
-      })
-      .catch((err) => {
-        console.error("Erro ao buscar top 20 do ano:", err);
-        setTopOfYearError("Não foi possível carregar agora.");
-      });
-  }, []);
+  // Os animes que o usuário segue também são `tv` — ficam fora do "Seu Rank"
+  // e da IA de séries.
+  const followedAnimeKeys = new Set(media.followedList.filter((s) => s.category === "animes").map((s) => movieKey("tv", s.id)));
 
-  // Toggle "já vi" (TimelineDetail, das timelines seguidas) — mesmo
-  // padrão de home/dashboard/index.tsx, estado global compartilhado com
-  // o resto do app (service/WatchedSettings.ts).
-  const handleToggleWatched = async (item: { id?: number; mediaType?: "movie" | "tv" }) => {
-    if (!uid || item.id === undefined || !item.mediaType) return;
-    const key = movieKey(item.mediaType, item.id);
-    const nextWatched = !watchedMap.has(key);
+  const mySeriesItems = followedSeries.map((series) =>
+    toSeriesCardItem({ ...series, backdropPath: followedTitles.get(movieKey("tv", series.id))?.backdropPath ?? null }, "series")
+  );
 
-    const nextMap = new Map(watchedMap);
-    if (nextWatched) nextMap.set(key, Date.now());
-    else nextMap.delete(key);
-    setWatchedMapState(nextMap);
+  // Base "assistidos" da IA quando não há nota: as séries que o usuário segue.
+  const followedAsRecent: DashboardMovie[] = followedSeries.map((series) => ({
+    id: series.id,
+    mediaType: "tv",
+    title: series.title,
+    posterPath: series.posterPath,
+  }));
 
-    try {
-      await setWatched(uid, key, nextWatched);
-    } catch (err) {
-      console.error("Erro ao marcar filme/série como visto:", err);
-      setWatchedMapState(watchedMap); // desfaz
-    }
-  };
-
-  const followedIds = new Set(followedSeries.map((s) => s.id));
-
-  // Toggle "seguir" — usado nas fileiras de streaming e em "Minhas
-  // séries" (não mais na busca, que virou o modal global sem esse botão,
-  // ver @/components/searchModal). Seguir exige resolver temporadas +
-  // TODOS os episódios no TMDb antes (fetchSeriesWithEpisodes), então não
-  // dá pra ser 100% otimista feito o toggle de "já vi" do resto do app;
-  // deixar de seguir é otimista igual ao padrão (desfaz recarregando se a
-  // gravação falhar).
-  const handleToggleFollowed = async (item: SeriesRowItem) => {
-    if (!uid || pendingIds.has(item.id)) return;
-
-    if (followedIds.has(item.id)) {
-      const previous = followedSeries;
-      setFollowedSeries((prev) => prev.filter((s) => s.id !== item.id));
-      try {
-        await unfollowSeries(uid, item.id);
-      } catch (err) {
-        console.error("Erro ao deixar de seguir série:", err);
-        setFollowedSeries(previous); // desfaz
-      }
-      return;
-    }
-
-    setPendingIds((prev) => new Set(prev).add(item.id));
-    try {
-      const { status, seasons } = await fetchSeriesWithEpisodes(item.id);
-      await followSeries(uid, { id: item.id, title: item.title, posterPath: item.posterPath, status, category: "series", seasons });
-      loadFollowedSeries();
-    } catch (err) {
-      console.error("Erro ao seguir série:", err);
-    } finally {
-      setPendingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(item.id);
-        return next;
-      });
-    }
-  };
-
-  // Remoção deliberada pela grade "Minhas séries" (lixeira do card) —
-  // mesma ação de handleToggleFollowed pro caso "já seguida", só que com
-  // confirmação (perde o progresso de episódios todo, diferente do
-  // toggle rápido nas fileiras/busca, que é sobre entrar/sair da lista
-  // antes de ter progresso nenhum na prática).
-  const handleRemoveSeries = async (series: FollowedSeries) => {
-    if (!uid || deletingId) return;
-    if (!window.confirm(`Deixar de seguir "${series.title}"? Seu progresso de episódios se perde.`)) return;
-
-    setDeletingId(series.id);
-    try {
-      await unfollowSeries(uid, series.id);
-      setFollowedSeries((prev) => prev.filter((s) => s.id !== series.id));
-      if (selectedSeriesId === series.id) setSelectedSeriesId(null);
-    } catch (err) {
-      console.error("Erro ao deixar de seguir série:", err);
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
-  const handleToggleEpisode = async (series: FollowedSeries, season: number, episode: number) => {
-    if (!uid) return;
-    const key = String(season);
-    const epKey = String(episode);
-    const nextWatched = !series.seasons[key].episodes[epKey].watched;
-
-    const updated: FollowedSeries = {
-      ...series,
-      seasons: {
-        ...series.seasons,
-        [key]: {
-          ...series.seasons[key],
-          episodes: { ...series.seasons[key].episodes, [epKey]: { ...series.seasons[key].episodes[epKey], watched: nextWatched } },
-        },
-      },
-    };
-    setFollowedSeries((prev) => prev.map((s) => (s.id === series.id ? updated : s)));
-
-    try {
-      await setEpisodeWatched(uid, series.id, season, episode, nextWatched);
-    } catch (err) {
-      console.error("Erro ao marcar episódio:", err);
-      setFollowedSeries((prev) => prev.map((s) => (s.id === series.id ? series : s))); // desfaz
-    }
-  };
-
-  // "Marcar temporada inteira" (SeriesDetail.tsx) — resolve TODOS os
-  // episódios de uma vez sobre o MESMO snapshot de `series` (sem loop de
-  // handleToggleEpisode: cada chamada individual pegaria a mesma `series`
-  // stale e cada `setState` subsequente sobrescreveria o anterior, bug
-  // real já visto ao vivo — só o último episódio do loop "sobrevivia").
-  const handleToggleSeason = async (series: FollowedSeries, season: number, episodes: number[], watched: boolean) => {
-    if (!uid) return;
-    const key = String(season);
-    const updatedEpisodes = { ...series.seasons[key].episodes };
-    for (const ep of episodes) {
-      updatedEpisodes[String(ep)] = { ...updatedEpisodes[String(ep)], watched };
-    }
-
-    const updated: FollowedSeries = {
-      ...series,
-      seasons: { ...series.seasons, [key]: { ...series.seasons[key], episodes: updatedEpisodes } },
-    };
-    setFollowedSeries((prev) => prev.map((s) => (s.id === series.id ? updated : s)));
-
-    try {
-      await setSeasonWatched(uid, series.id, season, episodes, watched);
-    } catch (err) {
-      console.error("Erro ao marcar temporada:", err);
-      setFollowedSeries((prev) => prev.map((s) => (s.id === series.id ? series : s))); // desfaz
-    }
-  };
-
-  const selectedSeries = selectedSeriesId !== null ? followedSeries.find((s) => s.id === selectedSeriesId) ?? null : null;
-
-  // Clicar num pôster de série já seguida abre o dialog de episódios
-  // direto (SeriesDetail) em vez do @/components/movieDetail genérico —
-  // uma vez seguida, marcar episódio é a ação mais útil, não reler a
-  // sinopse de novo. Série ainda NÃO seguida continua abrindo o
-  // MovieDetail normal (sinopse/elenco/onde assistir), igual ao resto do
-  // app.
-  const handlePosterClick = (item: SeriesRowItem) => {
-    if (followedIds.has(item.id)) setSelectedSeriesId(item.id);
-    else setSelectedItemId(item.id);
-  };
+  if (!pageReady) {
+    return <PageLoader />;
+  }
 
   return (
-    <div className="series-page">
+    <div className="series-page series-page--blocks">
       <HeroCarousel items={heroTrailers} />
 
-      <CreateTimelinePanel
-        uid={uid}
-        categoryLock="series"
-        placeholder={t("dashboard.createTimeline.placeholderSeries")}
-      />
+      <CreateTimelinePanel uid={uid} categoryLock="series" placeholder={t("dashboard.createTimeline.placeholderSeries")} />
 
-      <FollowedTimelinesRow timelines={followedTimelines} watchedMap={watchedMap} onSelect={setSelectedTimeline} />
+      <FollowedTimelinesRow timelines={followedTimelines} watchedMap={media.checkedMap} onSelect={setSelectedTimeline} />
 
+      <HomeGroup>
+        <SeriesRailSection title={t("seriesPage.mySeries")} items={mySeriesItems} emptyMessage={t("seriesPage.emptyMine")} />
 
-      {/* "Minhas séries" no TOPO da página (antes das fileiras de
-          streaming) — pedido explícito da Rebecca: é o que importa ver
-          primeiro ao voltar na página, não precisar rolar por 6 fileiras
-          de descoberta pra achar a própria lista. */}
-      <section className="series-page__my-series">
-        <div className="series-page__inner">
-          <h2 className="series-page__row-title">Minhas séries</h2>
-
-          {followedSeries.length === 0 && (
-            <p className="series-page__empty">Adicione uma série pela busca abaixo pra marcar os episódios que já viu.</p>
-          )}
-
-          {followedSeries.length > 0 && (
-            <ScrollableRow itemsKey={followedSeries}>
-              {followedSeries.map((series) => {
-                const { watched, total } = followedSeriesProgress(series);
-                const pct = progressPercent(watched, total);
-                const poster = posterUrl(series.posterPath);
-
-                return (
-                  <div key={series.id} className="series-page__row-item series-page__my-item">
-                    <button
-                      type="button"
-                      className="series-page__my-card-delete"
-                      onClick={() => handleRemoveSeries(series)}
-                      disabled={deletingId === series.id}
-                      aria-label={`Remover ${series.title}`}
-                    >
-                      {deletingId === series.id ? <Loader2 className="series-page__spinner" size={14} /> : <Trash2 size={14} />}
-                    </button>
-
-                    <button type="button" className="series-page__row-item-open" onClick={() => setSelectedSeriesId(series.id)}>
-                      {poster ? (
-                        <img src={poster} alt={series.title} className="series-page__row-poster" />
-                      ) : (
-                        <div className="series-page__row-poster series-page__row-poster--empty" />
-                      )}
-                      <AvailabilityBadge available={availabilityMap.has(movieKey("tv", series.id))} />
-                      <span className="series-page__row-title-text">{series.title}</span>
-                    </button>
-                    <div className="series-page__my-item-progress-bar">
-                      <div className="series-page__my-item-progress-fill" style={{ width: `${pct}%` }} />
-                    </div>
-                    <span className="series-page__my-item-count">
-                      visto: {watched}/{total}
-                    </span>
-                    <AddToTimelineButton uid={uid} movie={{ id: series.id, mediaType: "tv", title: series.title, posterPath: series.posterPath }} />
-                  </div>
-                );
-              })}
-            </ScrollableRow>
-          )}
-        </div>
-      </section>
-
-      <SeriesRow
-        title={`Top 20 mais vistas em ${new Date().getFullYear()}`}
-        items={topOfYear ?? []}
-        loading={topOfYear === null && !topOfYearError}
-        error={topOfYearError}
-        addedIds={followedIds}
-        pendingIds={pendingIds}
-        availabilityMap={availabilityMap}
-        uid={uid}
-        onItemClick={handlePosterClick}
-        onToggleAdded={handleToggleFollowed}
-      />
-
-      {STREAMING_PROVIDERS.map((provider) => (
-        <SeriesRow
-          key={provider.id}
-          title={`Melhor avaliadas na ${provider.label}`}
-          items={providerRows[provider.id] ?? []}
-          loading={!providerRows[provider.id] && !providerErrors[provider.id]}
-          error={providerErrors[provider.id] ?? null}
-          addedIds={followedIds}
-          pendingIds={pendingIds}
-          availabilityMap={availabilityMap}
-          uid={uid}
-          onItemClick={handlePosterClick}
-          onToggleAdded={handleToggleFollowed}
+        <RankSection
+          mediaKind="tv"
+          category="series"
+          keyFilter={(key) => !followedAnimeKeys.has(key)}
+          popularityTitle={
+            <>
+              {t("seriesPage.mostWatched")} <strong>{new Date().getFullYear()}</strong>
+            </>
+          }
+          popularity={topOfYear ? topOfYear.map((item) => ({ id: item.id, mediaType: "tv" as const, title: item.title })) : null}
+          popularityError={topOfYearError}
+          recentlyWatched={followedAsRecent}
         />
-      ))}
 
-      {/* O rodapé inteiro era só a barra de busca (sem Logo aqui, diferente
-          da Home) — saiu daqui e virou o ícone de lupa global da navbar
-          (@/components/appNav → @/components/searchModal), pedido
-          explícito da Rebecca: "essa barra de search que a gente tem no
-          final das páginas filmes/séries/animes pode sair dali e virar
-          só um ícone de lupa no navbar". Sem mais nada pra mostrar, o
-          <footer> em si saiu junto (deixar um rodapé vazio só ocupando
-          espaço não fazia sentido). O modal global abre o MovieDetail
-          genérico (sem o botão de "seguir" rápido que existia aqui, que
-          resolve temporadas/episódios e é uma ação específica de série
-          — continua disponível nas fileiras de streaming/"Minhas
-          séries" desta página, só saiu do fluxo de busca). */}
+        {STREAMING_PROVIDERS.map((provider) => (
+          <SeriesRailSection
+            key={provider.id}
+            title={t("seriesPage.bestRatedOn", { provider: provider.label })}
+            items={providerRows[provider.id]?.map((item) => toSeriesCardItem(item, "series")) ?? null}
+            loading={!providerRows[provider.id] && !providerErrors[provider.id]}
+            error={providerErrors[provider.id] ?? null}
+          />
+        ))}
+      </HomeGroup>
 
-      {selectedItemId !== null && <MovieDetail id={selectedItemId} mediaType="tv" onClose={() => setSelectedItemId(null)} />}
-
-      {selectedSeries && (
-        <SeriesDetail
-          series={selectedSeries}
-          uid={uid}
-          onClose={() => setSelectedSeriesId(null)}
-          onToggleEpisode={handleToggleEpisode}
-          onToggleSeason={handleToggleSeason}
-        />
-      )}
-
-      {selectedTimeline && (
-        <TimelineDetail
-          timeline={selectedTimeline}
-          watchedMap={watchedMap}
-          uid={uid}
-          onClose={() => setSelectedTimeline(null)}
-          onToggleWatched={handleToggleWatched}
-        />
-      )}
+      {selectedTimeline && <TimelineDetail timeline={selectedTimeline} onClose={() => setSelectedTimeline(null)} />}
     </div>
   );
 };

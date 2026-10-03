@@ -22,33 +22,24 @@
 // → só then resolve via IA (e grava nos DOIS lugares) se nem um nem
 // outro existir ainda.
 //
-// Grade simples com toggle "já vi" — reaproveita o MESMO padrão visual de
-// pages/private/timelines/TimelineDetail.tsx (grade de pôsteres +
-// WatchButton + MovieDetail aninhado ao clicar), só que como página cheia
-// em vez de dialog: uma página de franquia já É o "detalhe", não precisa
-// de mais um nível de modal por cima. Reusa até as classes CSS de
-// timelines-page__movie-* (import do próprio styles.scss dela) — mesma
-// filosofia de reuso já usada entre Séries/Animes (reaproveitar
-// componente/CSS de verdade em vez de duplicar).
+// Grade de CARDS GLOBAIS (@/components/mediaCard) — o mesmo padrão de
+// pages/private/timelines/TimelineDetail.tsx, só que como página cheia em
+// vez de dialog: uma página de franquia já É o "detalhe", não precisa de
+// mais um nível de modal por cima. Franquia mistura filmes E séries: filme
+// vira o card `movie` (check = assisti), série o card `serie` (check =
+// estou assistindo). O estado dos cards é global (MediaCardsProvider).
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Navigate, useParams } from "react-router-dom";
-import MovieDetail from "@/components/movieDetail";
-import { fetchAvailabilityMap } from "@/components/movieDetail/functions";
-import WatchButton from "@/components/watchButton";
-import AvailabilityBadge from "@/components/availabilityBadge";
-import AddToTimelineButton from "@/components/addToTimelineButton";
+import { ConnectedMediaCard, cardKey, useMediaCards, useOpenCard, type MediaItem } from "@/components/mediaCard";
 import { auth } from "@/service/FirebaseSettings";
 import { ROUTES } from "@/service/Routes";
-import { posterUrl } from "@/service/TMDbSettings";
 import {
   createFranchiseTimeline,
   fetchTimelineByFranchise,
   timelineMovieKey,
   type Timeline,
-  type TimelineMovie,
 } from "@/service/TimelineSettings";
-import { fetchWatchedMap, setWatched } from "@/service/WatchedSettings";
 import { resolveTimelineMovies } from "@/pages/private/home/dashboard/functions";
 import { findFranchiseConfig } from "./franchiseConfigs";
 import { fetchFranchiseCatalog, saveFranchiseCatalog } from "./functions";
@@ -59,15 +50,11 @@ const FranchisePage = () => {
   const { slug } = useParams<{ slug: string }>();
   const config = findFranchiseConfig(slug);
   const uid = auth.currentUser?.uid ?? null;
+  const media = useMediaCards();
 
   const [timeline, setTimeline] = useState<Timeline | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedMovie, setSelectedMovie] = useState<TimelineMovie | null>(null);
-  const [watchedMap, setWatchedMapState] = useState<Map<string, number>>(new Map());
-  // Claquete ("disponível em streaming/aluguel") — pedido explícito da
-  // Rebecca: "deve aparecer em todos os lugares do site".
-  const [availabilityMap, setAvailabilityMap] = useState<Map<string, true>>(new Map());
 
   useEffect(() => {
     if (!config || !uid) {
@@ -138,48 +125,25 @@ const FranchisePage = () => {
     };
   }, [config?.slug, uid]);
 
+  // Claquete ("disponível em streaming/aluguel") dos títulos da franquia.
   useEffect(() => {
-    if (!uid) return;
-    fetchWatchedMap(uid)
-      .then(setWatchedMapState)
-      .catch((err) => console.error("Erro ao buscar filmes vistos:", err));
-  }, [uid]);
-
-  useEffect(() => {
-    if (!timeline || timeline.movies.length === 0) return;
-    let cancelled = false;
-    fetchAvailabilityMap(timeline.movies)
-      .then((resolved) => {
-        if (!cancelled) setAvailabilityMap(resolved);
-      })
-      .catch((err) => console.error("Erro ao buscar disponibilidade (streaming/aluguel):", err));
-    return () => {
-      cancelled = true;
-    };
+    if (timeline) media.loadAvailability(timeline.movies);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeline]);
 
-  const handleToggleWatched = async (movie: TimelineMovie) => {
-    if (!uid) return;
-    const key = timelineMovieKey(movie);
-    const nextWatched = !watchedMap.has(key);
 
-    const nextMap = new Map(watchedMap);
-    if (nextWatched) nextMap.set(key, Date.now());
-    else nextMap.delete(key);
-    setWatchedMapState(nextMap);
-
-    try {
-      await setWatched(uid, key, nextWatched);
-    } catch (err) {
-      console.error("Erro ao marcar filme como visto:", err);
-      setWatchedMapState(watchedMap); // desfaz
-    }
-  };
+  const movies = timeline?.movies ?? [];
+  const items: MediaItem[] = movies.map((movie) => ({
+    id: movie.id,
+    mediaType: movie.mediaType,
+    title: movie.year ? `${movie.title} (${movie.year})` : movie.title,
+    posterPath: movie.posterPath,
+  }));
+  const watchedCount = movies.filter((movie) => media.checkedMap.has(timelineMovieKey(movie))).length;
+  const open = useOpenCard(items);
 
   if (!config) return <Navigate to={ROUTES.HOME} replace />;
 
-  const movies = timeline?.movies ?? [];
-  const watchedCount = movies.filter((movie) => watchedMap.has(timelineMovieKey(movie))).length;
 
   return (
     <div className="franchise-page">
@@ -203,37 +167,14 @@ const FranchisePage = () => {
         )}
 
         {!loading && !error && (
-          <div className="timelines-page__movie-grid">
-            {movies.map((movie) => {
-              const key = timelineMovieKey(movie);
-              const poster = posterUrl(movie.posterPath);
-              const isWatched = watchedMap.has(key);
-
-              return (
-                <div key={key} className={isWatched ? "timelines-page__movie timelines-page__movie--watched" : "timelines-page__movie"}>
-                  <button type="button" className="timelines-page__movie-open" onClick={() => setSelectedMovie(movie)}>
-                    {poster ? (
-                      <img src={poster} alt={movie.title} className="timelines-page__movie-poster" />
-                    ) : (
-                      <div className="timelines-page__movie-poster timelines-page__movie-poster--empty" />
-                    )}
-                    <AvailabilityBadge available={availabilityMap.has(key)} />
-                    <span className="timelines-page__movie-title">
-                      {movie.title} {movie.year && `(${movie.year})`}
-                    </span>
-                  </button>
-                  <WatchButton isWatched={isWatched} onToggle={() => handleToggleWatched(movie)} disabled={!uid} />
-                  <AddToTimelineButton uid={uid} movie={{ id: movie.id, mediaType: movie.mediaType, title: movie.title, posterPath: movie.posterPath }} />
-                </div>
-              );
+          <div className="media-grid">
+            {items.map((item, index) => {
+              const id = cardKey(item, index);
+              return <ConnectedMediaCard key={id} item={item} isOpen={open.openKey === id} onSelect={() => open.setOpenKey(id)} />;
             })}
           </div>
         )}
       </div>
-
-      {selectedMovie && (
-        <MovieDetail id={selectedMovie.id} mediaType={selectedMovie.mediaType} onClose={() => setSelectedMovie(null)} />
-      )}
     </div>
   );
 };

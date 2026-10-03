@@ -16,6 +16,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Clapperboard, FolderPlus, ListPlus } from "lucide-react";
+import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import ExistingTimelineModal from "./ExistingTimelineModal";
 import CreateTimelineModal from "./CreateTimelineModal";
 import type { AddableMovie } from "./functions";
@@ -24,9 +25,13 @@ import "./styles.scss";
 interface AddToTimelineButtonProps {
   uid: string | null;
   movie: AddableMovie;
+  // "overlay" (padrão): claquete redonda sobre o pôster. "icon": ＋ de 24px
+  // em linha (card de sugestão, @/components/suggestionCard) — o menu abre
+  // pra cima, alinhado à direita do botão.
+  variant?: "overlay" | "icon";
 }
 
-const AddToTimelineButton = ({ uid, movie }: AddToTimelineButtonProps) => {
+const AddToTimelineButton = ({ uid, movie, variant = "overlay" }: AddToTimelineButtonProps) => {
   const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   // Desloca o menu (via `transform: translateX`, não troca de lado) o
@@ -78,7 +83,7 @@ const AddToTimelineButton = ({ uid, movie }: AddToTimelineButtonProps) => {
   }, [menuOpen]);
 
   return (
-    <div className="add-to-timeline" ref={wrapperRef}>
+    <div className={variant === "icon" ? "add-to-timeline add-to-timeline--icon" : "add-to-timeline"} ref={wrapperRef}>
       <button
         type="button"
         className="add-to-timeline__button"
@@ -88,10 +93,11 @@ const AddToTimelineButton = ({ uid, movie }: AddToTimelineButtonProps) => {
           setMenuOpen((prev) => !prev);
         }}
         disabled={!uid}
-        title={t("addToTimeline.button")}
+        title={variant === "icon" ? undefined : t("addToTimeline.button")}
+        data-tooltip={variant === "icon" ? t("addToTimeline.button") : undefined}
         aria-label={t("addToTimeline.button")}
       >
-        <Clapperboard size={13} />
+        {variant === "icon" ? <PlusCircleIcon /> : <Clapperboard size={13} />}
       </button>
 
       {uid && menuOpen && (

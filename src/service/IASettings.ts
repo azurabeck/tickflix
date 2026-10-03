@@ -10,16 +10,27 @@ export const APP_NAME = "TickFlix";
 // estruturado do TMDb, enumerar títulos (ver
 // src/pages/private/home/dashboard/functions.ts).
 //
-// ATENÇÃO: ao contrário do apiKey do Firebase/TMDb (públicos por design),
-// uma chave do Gemini exposta no client pode ser extraída do bundle e
-// abusada por terceiros, gerando custo de verdade na conta Google de quem
-// gerou a chave. O certo seria essa chamada passar por uma Cloud Function
-// como proxy — o projeto ainda não tem backend, e ficou definido usar
-// direto do client por enquanto (mesma lógica do TMDb). Migrar pra uma
-// function é a recomendação antes de ir pra produção com tráfego público.
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL || "gemini-3.6-flash";
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+// A chave da PLATAFORMA fica só no servidor (`GEMINI_API_KEY`, api/gemini.ts):
+// o navegador pede ao backend (`POST /api/gemini`, com o ID token do
+// Firebase), que repete em erro transitório e cai num modelo reserva — a
+// chave nunca vai pro bundle. Quem configurou a PRÓPRIA chave (Configurações)
+// chama o Google direto daqui, com a chave dele (que só existe no
+// localStorage dele), e essa sempre ganha da da plataforma.
+// Modelo usado só no caminho com a chave do próprio usuário (o do servidor é
+// `GEMINI_MODEL`, em api/gemini.ts).
+const GEMINI_MODEL = "gemini-3.6-flash";
+const geminiUrl = (model: string): string => `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+
+// Modelo reserva (alias que o Google mantém apontando pro Flash atual): se o
+// principal estiver sobrecarregado (503) mesmo depois de tentar de novo, a
+// chamada cai pra ele em vez de falhar.
+const GEMINI_FALLBACK_MODEL = "gemini-flash-latest";
+
+// Erros transitórios (sobrecarga/limite) — vale tentar de novo.
+// 429 (cota esgotada) NÃO entra: repetir só gasta mais cota.
+const isTransientStatus = (status: number): boolean => status === 500 || status === 503;
+const RETRY_DELAYS_MS = [1_000, 2_500];
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // --- Chave do Gemini do próprio usuário -------------------------------------
 // Pedido explícito da Rebecca, olhando como o projeto "mailbook"
@@ -94,35 +105,82 @@ const GEMINI_TIMEOUT_MS = 45_000;
  * vem vazia; com grounding, vem certa. Custa um pouco mais de latência,
  * então só liga onde precisa de fato atual (ver generateAwardNominees).
  */
-export const geminiGenerateJSON = async <T>(
-  prompt: string,
-  schema: GeminiSchema,
-  useSearch = false
-): Promise<T> => {
-  // Chave do próprio usuário (Configurações) sempre ganha da chave
-  // compartilhada da plataforma — mesma regra do mailbook.
-  const apiKey = getUserGeminiKey() || GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error("Nenhuma chave do Gemini configurada — adicione a sua em Configurações, ou configure VITE_GEMINI_API_KEY no .env.");
+// Caminho da chave do próprio usuário: direto no Google, com as mesmas
+// tentativas/modelo reserva do servidor.
+const generateWithUserKey = async <T>(apiKey: string, prompt: string, schema: GeminiSchema, useSearch: boolean): Promise<T> => {
+  const body = JSON.stringify({
+    contents: [{ parts: [{ text: prompt }] }],
+    ...(useSearch ? { tools: [{ google_search: {} }] } : {}),
+    generationConfig: {
+      responseMimeType: "application/json",
+      responseSchema: schema,
+    },
+  });
+
+  const callModel = async (model: string): Promise<Response> => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
+    try {
+      return await fetch(`${geminiUrl(model)}?key=${apiKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body,
+      });
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        throw new Error("Gemini demorou demais pra responder (timeout).");
+      }
+      throw err;
+    } finally {
+      clearTimeout(timeout);
+    }
+  };
+
+  // Modelo principal com até 2 novas tentativas (1s, 2,5s) em erro transitório
+  // ("high demand", 503) e, se continuar, uma tentativa no modelo reserva.
+  let response = await callModel(GEMINI_MODEL);
+  for (const delay of RETRY_DELAYS_MS) {
+    if (response.ok || !isTransientStatus(response.status)) break;
+    await sleep(delay);
+    response = await callModel(GEMINI_MODEL);
+  }
+  if (!response.ok && (isTransientStatus(response.status) || response.status === 429)) {
+    response = await callModel(GEMINI_FALLBACK_MODEL);
   }
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
+  if (!response.ok) {
+    // Inclui a mensagem de erro da própria API (ex.: "model X is no
+    // longer available") — bem mais rápido de debugar que só o status.
+    const errorBody = await response.json().catch(() => null);
+    const detail = errorBody?.error?.message;
+    throw new Error(`Gemini respondeu ${response.status}${detail ? `: ${detail}` : ""}`);
+  }
 
+  const data = await response.json();
+  const text: string | undefined = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error("Resposta do Gemini sem conteúdo.");
+
+  return JSON.parse(text) as T;
+};
+
+// Caminho da plataforma: pede ao backend (api/gemini.ts), que tem a chave.
+// O servidor já faz as tentativas/modelo reserva (até ~1 min no pior caso).
+const BACKEND_TIMEOUT_MS = 65_000;
+
+const generateViaBackend = async <T>(prompt: string, schema: GeminiSchema, useSearch: boolean): Promise<T> => {
+  const idToken = await auth.currentUser?.getIdToken();
+  if (!idToken) throw new Error("Faça login pra usar a IA.");
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), BACKEND_TIMEOUT_MS);
   let response: Response;
   try {
-    response = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
+    response = await fetch("/api/gemini", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
       signal: controller.signal,
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        ...(useSearch ? { tools: [{ google_search: {} }] } : {}),
-        generationConfig: {
-          responseMimeType: "application/json",
-          responseSchema: schema,
-        },
-      }),
+      body: JSON.stringify({ prompt, schema, useSearch }),
     });
   } catch (err) {
     if (err instanceof DOMException && err.name === "AbortError") {
@@ -134,16 +192,18 @@ export const geminiGenerateJSON = async <T>(
   }
 
   if (!response.ok) {
-    // Inclui a mensagem de erro da própria API (ex.: "model X is no
-    // longer available") — bem mais rápido de debugar que só o status.
-    const body = await response.json().catch(() => null);
-    const detail = body?.error?.message;
-    throw new Error(`Gemini respondeu ${response.status}${detail ? `: ${detail}` : ""}`);
+    const errorBody = (await response.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(errorBody?.error ?? `API da IA respondeu ${response.status}`);
   }
 
-  const data = await response.json();
-  const text: string | undefined = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  const { text } = (await response.json()) as { text?: string };
   if (!text) throw new Error("Resposta do Gemini sem conteúdo.");
-
   return JSON.parse(text) as T;
+};
+
+export const geminiGenerateJSON = async <T>(prompt: string, schema: GeminiSchema, useSearch = false): Promise<T> => {
+  // Chave do próprio usuário (Configurações) sempre ganha da chave
+  // compartilhada da plataforma — mesma regra do mailbook.
+  const userKey = getUserGeminiKey();
+  return userKey ? generateWithUserKey<T>(userKey, prompt, schema, useSearch) : generateViaBackend<T>(prompt, schema, useSearch);
 };

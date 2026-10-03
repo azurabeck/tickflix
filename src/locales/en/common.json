@@ -21,8 +21,12 @@
     "openAccount": "Open account menu",
     "profile": "My profile",
     "settings": "Settings",
+    "refresh": "Refresh",
     "signOut": "Sign out",
     "defaultName": "User"
+  },
+  "pageLoader": {
+    "loading": "Loading..."
   },
   "tagline": "your adventure lives at the movies",
   "close": "Close",
@@ -174,7 +178,8 @@
     "errors": {
       "nowPlaying": "Couldn't load what's in theaters.",
       "boxOffice": "Couldn't load the box office champions.",
-      "majorReleases": "Couldn't load the top releases."
+      "majorReleases": "Couldn't load the top releases.",
+      "watchedAll": "Couldn't load what you've watched."
     },
     "hero": {
       "nowPlayingBadge": "IN THEATERS",
@@ -228,6 +233,30 @@
         "November",
         "December"
       ]
+    },
+    "seeAllShort": "see all",
+    "seeUntil12Months": "see up to 12 months",
+    "watchedAllTitle": "Everything you've watched",
+    "watchedAllEmpty": "You haven't marked any title as watched yet.",
+    "rank": {
+      "yoursEmpty": "Rate the movies you've watched and your rank shows up here.",
+      "yoursEmptyTv": "Rate the series you watch (you don't need to finish them) and your rank shows up here.",
+      "popularityLabel": "Popularity Rank",
+      "yoursLabel": "Your Rank by",
+      "yoursStrong": "Ratings",
+      "yoursEmptyAnime": "Rate the anime you watch (you don't need to finish them) and your rank shows up here."
+    },
+    "ai": {
+      "title": "AI Suggestions",
+      "empty": "Rate and mark what you watch — the AI suggests what to watch next based on your taste.",
+      "loading": "Thinking of suggestions for you...",
+      "error": "Couldn't generate suggestions right now.",
+      "retry": "Try again",
+      "basisRatings": "Based on your ratings",
+      "basisWatched": "Based on what you've watched",
+      "refresh": "Get another suggestion",
+      "refreshing": "Finding a suggestion...",
+      "quota": "The AI's daily quota is used up. Try again tomorrow (or use your own key in Settings)."
     }
   },
   "availabilityBadge": {
@@ -264,5 +293,38 @@
   },
   "example": {
     "hello": "Hello! This is an example of translated text."
+  },
+  "rating": {
+    "label": "Your rating:",
+    "edit": "Click to give or change your rating (1 to 10)",
+    "needWatched": "Mark as watched to give your rating",
+    "invalid": "Use a rating from 1 to 10 (e.g. 8.5)"
+  },
+  "card": {
+    "availableStreaming": "Available to stream",
+    "watchTrailer": "Watch trailer",
+    "markWatched": "Mark as watched",
+    "unmarkWatched": "Remove from watched",
+    "noTrailer": "Trailer not found.",
+    "progress": "{{watched}} of {{total}} episodes watched",
+    "markFollowing": "Mark as watching",
+    "unmarkFollowing": "Stop watching"
+  },
+  "rank": {
+    "top": "TOP {{count}} -",
+    "seeTop": "SEE TOP {{count}}"
+  },
+  "seriesPage": {
+    "mySeries": "My series",
+    "emptyMine": "Tick the ✓ on a series you're watching to see it here with your episode progress.",
+    "mostWatched": "Most watched in",
+    "bestRatedOn": "Best rated on {{provider}}",
+    "confirmUnfollow": "Stop following \"{{title}}\"? Your episode progress will be lost."
+  },
+  "animePage": {
+    "myAnime": "My anime",
+    "emptyMine": "Tick the ✓ on an anime you're watching to see it here with your episode progress.",
+    "mostWatched": "Most watched in",
+    "bestRatedOn": "Best rated on {{provider}}"
   }
 }

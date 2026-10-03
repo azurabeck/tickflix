@@ -12,18 +12,16 @@
 // indicados (vencedor primeiro) → clicar num indicado abre o detalhe
 // (dialog). Navegação por estado local (sem rota por edição/:ano por
 // enquanto).
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import MovieDetail from "@/components/movieDetail";
-import { fetchAvailabilityMap } from "@/components/movieDetail/functions";
+import { useMediaCards } from "@/components/mediaCard";
 import { auth } from "@/service/FirebaseSettings";
-import { fetchWatchedMap, setWatched } from "@/service/WatchedSettings";
 import type { AwardConfig } from "./awardConfigs";
 import {
   fetchAllSavedAwardEditions,
   fetchAwardEditionFromFirestore,
   getAwardEditions,
-  awardNomineeKey,
   type AwardCategory,
   type AwardEdition,
   type AwardNominee,
@@ -50,16 +48,10 @@ const AwardPage = ({ config }: AwardPageProps) => {
 
   const selectedEdition = editions.find((e) => e.ordinal === selectedOrdinal) ?? null;
 
-  // "Já vi" — estado GLOBAL por filme (service/WatchedSettings.ts), não
-  // uma marcação própria dessa página: o mesmo filme, se estiver numa
-  // timeline do usuário (dessa premiação ou de outra), compartilha essa
-  // mesma marcação. Otimista no toggle, desfaz se a gravação falhar.
-  const [watchedMap, setWatchedMapState] = useState<Map<string, number>>(new Map());
-  // Claquete ("disponível em streaming/aluguel") — pedido explícito da
-  // Rebecca: "deve aparecer em todos os lugares do site". Só dá pra
-  // resolver pra indicados com tmdbId real cadastrado (ver
-  // awardNomineeKey em functions.ts).
-  const [availabilityMap, setAvailabilityMap] = useState<Map<string, true>>(new Map());
+  // "Já vi", nota, claquete etc. dos cards: estado GLOBAL (MediaCardsProvider)
+  // — o mesmo filme, se estiver numa timeline do usuário (dessa premiação ou
+  // de outra), compartilha a mesma marcação.
+  const media = useMediaCards();
 
   // Trocar de premiação (Oscar → Globo de Ouro, ex.) é o MESMO componente
   // React, então o estado local não reseta sozinho — precisa reagir à
@@ -70,13 +62,6 @@ const AwardPage = ({ config }: AwardPageProps) => {
     setSelectedNominee(null);
     setAddDataOpen(false);
   }, [config]);
-
-  useEffect(() => {
-    if (!uid) return;
-    fetchWatchedMap(uid)
-      .then(setWatchedMapState)
-      .catch((err) => console.error("Erro ao buscar filmes vistos:", err));
-  }, [uid]);
 
   // Uma leitura só da collection inteira, na entrada da página — é o que
   // faz a GRADE já abrir mostrando o vencedor de quem já foi resolvido.
@@ -113,60 +98,30 @@ const AwardPage = ({ config }: AwardPageProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedOrdinal, config]);
 
+  // Claquete ("disponível em streaming/aluguel") dos indicados da edição —
+  // só dá pra resolver pra quem tem tmdbId real cadastrado.
   useEffect(() => {
-    if (!selectedEdition?.categories) {
-      setAvailabilityMap(new Map());
-      return;
-    }
-    const uniqueNominees = new Map<string, AwardNominee>();
-    for (const category of selectedEdition.categories) {
-      for (const nom of category.nominees) {
-        if (nom.tmdbId !== null) uniqueNominees.set(awardNomineeKey(nom), nom);
-      }
-    }
-    const items = Array.from(uniqueNominees.values()).map((nom) => ({ id: nom.tmdbId as number, mediaType: nom.mediaType }));
-    if (items.length === 0) {
-      setAvailabilityMap(new Map());
-      return;
-    }
-
-    let cancelled = false;
-    fetchAvailabilityMap(items)
-      .then((resolved) => {
-        if (!cancelled) setAvailabilityMap(resolved);
-      })
-      .catch((err) => console.error("Erro ao buscar disponibilidade (streaming/aluguel):", err));
-    return () => {
-      cancelled = true;
-    };
+    if (!selectedEdition?.categories) return;
+    const items = selectedEdition.categories.flatMap((category) =>
+      category.nominees.filter((nom) => nom.tmdbId !== null).map((nom) => ({ id: nom.tmdbId as number, mediaType: nom.mediaType }))
+    );
+    media.loadAvailability(items);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedEdition]);
 
-  const handleToggleWatched = async (nominee: AwardNominee) => {
-    if (!uid) return;
-    const key = awardNomineeKey(nominee);
-    const nextWatched = !watchedMap.has(key);
-
-    const nextMap = new Map(watchedMap);
-    if (nextWatched) nextMap.set(key, Date.now());
-    else nextMap.delete(key);
-    setWatchedMapState(nextMap);
-
-    try {
-      await setWatched(uid, key, nextWatched);
-    } catch (err) {
-      console.error("Erro ao marcar filme como visto:", err);
-      setWatchedMapState(watchedMap); // desfaz — volta pro estado de antes do clique
-      return;
-    }
-
-    // Garante que o filme está numa timeline de verdade do usuário (uma
-    // por prêmio+edição, criada na hora do primeiro "já vi" dela).
-    // Best-effort: se falhar, o "já vi" já foi gravado, só não garantiu a
-    // timeline dessa vez.
-    if (selectedEdition) {
+  // Garante que o filme está numa timeline de verdade do usuário (uma por
+  // prêmio+edição, criada na hora do primeiro "já vi" dela) — roda a cada
+  // check de filme (`watchedRevision`). Best-effort: se falhar, o "já vi"
+  // já foi gravado, só não garantiu a timeline dessa vez.
+  const lastRevision = useRef(media.watchedRevision);
+  useEffect(() => {
+    if (media.watchedRevision === lastRevision.current) return;
+    lastRevision.current = media.watchedRevision;
+    if (uid && selectedEdition) {
       syncAwardTimeline(uid, config, selectedEdition).catch((err) => console.error(`Erro ao sincronizar timeline da edição do ${config.name}:`, err));
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [media.watchedRevision]);
 
   const handleDataSaved = (headline: string, categories: AwardCategory[]) => {
     if (!selectedEdition) return;
@@ -181,12 +136,9 @@ const AwardPage = ({ config }: AwardPageProps) => {
           <EditionDetail
             config={config}
             edition={selectedEdition}
-            watchedMap={watchedMap}
-            availabilityMap={availabilityMap}
             uid={uid}
             onBack={() => setSelectedOrdinal(null)}
             onSelectNominee={(_categoryName, nominee) => setSelectedNominee(nominee)}
-            onToggleWatched={handleToggleWatched}
             onOpenAddData={() => setAddDataOpen(true)}
           />
         ) : (

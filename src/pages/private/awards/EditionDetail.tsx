@@ -4,79 +4,66 @@
 // Generalização de pages/private/oscar/EditionDetail.tsx — recebe
 // `config` só pro texto do cabeçalho ("cerimônia do Oscar" vs "edição do
 // Festival de Cannes", ver AwardConfig.editionNoun).
-import { ArrowLeft, Clapperboard, FileJson, Trophy } from "lucide-react";
-import WatchButton from "@/components/watchButton";
-import AvailabilityBadge from "@/components/availabilityBadge";
-import AddToTimelineButton from "@/components/addToTimelineButton";
-import { posterUrl } from "@/service/TMDbSettings";
+//
+// Cada indicado é o CARD GLOBAL (@/components/mediaCard): filme = card
+// `movie`, série = card `serie`; vencedor ganha o selo "Vencedor" na
+// imagem e, em categoria de pessoa, o nome dela sob o título. Indicado sem
+// tmdbId cadastrado vira card sem ações (não dá pra marcar/avaliar algo que
+// não existe no TMDb).
+import { ArrowLeft, FileJson, Trophy } from "lucide-react";
+import { ConnectedMediaCard, cardKey, useMediaCards, useOpenCard, type MediaItem } from "@/components/mediaCard";
 import type { AwardConfig } from "./awardConfigs";
-import { awardNomineeKey, type AwardEdition, type AwardNominee } from "./functions";
+import { awardNomineeKey, type AwardCategory, type AwardEdition, type AwardNominee } from "./functions";
 
 interface EditionDetailProps {
   config: AwardConfig;
   edition: AwardEdition;
-  watchedMap: Map<string, number>;
-  // Claquete ("disponível em streaming/aluguel") — pedido explícito da
-  // Rebecca: "deve aparecer em todos os lugares do site".
-  availabilityMap: Map<string, true>;
   uid: string | null;
   onBack: () => void;
+  // Clique na imagem do card aberto (detalhe do indicado).
   onSelectNominee: (categoryName: string, nominee: AwardNominee) => void;
-  onToggleWatched: (nominee: AwardNominee) => void;
   onOpenAddData: () => void;
 }
 
-const NomineeCard = ({
-  nominee,
-  categoryName,
-  isWatched,
-  isAvailable,
-  uid,
+// Indicados de UMA categoria — "um card aberto por vez" por categoria.
+const CategoryNominees = ({
+  category,
   onSelectNominee,
-  onToggleWatched,
 }: {
-  nominee: AwardNominee;
-  categoryName: string;
-  isWatched: boolean;
-  isAvailable: boolean;
-  uid: string | null;
+  category: AwardCategory;
   onSelectNominee: (categoryName: string, nominee: AwardNominee) => void;
-  onToggleWatched: (nominee: AwardNominee) => void;
 }) => {
-  const poster = posterUrl(nominee.posterPath);
+  const items: MediaItem[] = category.nominees.map((nom) => ({
+    id: nom.tmdbId ?? undefined,
+    mediaType: nom.tmdbId !== null ? nom.mediaType : undefined,
+    title: nom.filmTitle,
+    posterPath: nom.posterPath,
+  }));
+  const open = useOpenCard(items);
 
   return (
-    <div className={nominee.isWinner ? "awards__nominee awards__nominee--winner" : "awards__nominee"}>
-      <button type="button" className="awards__nominee-open" onClick={() => onSelectNominee(categoryName, nominee)}>
-        {poster ? (
-          <img src={poster} alt={nominee.filmTitle} className="awards__nominee-poster" />
-        ) : (
-          <div className="awards__nominee-poster awards__nominee-poster--empty">
-            <Clapperboard size={22} />
-          </div>
-        )}
-
-        <AvailabilityBadge available={isAvailable} />
-
-        {nominee.isWinner && (
-          <span className="awards__nominee-winner-badge">
-            <Trophy size={12} />
-            Vencedor
-          </span>
-        )}
-
-        <span className="awards__nominee-title">{nominee.filmTitle}</span>
-        {nominee.personName && <span className="awards__nominee-person">{nominee.personName}</span>}
-      </button>
-
-      <WatchButton isWatched={isWatched} onToggle={() => onToggleWatched(nominee)} disabled={!uid} />
-      {/* Sem tmdbId cadastrado não dá pra resolver um TimelineMovie de
-          verdade (ver @/components/addToTimelineButton/functions.ts) —
-          mesmo caso já tratado pro MovieDetail (ver index.tsx, "sem
-          tmdbId cadastrado"), aqui simplesmente não mostra o botão. */}
-      {nominee.tmdbId !== null && (
-        <AddToTimelineButton uid={uid} movie={{ id: nominee.tmdbId, mediaType: nominee.mediaType, title: nominee.filmTitle, posterPath: nominee.posterPath }} />
-      )}
+    <div className="media-grid">
+      {category.nominees.map((nom, index) => {
+        const id = cardKey(items[index], index);
+        return (
+          <ConnectedMediaCard
+            key={`${nom.filmTitle}-${nom.personName ?? ""}`}
+            item={items[index]}
+            isOpen={open.openKey === id}
+            onSelect={() => open.setOpenKey(id)}
+            onOpen={() => onSelectNominee(category.name, nom)}
+            badge={
+              nom.isWinner ? (
+                <>
+                  <Trophy size={12} />
+                  Vencedor
+                </>
+              ) : undefined
+            }
+            subtitle={nom.personName}
+          />
+        );
+      })}
     </div>
   );
 };
@@ -93,17 +80,8 @@ const countEditionFilms = (edition: AwardEdition, watchedMap: Map<string, number
   return { categoriesCount: edition.categories?.length ?? 0, total, watched };
 };
 
-const EditionDetail = ({
-  config,
-  edition,
-  watchedMap,
-  availabilityMap,
-  uid,
-  onBack,
-  onSelectNominee,
-  onToggleWatched,
-  onOpenAddData,
-}: EditionDetailProps) => {
+const EditionDetail = ({ config, edition, uid, onBack, onSelectNominee, onOpenAddData }: EditionDetailProps) => {
+  const { checkedMap: watchedMap } = useMediaCards();
   const { categoriesCount, total, watched } = countEditionFilms(edition, watchedMap);
   const pct = total === 0 ? 0 : Math.round((watched / total) * 100);
 
@@ -152,20 +130,7 @@ const EditionDetail = ({
     {edition.categories?.map((category) => (
       <section key={category.name} className="awards__category">
         <h2 className="awards__category-title">{category.name}</h2>
-        <div className="awards__nominee-row">
-          {category.nominees.map((nom) => (
-            <NomineeCard
-              key={`${nom.filmTitle}-${nom.personName ?? ""}`}
-              nominee={nom}
-              categoryName={category.name}
-              isWatched={watchedMap.has(awardNomineeKey(nom))}
-              isAvailable={availabilityMap.has(awardNomineeKey(nom))}
-              uid={uid}
-              onSelectNominee={onSelectNominee}
-              onToggleWatched={onToggleWatched}
-            />
-          ))}
-        </div>
+        <CategoryNominees category={category} onSelectNominee={onSelectNominee} />
       </section>
     ))}
   </div>
