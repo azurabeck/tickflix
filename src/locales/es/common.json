@@ -343,7 +343,8 @@
     "completed": "Completados",
     "inProgress": "En progreso",
     "notStarted": "Sin empezar",
-    "empty": "Ningún título en este filtro."
+    "empty": "Ningún título en este filtro.",
+    "soon": "Próximamente"
   },
   "confirmDialog": {
     "title": "Confirmar",

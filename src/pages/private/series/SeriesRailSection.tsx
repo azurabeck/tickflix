@@ -9,7 +9,7 @@
 // {streaming}".
 import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { followedSeriesProgress, type FollowedCategory } from "@/service/FollowingSettings";
+import { episodeAiringInfo, type FollowedCategory, type FollowedSeries } from "@/service/FollowingSettings";
 import { ConnectedMediaCard, cardKey, useMediaCards, useOpenCard, type MediaItem } from "@/components/mediaCard";
 import HomeSection from "@/pages/private/home/dashboard/HomeSection";
 import { RailControls, ScrollRail, useScrollRail } from "@/pages/private/home/dashboard/ScrollRail";
@@ -31,8 +31,36 @@ export const toSeriesCardItem = (
 });
 
 // Filtros de "Minhas séries"/"Meus animes" pelo progresso de episódios.
-type ProgressFilter = "completed" | "inProgress" | "notStarted";
-const PROGRESS_FILTERS: ProgressFilter[] = ["completed", "inProgress", "notStarted"];
+type ProgressFilter = "completed" | "inProgress" | "soon" | "notStarted";
+const PROGRESS_FILTERS: ProgressFilter[] = ["completed", "inProgress", "soon", "notStarted"];
+
+// Os quatro grupos são EXCLUSIVOS (todo título seguido cai em exatamente um):
+//   Concluídos   — todos os episódios vistos (ou em dia e a série foi cancelada)
+//   Em breve     — viu TUDO que já saiu, mas ainda tem episódio por lançar
+//                  (ex.: a temporada nova já anunciada)
+//   Não iniciado — nenhum episódio visto
+//   Em progresso — o resto: viu algum e ainda falta algo que já saiu
+const progressGroup = (series: FollowedSeries): ProgressFilter => {
+  let watched = 0;
+  let total = 0;
+  let aired = 0;
+  let watchedAired = 0;
+  for (const season of Object.values(series.seasons)) {
+    for (const episode of Object.values(season.episodes)) {
+      total++;
+      if (episode.watched) watched++;
+      if (episodeAiringInfo(episode, series.status).aired) {
+        aired++;
+        if (episode.watched) watchedAired++;
+      }
+    }
+  }
+  if (watched === 0) return "notStarted";
+  if (total > 0 && watched === total) return "completed";
+  const caughtUp = aired > 0 && watchedAired === aired;
+  if (caughtUp) return series.status === "Canceled" ? "completed" : "soon";
+  return "inProgress";
+};
 
 interface SeriesRailSectionProps {
   title: ReactNode;
@@ -41,8 +69,9 @@ interface SeriesRailSectionProps {
   error?: string | null;
   emptyMessage?: string;
   // Só "Minhas séries"/"Meus animes": 3 botões de filtro por progresso —
-  // Concluídos (barra 100%), Em progresso (já viu ao menos 1 episódio, mas não
-  // todos) e Não iniciado (nenhum episódio visto). Dá pra ligar VÁRIOS ao mesmo
+  // Concluídos (barra 100%), Em progresso (já viu algum e ainda falta algo que
+  // já saiu), Em breve (viu tudo que saiu, falta só o que ainda vai estrear) e
+  // Não iniciado (nenhum episódio visto). Dá pra ligar VÁRIOS ao mesmo
   // tempo (mostra os títulos que se encaixam em qualquer um); começa só com
   // "Em progresso" e, sem nenhum ligado, mostra tudo.
   progressFilters?: boolean;
@@ -55,11 +84,7 @@ const SeriesRailSection = ({ title, items: allItems, loading, error, emptyMessag
 
   const matches = (item: MediaItem, wanted: ProgressFilter): boolean => {
     const followed = item.id !== undefined ? media.followed.get(item.id) : undefined;
-    if (!followed) return false;
-    const { watched, total } = followedSeriesProgress(followed);
-    if (wanted === "completed") return total > 0 && watched === total;
-    if (wanted === "notStarted") return watched === 0;
-    return watched > 0 && watched < total;
+    return followed ? progressGroup(followed) === wanted : false;
   };
 
   const filtering = Boolean(progressFilters) && filters.size > 0;
