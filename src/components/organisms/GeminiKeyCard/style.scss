@@ -1,0 +1,137 @@
+@use "@/theme" as *;
+
+.gemini-key-card {
+  margin-top: 20px;
+
+  &__title {
+    margin: 0 0 8px;
+    font-size: 17px;
+    font-weight: 700;
+    color: $color-text;
+  }
+
+  &__description {
+    max-width: 640px;
+    margin: 0 0 18px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: $color-text-muted;
+  }
+
+  &__subtitle {
+    margin: 0 0 10px;
+    font-size: 13px;
+    font-weight: 700;
+    color: $color-text;
+  }
+
+  &__steps {
+    max-width: 640px;
+    margin: 0 0 18px;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: $color-text;
+
+    a {
+      color: $color-primary;
+      font-weight: 600;
+    }
+  }
+
+  &__status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+    padding: 10px 14px;
+    border-radius: $radius-sm;
+    background: rgba($color-primary, 0.08);
+    color: $color-primary;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  &__form {
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__label {
+    font-size: 12px;
+    font-weight: 700;
+    color: $color-text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  &__key-input-wrap {
+    position: relative;
+    display: flex;
+  }
+
+  &__input {
+    width: 100%;
+    padding: 12px 44px 12px 14px;
+    border: 1px solid $color-border;
+    border-radius: $radius-sm;
+    font-size: 14px;
+    font-family: monospace;
+    color: $color-text;
+
+    &:focus {
+      outline: none;
+      border-color: $color-primary;
+    }
+
+    &:disabled {
+      background: rgba($color-border, 0.12);
+    }
+  }
+
+  &__key-toggle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    border: none;
+    background: none;
+    color: $color-text-muted;
+    cursor: pointer;
+
+    &:hover {
+      color: $color-text;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    .btn {
+      width: auto;
+    }
+  }
+
+  &__footnote {
+    margin: 18px 0 0;
+    font-size: 12px;
+    color: $color-text-muted;
+  }
+}

@@ -1,21 +1,3 @@
-// api/gemini.ts
-// Função serverless (Vercel) — proxy do Gemini. A chave da plataforma
-// (`GEMINI_API_KEY`, SEM prefixo VITE_) fica só aqui no servidor: antes ela
-// ia dentro do bundle do navegador (VITE_GEMINI_API_KEY) e qualquer pessoa
-// que abrisse o site podia extraí-la e gastar a cota/dinheiro da conta.
-//
-// POST /api/gemini   (Authorization: Bearer <ID token do Firebase>)
-//   body: { prompt: string, schema: object, useSearch?: boolean }
-//   200:  { text: string }            — o JSON gerado, ainda como texto
-//   4xx/5xx: { error: string }
-//
-// Só usuário logado chama (o ID token é verificado com o Firebase Admin).
-// Erro transitório do Google (503 "high demand", 500) é repetido aqui (2 novas
-// tentativas) e, se persistir, cai num modelo reserva. 429 (cota esgotada) NÃO
-// é repetido: cada tentativa gasta cota e só piora (a cota grátis é de poucas
-// dezenas de chamadas por dia) — vai no máximo uma vez ao modelo reserva.
-// Quem usa a PRÓPRIA chave (Configurações) continua chamando o Google direto
-// do navegador, sem passar por aqui (ver src/service/IASettings.ts).
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getAuth } from "firebase-admin/auth";
 import { getAdminApp } from "./_lib/firebaseAdmin.js";
@@ -56,7 +38,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  // Só usuário logado.
   const authHeader = req.headers.authorization ?? "";
   const idToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
   if (!idToken) {
@@ -96,6 +77,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!response.ok) {
       const errorBody = (await response.json().catch(() => null)) as { error?: { message?: string } } | null;
       const detail = errorBody?.error?.message;
+      // 401/403 vindo do Google = a GEMINI_API_KEY do servidor está inválida ou sem permissão (não confundir com a sessão do usuário)
+      if (response.status === 401 || response.status === 403) {
+        console.error(`Gemini recusou a GEMINI_API_KEY do servidor (${response.status}): ${detail ?? "sem detalhe"}`);
+        res.status(502).json({ error: "A chave do Gemini do servidor foi recusada (GEMINI_API_KEY inválida ou sem permissão)." });
+        return;
+      }
       res.status(response.status).json({ error: `Gemini respondeu ${response.status}${detail ? `: ${detail}` : ""}` });
       return;
     }

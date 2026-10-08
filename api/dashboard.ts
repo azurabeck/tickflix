@@ -1,22 +1,3 @@
-// api/dashboard.ts
-// Função serverless (Vercel) — devolve os dados pesados da Home (em
-// cartaz, bilheteria, principais lançamentos, trailers do topo) já
-// resolvidos, lendo de um cache COMPARTILHADO no Firestore
-// (api/_lib/sharedCache.ts, 7 dias) em vez de cada navegador refazer
-// essas dezenas/centenas de chamadas no TMDb sozinho. Pedido explícito
-// da Rebecca: "a gente ta pegando isso toda vez... o certo era a gente
-// ter a chamada do tmdb, quando a resposta... e aí as sessões são
-// basicamente filtros" — na prática do dashboard (sem filtro nenhum por
-// usuário, só por cidade/idioma), "filtro" aqui é city+lang: a maioria
-// das visitas cai em cache HIT (uma leitura no Firestore, nenhuma
-// chamada ao TMDb) em vez de reconstruir a lista do zero.
-//
-// GET /api/dashboard?lang=pt-BR&city=sao-paulo&refresh=0
-//   lang: pt-BR | en-US | es-ES (mesmo valor de TMDB_LANGUAGE_BY_APP_LANGUAGE, src/service/i18n.ts)
-//   city: slug do ingresso.com pra "em cartaz" (já resolvido no client via geolocation — o
-//         backend não faz geolocation nenhuma, só lê a página do ingresso.com pra ESSA cidade)
-//   refresh: "1" força ignorar o cache (botão "Atualizar" do UserMenu)
-//   part: "main" (padrão: em cartaz + trailers + bilheteria) | "releases" (os 120 lançamentos do "Ver tudo", bem mais pesado)
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { cachedOrFetch } from "./_lib/sharedCache.js";
 import {
@@ -26,49 +7,55 @@ import {
   fetchNowPlayingBrazil,
   fetchRecentMajorReleases,
   buildIngressoMovieUrl,
-  type DashboardMovie,
-  type HeroTrailer,
-  type MajorReleaseMovie,
+  withAvailability,
   type MovieRowItem,
 } from "./_lib/dashboardData.js";
+
+// Uma chamada por grupo de sections da página (`?page=movies&only=hero,nowplaying,boxoffice`; sem `only`, todas): o servidor monta as sections pedidas
+// em paralelo e responde uma resposta por section,
+//   { hero, nowplaying, boxoffice, releases }, cada uma com `{ items }` (cards prontos: imagens, título, ano, id, "disponível")
+// ou `{ error }`. Cada section tem o próprio cache compartilhado, então uma falha não derruba as outras e o que já terminou
+// fica guardado mesmo que a chamada demore.
+//   hero       -> trailers do topo (dos filmes em cartaz)
+//   nowplaying -> "Em cartaz" (da cidade; sem cidade, Brasil)
+//   boxoffice  -> ranking de popularidade do ano
+//   releases   -> principais lançamentos dos últimos 12 meses
 
 const ALLOWED_LANGS = new Set(["pt-BR", "en-US", "es-ES"]);
 const ROW_LIMIT = 8;
 const BOX_OFFICE_LIMIT = 20;
-const MAJOR_RELEASES_MODAL_LIMIT = 120;
+const RELEASES_LIMIT = 120;
 const INGRESSO_LIMIT = 40;
+const HERO_CANDIDATES = 12;
+const HERO_LIMIT = 5;
 
-interface NowPlayingPayload {
-  movies: MovieRowItem[];
-  heroTrailers: HeroTrailer[];
-}
-
-const resolveNowPlaying = async (city: string | null, lang: string): Promise<NowPlayingPayload> => {
+const nowPlayingMovies = async (city: string | null, lang: string): Promise<MovieRowItem[]> => {
   if (city) {
     try {
-      const movies = await fetchIngressoNowPlayingResolved(city, INGRESSO_LIMIT, lang);
-      const withId = movies.filter((m): m is MovieRowItem & { id: number } => m.id !== undefined);
-      const heroTrailers = await fetchHeroTrailers(withId, lang);
-      return { movies, heroTrailers };
+      return await withAvailability(await fetchIngressoNowPlayingResolved(city, INGRESSO_LIMIT, lang), lang);
     } catch (err) {
       console.error("Erro ao buscar em cartaz do ingresso.com, caindo pro TMDb:", err);
     }
   }
 
   const fallback = await fetchNowPlayingBrazil(ROW_LIMIT, lang);
-  const movies: MovieRowItem[] = fallback.map((movie) => ({
-    id: movie.id,
-    mediaType: movie.mediaType,
-    title: movie.title,
-    posterPath: movie.posterPath,
-    backdropPath: movie.backdropPath,
-    href: buildIngressoMovieUrl(movie.title),
-    rankLabel: "Comprar ingresso",
-  }));
-  const withId = movies.filter((m): m is MovieRowItem & { id: number } => m.id !== undefined);
-  const heroTrailers = await fetchHeroTrailers(withId, lang);
-  return { movies, heroTrailers };
+  return withAvailability(
+    fallback.map((movie) => ({
+      id: movie.id,
+      mediaType: movie.mediaType,
+      title: movie.title,
+      year: movie.year,
+      posterPath: movie.posterPath,
+      backdropPath: movie.backdropPath,
+      href: buildIngressoMovieUrl(movie.title),
+      rankLabel: "Comprar ingresso",
+    })),
+    lang
+  );
 };
+
+type SectionResult = { items: unknown[] } | { error: string };
+const asResult = (items: unknown[] | null, label: string): SectionResult => (items ? { items } : { error: `Não foi possível buscar "${label}" agora.` });
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "GET") {
@@ -79,44 +66,46 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const langParam = typeof req.query.lang === "string" ? req.query.lang : "";
   const lang = ALLOWED_LANGS.has(langParam) ? langParam : "pt-BR";
   const city = typeof req.query.city === "string" && req.query.city.trim() ? req.query.city.trim() : null;
-  const forceRefresh = req.query.refresh === "1" || req.query.refresh === "true";
+  const refresh = req.query.refresh === "1" || req.query.refresh === "true";
 
-  // `part` separa o que é rápido do que é pesado — antes tudo vinha numa
-  // resposta só, então a Home esperava os 120 lançamentos (a parte de
-  // ~35s com cache frio) mesmo só precisando de "em cartaz"/bilheteria
-  // pra mostrar a página. O client chama as duas partes em paralelo e
-  // só trava o load geral na "main".
-  const part = req.query.part === "releases" ? "releases" : "main";
-
-  // Cache de CDN (Vercel) só em resposta COMPLETA e sem `refresh=1` —
-  // a maioria das visitas é servida da borda sem nem invocar a função
-  // (nem ler o Firestore). `refresh=1` (botão "Atualizar") e qualquer
-  // falha ficam `no-store`, pra nunca congelar um erro nem uma lista
-  // velha na CDN. 10 min: curto o bastante pro "Atualizar" aparecer logo
-  // pra quem entra depois, sem perder o ganho.
-  const setCacheHeader = (complete: boolean) =>
-    res.setHeader("Cache-Control", complete && !forceRefresh ? "public, s-maxage=600, stale-while-revalidate=3600" : "no-store");
-
-  if (part === "releases") {
-    const majorReleasesFull = await cachedOrFetch<MajorReleaseMovie[]>(`dashboard:v2:major-releases-full:${lang}`, "principais lançamentos", forceRefresh,
-      () => fetchRecentMajorReleases(MAJOR_RELEASES_MODAL_LIMIT, lang)
-    );
-    setCacheHeader(majorReleasesFull !== null);
-    res.status(200).json({ majorReleasesFull, majorReleasesFailed: majorReleasesFull === null });
+  if (req.query.page !== "movies") {
+    res.status(400).json({ error: "Página inválida." });
     return;
   }
 
-  const [nowPlayingPayload, boxOffice] = await Promise.all([
-    cachedOrFetch<NowPlayingPayload>(`dashboard:v2:now-playing:${lang}:${city ?? "brasil"}`, "em cartaz", forceRefresh, () => resolveNowPlaying(city, lang)),
-    cachedOrFetch<DashboardMovie[]>(`dashboard:v2:box-office:${lang}`, "bilheteria", forceRefresh, () => fetchBoxOfficeChampions(BOX_OFFICE_LIMIT, lang)),
-  ]);
+  const place = city ?? "brasil";
+  const only = typeof req.query.only === "string" && req.query.only ? req.query.only.split(",") : null;
 
-  setCacheHeader(nowPlayingPayload !== null && boxOffice !== null);
-  res.status(200).json({
-    nowPlaying: nowPlayingPayload?.movies ?? null,
-    nowPlayingFailed: nowPlayingPayload === null,
-    heroTrailers: nowPlayingPayload?.heroTrailers ?? [],
-    boxOffice,
-    boxOfficeFailed: boxOffice === null,
+  const nowPlaying = () => cachedOrFetch(`dashboard:v4:now-playing:${lang}:${place}`, "em cartaz", refresh, () => nowPlayingMovies(city, lang));
+
+  const builders: Record<string, { label: string; run: () => Promise<unknown[] | null> }> = {
+    // Trailers do topo: os filmes em cartaz no Brasil (uma consulta só, não depende da cidade nem do "disponível"), os primeiros candidatos
+    // e até 5 com trailer. Lista vazia é falha (não vai para o cache), para um problema passageiro não prender o hero por dias.
+    hero: {
+      label: "trailers",
+      run: () =>
+        cachedOrFetch(`dashboard:v5:hero:${lang}`, "trailers", refresh, async () => {
+          const trailers = await fetchHeroTrailers(await fetchNowPlayingBrazil(HERO_CANDIDATES, lang), lang);
+          if (trailers.length === 0) throw new Error("nenhum filme em cartaz com trailer");
+          return trailers.slice(0, HERO_LIMIT);
+        }),
+    },
+    nowplaying: { label: "em cartaz", run: nowPlaying },
+    boxoffice: {
+      label: "bilheteria",
+      run: () => cachedOrFetch(`dashboard:v4:box-office:${lang}`, "bilheteria", refresh, async () => withAvailability(await fetchBoxOfficeChampions(BOX_OFFICE_LIMIT, lang), lang)),
+    },
+    releases: { label: "lançamentos", run: () => cachedOrFetch(`dashboard:v4:releases:${lang}`, "principais lançamentos", refresh, () => fetchRecentMajorReleases(RELEASES_LIMIT, lang)) },
+  };
+
+  const names = Object.keys(builders).filter((name) => !only || only.includes(name));
+  const results = await Promise.all(names.map((name) => builders[name].run()));
+  const sections: Record<string, SectionResult> = {};
+  names.forEach((name, index) => {
+    sections[name] = asResult(results[index], builders[name].label);
   });
+  const complete = Object.values(sections).every((section) => "items" in section);
+
+  res.setHeader("Cache-Control", complete && !refresh ? "public, s-maxage=600, stale-while-revalidate=3600" : "no-store");
+  res.status(200).json(sections);
 }

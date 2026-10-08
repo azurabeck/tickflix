@@ -1,0 +1,102 @@
+@use "@/theme" as *;
+
+.season-item {
+  border: 1px solid rgba($color-border, 0.3);
+  border-radius: $radius-md;
+  overflow: hidden;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+  }
+
+  &__toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+    color: $color-text-muted;
+
+    &:hover {
+      color: $color-primary;
+    }
+  }
+
+  &__name {
+    font-size: 13px;
+    font-weight: 700;
+    color: $color-primary-dark;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__count {
+    flex: 0 0 auto;
+    font-size: 12px;
+    font-weight: 600;
+    color: $color-text-muted;
+  }
+
+  &__mark-all {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: 1px solid rgba($color-border, 0.5);
+    border-radius: 50%;
+    background: none;
+    color: $color-text-muted;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      border-color: $color-success;
+      color: $color-success;
+    }
+
+    &--active {
+      background: $color-success;
+      border-color: $color-success;
+      color: #ffffff;
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  }
+
+  &__progress-bar {
+    height: 3px;
+    background: rgba($color-border, 0.3);
+  }
+
+  &__progress-fill {
+    height: 100%;
+    background: $color-success;
+    transition: width 0.25s ease;
+  }
+
+  &__hint {
+    margin: 6px 10px 2px;
+    font-size: 11px;
+    color: $color-text-muted;
+    font-style: italic;
+  }
+
+  &__episodes {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px;
+  }
+}

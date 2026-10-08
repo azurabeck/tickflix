@@ -1,0 +1,72 @@
+@use "@/theme" as *;
+
+.add-to-timeline {
+  position: relative;
+  display: inline-flex;
+
+  &__button {
+    display: inline-flex;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: #ffffff;
+    cursor: pointer;
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    &:hover:not(:disabled) {
+      color: $chip-lilac;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &__menu {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    right: 0;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    width: max-content;
+    min-width: 200px;
+
+    max-width: calc(100vw - 24px);
+    padding: 6px;
+    border-radius: $radius-md;
+    background: $color-bg;
+    box-shadow: 0 12px 30px rgba(#000000, 0.35);
+
+  }
+
+  &__menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: none;
+    border-radius: $radius-sm;
+    background: none;
+    color: $color-text;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover {
+      background: rgba($color-primary, 0.1);
+    }
+
+    svg {
+      flex: 0 0 auto;
+      color: $color-primary;
+    }
+  }
+}

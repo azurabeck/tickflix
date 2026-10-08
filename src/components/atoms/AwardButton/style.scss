@@ -1,0 +1,26 @@
+@use "@/theme" as *;
+
+.award-button {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid color-mix(in srgb, var(--awards-accent) 40%, transparent);
+  border-radius: $radius-md;
+  background: color-mix(in srgb, var(--awards-accent) 16%, transparent);
+  padding: 9px 16px;
+  color: var(--awards-accent);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--awards-accent) 28%, transparent);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}

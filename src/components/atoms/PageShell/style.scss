@@ -1,0 +1,59 @@
+@use "@/theme" as *;
+
+$content-max-width: 1440px;
+$content-narrow-width: 1200px;
+
+.page-shell {
+  &--light {
+    min-height: calc(100vh - 60px);
+    padding: 48px 0;
+    background: $color-bg;
+  }
+
+  &--dark {
+    min-height: 100vh;
+    padding: 48px 0 64px;
+    background: linear-gradient(307deg, #242329 3%, #51279b 64%);
+
+    .status-message {
+      color: rgba(#ffffff, 0.75);
+    }
+  }
+
+  &__inner {
+    max-width: $content-max-width;
+    margin: 0 auto;
+    padding: 0 48px;
+
+    @media (max-width: 900px) {
+      padding: 0 20px;
+    }
+
+    &--narrow {
+      max-width: $content-narrow-width;
+    }
+  }
+
+  &__title {
+    margin: 0 0 24px;
+    font-size: 22px;
+    font-weight: 700;
+    color: $color-text;
+  }
+
+  &--dark &__title {
+    margin: 0 0 4px;
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    color: #ffffff;
+    text-align: center;
+  }
+
+  &__subtitle {
+    margin: 0 0 24px;
+    text-align: center;
+    font-size: 14px;
+    color: rgba(#ffffff, 0.65);
+  }
+}

@@ -1,0 +1,50 @@
+@use "@/theme" as *;
+
+.detail-panel {
+  &__overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(#000000, 0.6);
+  }
+
+  &__panel {
+    position: relative;
+    width: 100%;
+    max-width: 720px;
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: $radius-lg;
+    background: $color-bg;
+    box-shadow: 0 20px 60px rgba(#000000, 0.35);
+  }
+
+  &__close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(#000000, 0.5);
+    color: #ffffff;
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(#000000, 0.7);
+    }
+  }
+
+  &__status {
+    padding: 64px 24px;
+  }
+}

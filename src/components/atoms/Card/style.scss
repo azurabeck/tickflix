@@ -1,0 +1,46 @@
+@use "@/theme" as *;
+
+.card {
+  width: 100%;
+  border: 1px solid rgba($color-border, 0.4);
+  border-radius: $radius-lg;
+
+  &--md {
+    padding: 24px;
+  }
+
+  &--lg {
+    padding: 28px;
+  }
+
+  &--row {
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+
+    @media (max-width: 600px) {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+  }
+
+  &--between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 20px 24px;
+
+    @media (max-width: 480px) {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
+  &--column {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

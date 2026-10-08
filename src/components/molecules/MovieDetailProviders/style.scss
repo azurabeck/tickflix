@@ -1,0 +1,30 @@
+@use "@/theme" as *;
+
+.movie-detail-providers {
+  padding: 0 24px 24px;
+
+  @media (max-width: 600px) {
+    padding: 0 20px 20px;
+  }
+
+  &__title {
+    margin: 0 0 10px;
+    font-size: 14px;
+    font-weight: 700;
+    color: $color-primary-dark;
+  }
+
+  &__loading, &__empty {
+    margin: 0;
+    font-size: 13px;
+    color: $color-text-muted;
+  }
+
+  &__attribution {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 11px;
+    color: $color-text-muted;
+    text-decoration: underline;
+  }
+}

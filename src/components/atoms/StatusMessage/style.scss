@@ -1,0 +1,33 @@
+@use "@/theme" as *;
+
+.status-message {
+  &--loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: $color-text-muted;
+    font-size: 14px;
+  }
+
+  &--error {
+    color: $color-error;
+    text-align: center;
+  }
+
+  &--empty {
+    color: $color-text-muted;
+    text-align: center;
+  }
+
+  &--success {
+    color: $color-success;
+  }
+
+  // Feedback de formulário: alinhado à esquerda, sem margem.
+  &--compact {
+    margin: 0;
+    font-size: 13px;
+    text-align: left;
+  }
+}

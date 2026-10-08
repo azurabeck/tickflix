@@ -1,12 +1,3 @@
-// api/_lib/dashboardData.ts
-// Lógica de busca da Home, portada pro servidor — espelha
-// src/pages/private/home/dashboard/functions.ts e
-// src/service/IngressoSettings.ts, mas usando `tmdbFetchServer` (Node,
-// token de servidor) em vez do client. Duplicado de propósito (não
-// importado de `src/`, que é código de browser/Vite, com seu próprio
-// alias `@/` que o bundler da Vercel não resolve): qualquer ajuste de
-// COMPORTAMENTO num dos dois lados (ex.: mudar o piso de voto da
-// bilheteria) precisa ser espelhado aqui manualmente.
 import { tmdbFetchServer } from "./tmdbServer.js";
 
 const INGRESSO_BASE_URL = "https://www.ingresso.com";
@@ -22,8 +13,6 @@ export const slugify = (text: string): string =>
 
 export const buildIngressoMovieUrl = (title: string): string => `${INGRESSO_BASE_URL}/filme/${slugify(title)}`;
 
-// --- Tipos devolvidos pro client (mesmo formato que MovieRow/functions.ts já esperam) ---
-
 export interface DashboardMovie {
   id: number;
   mediaType: "movie" | "tv";
@@ -31,12 +20,16 @@ export interface DashboardMovie {
   posterPath: string | null;
   backdropPath: string | null;
   voteAverage: number;
+  year: string;
+  available?: boolean;
 }
 
 export interface MovieRowItem {
   id?: number;
   mediaType?: "movie" | "tv";
   title: string;
+  year?: string;
+  available?: boolean;
   posterPath?: string | null;
   backdropPath?: string | null;
   posterUrl?: string;
@@ -55,8 +48,6 @@ export interface MajorReleaseMovie extends DashboardMovie {
   available: boolean;
   releaseDate: string;
 }
-
-// --- Em cartaz (ingresso.com) -------------------------------------------------
 
 interface IngressoNowPlayingMovie {
   title: string;
@@ -107,6 +98,7 @@ interface RawTmdbResult {
 interface TmdbMovie {
   id: number;
   mediaType: "movie" | "tv";
+  year: string;
   poster_path: string | null;
   backdrop_path: string | null;
 }
@@ -114,7 +106,7 @@ interface TmdbMovie {
 const searchMovieByTitle = async (title: string, lang: string): Promise<TmdbMovie | null> => {
   const data = await tmdbFetchServer<{ results: RawTmdbResult[] }>("/search/movie", { query: title }, lang);
   const best = data.results[0];
-  return best ? { id: best.id, mediaType: "movie", poster_path: best.poster_path, backdrop_path: best.backdrop_path ?? null } : null;
+  return best ? { id: best.id, mediaType: "movie", year: (best.release_date ?? "").slice(0, 4), poster_path: best.poster_path, backdrop_path: best.backdrop_path ?? null } : null;
 };
 
 const stripTrailingParenthetical = (title: string): string => title.replace(/\s*\([^)]*\)\s*$/, "").trim();
@@ -140,6 +132,7 @@ export const fetchIngressoNowPlayingResolved = async (citySlug: string, limit: n
             id: match.id,
             mediaType: match.mediaType,
             title: movie.title,
+            year: match.year,
             posterPath: match.poster_path,
             backdropPath: match.backdrop_path,
             href: movie.movieUrl,
@@ -156,6 +149,7 @@ interface RawTmdbMovie {
   poster_path: string | null;
   backdrop_path: string | null;
   vote_average: number;
+  release_date?: string;
 }
 
 const toDashboardMovie = (m: RawTmdbMovie): DashboardMovie => ({
@@ -165,14 +159,13 @@ const toDashboardMovie = (m: RawTmdbMovie): DashboardMovie => ({
   posterPath: m.poster_path,
   backdropPath: m.backdrop_path,
   voteAverage: m.vote_average,
+  year: (m.release_date ?? "").slice(0, 4),
 });
 
 export const fetchNowPlayingBrazil = async (limit: number, lang: string): Promise<DashboardMovie[]> => {
   const data = await tmdbFetchServer<{ results: RawTmdbMovie[] }>("/movie/now_playing", { region: "BR" }, lang);
   return data.results.slice(0, limit).map(toDashboardMovie);
 };
-
-// --- Campeões de bilheteria ----------------------------------------------------
 
 export const fetchBoxOfficeChampions = async (limit: number, lang: string): Promise<DashboardMovie[]> => {
   const year = new Date().getFullYear();
@@ -188,11 +181,6 @@ export const fetchBoxOfficeChampions = async (limit: number, lang: string): Prom
   );
   return data.results.slice(0, limit).map(toDashboardMovie);
 };
-
-// --- Principais lançamentos dos últimos 12 meses -------------------------------
-// Mesma regra de negócio de dashboard/functions.ts (ver os comentários
-// longos lá pro histórico de cada decisão) — só a mecânica de chamada
-// HTTP muda (tmdbFetchServer, com `lang` explícito).
 
 const releasesCandidatePages = (limit: number): number => Math.max(5, Math.ceil(limit / 15));
 
@@ -250,8 +238,8 @@ interface RawWatchProvidersResponse {
 const isAvailableToWatch = (country: RawCountryProviders | undefined): boolean =>
   Boolean(country && ((country.flatrate?.length ?? 0) > 0 || (country.rent?.length ?? 0) > 0));
 
-const fetchAvailableBrUs = async (movieId: number, lang: string): Promise<boolean> => {
-  const data = await tmdbFetchServer<RawWatchProvidersResponse>(`/movie/${movieId}/watch/providers`, {}, lang);
+export const fetchAvailableBrUs = async (id: number, lang: string, mediaType: "movie" | "tv" = "movie"): Promise<boolean> => {
+  const data = await tmdbFetchServer<RawWatchProvidersResponse>(`/${mediaType}/${id}/watch/providers`, {}, lang);
   return isAvailableToWatch(data.results.BR) || isAvailableToWatch(data.results.US);
 };
 
@@ -317,8 +305,6 @@ export const fetchRecentMajorReleases = async (limit: number, lang: string): Pro
   return withAvailability.filter((m) => m.releaseDate <= todayIso);
 };
 
-// --- Trailers do carrossel -------------------------------------------------
-
 export interface RawTmdbVideo {
   key: string;
   site: string;
@@ -344,7 +330,7 @@ export const fetchHeroTrailers = async (movies: { id: number; title: string }[],
   const withTrailers = await Promise.all(
     movies.map(async (movie): Promise<HeroTrailer | null> => {
       try {
-        const data = await tmdbFetchServer<{ results: RawTmdbVideo[] }>(`/movie/${movie.id}/videos`, {}, lang);
+        const data = await tmdbFetchServer<{ results: RawTmdbVideo[] }>(`/movie/${movie.id}/videos`, { include_video_language: "pt,en,null" }, lang);
         const trailer = pickBestTrailer(data.results);
         return trailer ? { id: movie.id, title: movie.title, youtubeKey: trailer.key, isDubbed: isLikelyDubbed(trailer.name) } : null;
       } catch (err) {
@@ -356,3 +342,12 @@ export const fetchHeroTrailers = async (movies: { id: number; title: string }[],
 
   return withTrailers.filter((item): item is HeroTrailer => item !== null);
 };
+
+// Marca cada card com "dá para assistir" (assinatura ou aluguel no Brasil ou EUA), para o front não precisar consultar de novo.
+export const withAvailability = async <T extends { id?: number; mediaType?: "movie" | "tv" }>(items: T[], lang: string): Promise<(T & { available: boolean })[]> =>
+  Promise.all(
+    items.map(async (item) => ({
+      ...item,
+      available: item.id === undefined ? false : await fetchAvailableBrUs(item.id, lang, item.mediaType ?? "movie").catch(() => false),
+    }))
+  );

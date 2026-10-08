@@ -1,17 +1,5 @@
-// src/service/FirebaseSettings.ts
-// Inicializacao central do Firebase. Todo o resto da aplicacao deve
-// importar `db`/`auth` a partir deste arquivo, nunca chamar initializeApp
-// em outro lugar.
-//
-// Config vem de variaveis de ambiente (.env, fora do git — ver .env.example
-// pro template) em vez de hardcoded aqui. Nao sao segredos de verdade (o
-// apiKey de config web do Firebase e publico por design; quem protege os
-// dados sao as regras de seguranca do Firestore, nao esconder esse valor),
-// mas manter fora do codigo facilita trocar de projeto/ambiente sem editar
-// fonte.
-
 import { initializeApp, type FirebaseApp } from "firebase/app";
-import { getAnalytics, isSupported, type Analytics } from "firebase/analytics";
+import { getAnalytics, isSupported } from "firebase/analytics";
 import { getFirestore, type Firestore } from "firebase/firestore";
 import { getAuth, type Auth } from "firebase/auth";
 
@@ -25,19 +13,16 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-export const app: FirebaseApp = initializeApp(firebaseConfig);
+const app: FirebaseApp = initializeApp(firebaseConfig);
 
+// Firestore (banco). usado nas actions que leem/gravam dados do usuário: vistos, seguidos, timelines, premiações, franquias e login.
 export const db: Firestore = getFirestore(app);
 
+// Login e usuário atual (auth.currentUser). usado em quase todas as páginas e nas actions que gravam por usuário.
 export const auth: Auth = getAuth(app);
 
-// getAnalytics falha em ambientes sem suporte (SSR, alguns navegadores).
-// isSupported() evita quebrar o app nesses casos.
-export let analytics: Analytics | undefined;
 isSupported()
   .then((supported) => {
-    if (supported) analytics = getAnalytics(app);
+    if (supported) getAnalytics(app);
   })
-  .catch(() => {
-    analytics = undefined;
-  });
+  .catch(() => undefined);

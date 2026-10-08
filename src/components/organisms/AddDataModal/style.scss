@@ -1,0 +1,102 @@
+@use "@/theme" as *;
+
+.add-data-modal {
+  display: flex;
+  flex-direction: column;
+  background: #1a1424;
+  border: 1px solid color-mix(in srgb, var(--awards-accent) 25%, transparent);
+  padding: 32px;
+
+  @media (max-width: 600px) {
+    padding: 20px;
+  }
+
+  &__title {
+    margin: 0 32px 4px 0;
+    font-size: 20px;
+    font-weight: 800;
+    color: #ffffff;
+
+    span {
+      font-weight: 500;
+      color: rgba(#ffffff, 0.55);
+    }
+  }
+
+  &__hint {
+    margin: 0 0 16px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: rgba(#ffffff, 0.55);
+  }
+
+  &__copy-prompt {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(#ffffff, 0.15);
+    border-radius: $radius-sm;
+    background: none;
+    padding: 6px 12px;
+    color: rgba(#ffffff, 0.75);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+      border-color: color-mix(in srgb, var(--awards-accent) 40%, transparent);
+      color: var(--awards-accent);
+    }
+  }
+
+  &__textarea {
+    width: 100%;
+    min-height: 280px;
+    border: 1px solid rgba(#ffffff, 0.15);
+    border-radius: $radius-md;
+    background: rgba(#000000, 0.25);
+    padding: 14px;
+    color: #ffffff;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    resize: vertical;
+
+    &::placeholder {
+      color: rgba(#ffffff, 0.3);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: color-mix(in srgb, var(--awards-accent) 50%, transparent);
+    }
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  &__cancel {
+    border: none;
+    background: none;
+    padding: 9px 16px;
+    color: rgba(#ffffff, 0.6);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      color: #ffffff;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}

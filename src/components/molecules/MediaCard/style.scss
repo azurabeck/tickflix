@@ -1,0 +1,219 @@
+@use "@/theme" as *;
+@use "@/tooltip" as *;
+
+.media-card {
+  position: relative;
+  flex: 0 0 auto;
+  width: 220px;
+
+  &--open {
+    width: 300px;
+  }
+
+  &__media {
+    display: block;
+    width: 100%;
+    height: 170px;
+    padding: 0;
+    border: none;
+    overflow: hidden;
+    background: #d9d9d9;
+    cursor: pointer;
+  }
+
+  &--open &__media {
+    height: 225px;
+  }
+
+  &--modal {
+    width: 300px;
+    max-width: 100%;
+  }
+
+  &--modal &__media {
+    height: 225px;
+  }
+
+  &__image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.25s ease;
+
+    &--poster-fallback {
+      object-position: center top;
+    }
+
+    &--empty {
+      background: #cfcfcf;
+    }
+  }
+
+  &__media:hover &__image {
+    transform: scale(1.04);
+  }
+
+  &__panel {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    padding: 16px;
+    background: rgba($bar-dark, 0.85);
+    color: #ffffff;
+  }
+
+  &__name {
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 22px;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 24px;
+    margin-top: 8px;
+  }
+
+  &__row--serie {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: 4px;
+
+    > .media-card__progress {
+      justify-self: start;
+    }
+
+    > .media-card__group {
+      justify-self: center;
+    }
+
+    > .media-card__group--actions {
+      justify-self: end;
+    }
+  }
+
+  &__group {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+
+    &--actions {
+      gap: 8px;
+    }
+  }
+
+  &__icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: #ffffff;
+    cursor: pointer;
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    &:hover:not(:disabled) {
+      color: $chip-lilac;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    &--static {
+      cursor: default;
+
+      &:hover {
+        color: #ffffff;
+      }
+    }
+
+    &--checked {
+      color: $color-watched;
+
+      &:hover:not(:disabled) {
+        color: #ffd54f;
+      }
+    }
+  }
+
+  &__progress {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    width: 100%;
+    max-width: 108px;
+    min-width: 0;
+  }
+
+  &__progress-bar {
+    height: 6px;
+    overflow: hidden;
+    border-radius: 3px;
+    background: $chip-lilac;
+  }
+
+  &__progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: #4a12e0;
+    transition: width 0.25s ease;
+  }
+
+  &__progress-text {
+    color: #ffffff;
+    font-size: 10px;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  &__label {
+    color: $chip-lilac;
+    font-size: 10px;
+  }
+
+  &__subtitle {
+    margin: 2px 0 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: $chip-lilac;
+    font-size: 10px;
+    line-height: 12px;
+  }
+
+  &__badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: $color-watched;
+    color: #3d2963;
+    font-size: 10px;
+    font-weight: 600;
+    pointer-events: none;
+  }
+
+  @include data-tooltips;
+}

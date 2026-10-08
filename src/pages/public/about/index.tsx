@@ -1,15 +1,10 @@
-// src/pages/public/about/index.tsx
-// Landing "/sobre" — explica a proposta do TickFlix e como criar uma
-// timeline. Acessível logado ou não (link "saiba mais" no estado vazio
-// do Dashboard); "Voltar" leva pra ROUTES.HOME, que App.tsx resolve certo
-// nos dois casos (Dashboard se logado, redireciona pro login se não).
 import { useTranslation } from "react-i18next";
 import { CheckCircle2, Clapperboard, Info, Sparkles, ArrowLeft, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import Logo from "@/components/logo";
-import { ROUTES } from "@/service/Routes";
-import { EXAMPLE_PROMPT_KEYS, FEATURES, STEPS, type AboutIconKey } from "./functions";
-import "./styles.scss";
+import Logo from "@/components/atoms/Logo";
+import { ROUTES } from "@/routes";
+import { EXAMPLE_PROMPT_KEYS, FEATURES, STEPS, type AboutIconKey } from "@/actions/about/content";
+import "./style.scss";
 
 const ICONS: Record<AboutIconKey, typeof Sparkles> = {
   sparkles: Sparkles,

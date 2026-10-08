@@ -1,61 +1,29 @@
-// src/service/IASettings.ts
 import { auth } from "./FirebaseSettings";
 
-export const APP_NAME = "TickFlix";
-
-// --- Gemini ---------------------------------------------------------------
-// Usado pelo painel "Criar uma nova timeline" (único jeito de criar
-// timeline hoje — o wizard guiado foi removido) pra interpretar a
-// descrição livre do usuário e, quando não dá pra resolver por filtro
-// estruturado do TMDb, enumerar títulos (ver
-// src/pages/private/home/dashboard/functions.ts).
-//
-// A chave da PLATAFORMA fica só no servidor (`GEMINI_API_KEY`, api/gemini.ts):
-// o navegador pede ao backend (`POST /api/gemini`, com o ID token do
-// Firebase), que repete em erro transitório e cai num modelo reserva — a
-// chave nunca vai pro bundle. Quem configurou a PRÓPRIA chave (Configurações)
-// chama o Google direto daqui, com a chave dele (que só existe no
-// localStorage dele), e essa sempre ganha da da plataforma.
-// Modelo usado só no caminho com a chave do próprio usuário (o do servidor é
-// `GEMINI_MODEL`, em api/gemini.ts).
 const GEMINI_MODEL = "gemini-3.6-flash";
 const geminiUrl = (model: string): string => `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
-// Modelo reserva (alias que o Google mantém apontando pro Flash atual): se o
-// principal estiver sobrecarregado (503) mesmo depois de tentar de novo, a
-// chamada cai pra ele em vez de falhar.
 const GEMINI_FALLBACK_MODEL = "gemini-flash-latest";
 
-// Erros transitórios (sobrecarga/limite) — vale tentar de novo.
-// 429 (cota esgotada) NÃO entra: repetir só gasta mais cota.
 const isTransientStatus = (status: number): boolean => status === 500 || status === 503;
 const RETRY_DELAYS_MS = [1_000, 2_500];
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// --- Chave do Gemini do próprio usuário -------------------------------------
-// Pedido explícito da Rebecca, olhando como o projeto "mailbook"
-// (livro-app) faz isso: "deve ensinar como pegar a api key do gemini, e
-// deixar o usuário habilitar a propria apikey para utilizar no site" — tela
-// em pages/private/settings. Com a própria chave, o uso (e o custo) passa a
-// contar na conta Google de quem configurou, não na chave compartilhada da
-// plataforma (`VITE_GEMINI_API_KEY` acima, que vira só o fallback — ver
-// `geminiGenerateJSON` abaixo, chave do usuário sempre ganha dela).
-//
-// Guardada em localStorage, por uid (nunca sai do navegador de quem
-// configurou, só é usada direto nas chamadas pro Google feitas daqui) —
-// mesmo raciocínio do mailbook (lá: `service/userSettings.ts`).
 const userGeminiKeyStorageKey = (uid: string): string => `tickflix-user-${uid}-gemini-key`;
 
+// Chave do Gemini do próprio usuário, guardada só neste navegador.
+// usado em Configurações (card da chave do Gemini) e aqui, para escolher entre a chave dele e a da plataforma.
 export const getUserGeminiKey = (): string => {
   const uid = auth.currentUser?.uid;
   if (!uid) return "";
   try {
     return localStorage.getItem(userGeminiKeyStorageKey(uid)) ?? "";
   } catch {
-    return ""; // localStorage indisponível (aba anônima etc.)
+    return "";
   }
 };
 
+// Guarda (ou remove, se vier vazia) a chave. usado em Configurações (card da chave do Gemini).
 export const setUserGeminiKey = (value: string): void => {
   const uid = auth.currentUser?.uid;
   if (!uid) return;
@@ -64,12 +32,11 @@ export const setUserGeminiKey = (value: string): void => {
     if (trimmed) localStorage.setItem(userGeminiKeyStorageKey(uid), trimmed);
     else localStorage.removeItem(userGeminiKeyStorageKey(uid));
   } catch {
-    // não é crítico, ignora
+    // localStorage indisponível (ex.: aba anônima): segue sem salvar
   }
 };
 
-// Confere se a chave funciona ANTES de salvar (tela de Configurações) —
-// listar os modelos é uma chamada leve, não gasta tokens de geração.
+// Testa a chave na API do Google antes de guardar. usado em Configurações (card da chave do Gemini).
 export const validateGeminiKey = async (apiKey: string): Promise<void> => {
   const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=1", {
     headers: { "x-goog-api-key": apiKey },
@@ -83,30 +50,8 @@ export const validateGeminiKey = async (apiKey: string): Promise<void> => {
 
 export type GeminiSchema = Record<string, unknown>;
 
-// Perguntas sobre algo que o modelo não tem certeza (ex.: uma edição de
-// premiação recente demais pra ter entrado nos dados de treino) fazem ele
-// "pensar" bem mais tempo antes de responder — sem timeout, isso trava o
-// spinner indefinidamente com zero feedback pro usuário. 45s é generoso o
-// bastante pra respostas normais (as chamadas do wizard levam ~2-8s) sem
-// deixar um caso ruim travado pra sempre.
 const GEMINI_TIMEOUT_MS = 45_000;
 
-/**
- * Pede pro Gemini gerar JSON estruturado seguindo `schema` (formato do
- * `responseSchema` da API: `{ type: "OBJECT" | "ARRAY" | "STRING" | ... }`).
- * Usar `responseMimeType: "application/json"` faz o modelo devolver só o
- * JSON, sem markdown/texto em volta — mais confiável que fazer parsing de
- * uma resposta livre.
- *
- * `useSearch: true` liga o grounding com busca do Google — sem isso o
- * modelo só responde com o que "decorou" no treino, o que falha pra
- * qualquer fato recente (ex.: indicados de uma premiação deste ano).
- * Testado direto na API: sem grounding, pergunta sobre uma edição recente
- * vem vazia; com grounding, vem certa. Custa um pouco mais de latência,
- * então só liga onde precisa de fato atual (ver generateAwardNominees).
- */
-// Caminho da chave do próprio usuário: direto no Google, com as mesmas
-// tentativas/modelo reserva do servidor.
 const generateWithUserKey = async <T>(apiKey: string, prompt: string, schema: GeminiSchema, useSearch: boolean): Promise<T> => {
   const body = JSON.stringify({
     contents: [{ parts: [{ text: prompt }] }],
@@ -137,8 +82,7 @@ const generateWithUserKey = async <T>(apiKey: string, prompt: string, schema: Ge
     }
   };
 
-  // Modelo principal com até 2 novas tentativas (1s, 2,5s) em erro transitório
-  // ("high demand", 503) e, se continuar, uma tentativa no modelo reserva.
+  // Erro transitório (500/503): espera e tenta de novo. Se continuar, usa o modelo reserva.
   let response = await callModel(GEMINI_MODEL);
   for (const delay of RETRY_DELAYS_MS) {
     if (response.ok || !isTransientStatus(response.status)) break;
@@ -150,8 +94,6 @@ const generateWithUserKey = async <T>(apiKey: string, prompt: string, schema: Ge
   }
 
   if (!response.ok) {
-    // Inclui a mensagem de erro da própria API (ex.: "model X is no
-    // longer available") — bem mais rápido de debugar que só o status.
     const errorBody = await response.json().catch(() => null);
     const detail = errorBody?.error?.message;
     throw new Error(`Gemini respondeu ${response.status}${detail ? `: ${detail}` : ""}`);
@@ -164,10 +106,9 @@ const generateWithUserKey = async <T>(apiKey: string, prompt: string, schema: Ge
   return JSON.parse(text) as T;
 };
 
-// Caminho da plataforma: pede ao backend (api/gemini.ts), que tem a chave.
-// O servidor já faz as tentativas/modelo reserva (até ~1 min no pior caso).
 const BACKEND_TIMEOUT_MS = 65_000;
 
+// O frontend pega o token do Firebase e envia o pedido para /api/gemini
 const generateViaBackend = async <T>(prompt: string, schema: GeminiSchema, useSearch: boolean): Promise<T> => {
   const idToken = await auth.currentUser?.getIdToken();
   if (!idToken) throw new Error("Faça login pra usar a IA.");
@@ -175,6 +116,7 @@ const generateViaBackend = async <T>(prompt: string, schema: GeminiSchema, useSe
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), BACKEND_TIMEOUT_MS);
   let response: Response;
+  
   try {
     response = await fetch("/api/gemini", {
       method: "POST",
@@ -201,9 +143,11 @@ const generateViaBackend = async <T>(prompt: string, schema: GeminiSchema, useSe
   return JSON.parse(text) as T;
 };
 
+// Com a chave do próprio usuário (tela de Configurações), chama o Google direto
+// do navegador. Sem ela, passa pelo backend (/api/gemini), que guarda a chave da
+// plataforma no servidor — ela nunca vai pro bundle.
+// usado na section "Sugestão da IA" (Filmes, Séries e Animes) e na criação de timeline por texto.
 export const geminiGenerateJSON = async <T>(prompt: string, schema: GeminiSchema, useSearch = false): Promise<T> => {
-  // Chave do próprio usuário (Configurações) sempre ganha da chave
-  // compartilhada da plataforma — mesma regra do mailbook.
   const userKey = getUserGeminiKey();
   return userKey ? generateWithUserKey<T>(userKey, prompt, schema, useSearch) : generateViaBackend<T>(prompt, schema, useSearch);
 };

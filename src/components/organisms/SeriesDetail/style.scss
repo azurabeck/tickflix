@@ -1,0 +1,51 @@
+@use "@/theme" as *;
+
+$progress-fill: #bfff7e;
+
+.series-detail {
+  &__progress-bar {
+    position: relative;
+    height: 8px;
+    border-radius: $radius-sm;
+    overflow: hidden;
+    background: rgba($color-border, 0.3);
+  }
+
+  &__progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, $progress-fill, darken($progress-fill, 12%));
+    transition: width 0.25s ease;
+  }
+
+  &__section {
+    padding: 0 24px 24px;
+  }
+
+  &__header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: $color-primary-dark;
+  }
+
+  &__progress-text {
+    font-size: 13px;
+    color: $color-text-muted;
+    white-space: nowrap;
+  }
+
+  &__seasons {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 12px;
+  }
+}

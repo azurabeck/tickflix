@@ -1,19 +1,16 @@
-// src/theme.scss
-// Tokens de design do TickFlix, tirados do mockup (Desktop Btn Enabled /
-// Mobile Btn Disabled). Importado uma vez em main.tsx — os componentes
-// consomem essas variaveis com `@use "@/theme" as *;`.
-
-// Cores
 $color-primary: #543993;
 $color-primary-light: #6d5190;
 $color-primary-medium: #402267;
 $color-primary-dark: #150241;
 
-
 $color-success: #12e251;
-// Marcação de "já vi" (check do card, bookmark) — amarelo, não o verde de
-// sucesso acima (que continua nas mensagens de sucesso e no progresso).
+
 $color-watched: #ffc107;
+
+// Painéis e chips das seções (cards, ranks, filtros)
+$section-gray: #efefef;
+$bar-dark: #3d2963;
+$chip-lilac: #d0c6e6;
 
 $color-bg: #ffffff;
 $color-text: #16111f;
@@ -22,11 +19,9 @@ $color-placeholder: #a9a9a9;
 $color-border: #b9b9b9;
 $color-error: #d93659;
 
-// Tipografia
 $font-display: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 $font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
-// Espacamento / raio
 $radius-sm: 4px;
 $radius-md: 8px;
 $radius-lg: 16px;
@@ -42,14 +37,6 @@ body,
   margin: 0;
 }
 
-// Rede de segurança global — pedido explícito da Rebecca: "não deixe
-// nada vazar da tela". Qualquer elemento que escape da largura do
-// viewport (padding mal contado, `min-width` esquecido num item de
-// fileira horizontal etc.) rola a página INTEIRA de lado em vez de
-// ficar contido — isso NUNCA deveria acontecer, então trava aqui como
-// última linha de defesa; o conteúdo que precisa rolar de lado de
-// propósito (fileiras de pôster) já rola dentro do PRÓPRIO container
-// (`overflow-x: auto` local), não da página.
 html,
 body {
   overflow-x: hidden;

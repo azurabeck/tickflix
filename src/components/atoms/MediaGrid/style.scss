@@ -1,0 +1,23 @@
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, max-content));
+  align-items: start;
+  gap: 20px;
+
+  &--modal {
+    grid-template-columns: repeat(3, 300px);
+    gap: 16px;
+    justify-content: center;
+
+    @media (max-width: 1000px) {
+      grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 300px));
+    }
+  }
+
+  &--scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+}

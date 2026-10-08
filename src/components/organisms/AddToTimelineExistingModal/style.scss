@@ -1,0 +1,65 @@
+@use "@/theme" as *;
+
+.add-to-timeline-existing-modal {
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 50vh;
+    overflow-y: auto;
+  }
+
+  &__list-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    border: 1px solid rgba($color-border, 0.4);
+    border-radius: $radius-md;
+    background: none;
+    cursor: pointer;
+    text-align: left;
+
+    &:hover:not(:disabled) {
+      border-color: $color-primary;
+    }
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+  }
+
+  &__list-poster {
+    width: 36px;
+    aspect-ratio: 2 / 3;
+    border-radius: $radius-sm;
+    object-fit: cover;
+    background: rgba($color-border, 0.3);
+    flex: 0 0 auto;
+
+    &--empty {
+      display: block;
+    }
+  }
+
+  &__list-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: $color-text;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__list-status {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: $color-text-muted;
+  }
+}

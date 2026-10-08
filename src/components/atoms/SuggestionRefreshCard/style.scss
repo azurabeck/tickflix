@@ -1,0 +1,51 @@
+@use "@/theme" as *;
+@use "@/tooltip" as *;
+
+.suggestion-refresh-card {
+  position: relative;
+  display: flex;
+  flex: 0 1 208px;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  aspect-ratio: 208 / 295;
+  background: rgba($bar-dark, 0.55);
+  color: #ffffff;
+
+  &__button {
+    display: inline-flex;
+    width: 56px;
+    height: 56px;
+    padding: 12px;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    background: none;
+    color: #ffffff;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background: rgba(#ffffff, 0.15);
+    }
+
+    &:disabled {
+      cursor: wait;
+    }
+  }
+
+  &__icon {
+    width: 100%;
+    height: 100%;
+
+    &--spinning {
+      animation: suggestion-refresh-card-spin 0.9s linear infinite;
+    }
+  }
+
+  @include data-tooltips;
+}
+
+@keyframes suggestion-refresh-card-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

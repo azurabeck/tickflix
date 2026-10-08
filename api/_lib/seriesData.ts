@@ -1,35 +1,3 @@
-// api/_lib/seriesData.ts
-// Descoberta das páginas Séries e Animes (antes em
-// src/pages/private/series/functions.ts e anime/functions.ts, no
-// browser). As duas páginas eram o MESMO código com a condição de anime
-// invertida, então aqui é uma implementação só parametrizada por `kind`.
-//
-// Histórico das decisões (todas reportadas ao vivo pela Rebecca):
-//
-// - Ordem das fileiras por streaming: `popularity.desc` do TMDb é global
-//   e pesado pra atividade recente (botava procedural com catálogo
-//   enorme na frente de fenômeno real); nota crua (`vote_average`)
-//   favorece nicho de fã-base pequena ("The Chosen", 966 votos, acima de
-//   Arcane, 6138). Solução: candidatos ordenados por VOLUME de voto
-//   (`vote_count.desc`, piso de 300 votos, até CANDIDATE_PAGES páginas) e
-//   reordenados por média bayesiana ("Top Rated" clássico do IMDb):
-//   (v/(v+m))×R + (m/(v+m))×C, m=1000, C=média do próprio pool. A nota
-//   MOSTRADA no card continua a real; só a ORDEM usa a ponderação.
-// - `with_watch_monetization_types=flatrate` (incluído na assinatura, não
-//   avulso). Ids de provedor conferidos em /watch/providers/tv?watch_region=BR
-//   ("Max" = 1899, "Apple TV+" = 350).
-// - "Top 20 do ano" e trailers: `air_date.gte/lte` do ano inteiro (não
-//   `first_air_date_year`, que excluía "A Casa do Dragão" mesmo com
-//   temporada nova no ano) + `vote_count.desc`, sem ponderar nota. Efeito
-//   aceito: `vote_count` é acumulado da série toda.
-// - Anime = gênero Animação (16) + idioma original "ja" OU país "JP".
-//   Séries EXCLUEM anime (só a combinação, animação ocidental fica);
-//   a página Animes só INCLUI. O filtro é client-side do resultado porque
-//   o /discover não tem como excluir só "animação japonesa".
-//
-// Duplicado de propósito do que sobrou em src/ (STREAMING_PROVIDERS,
-// `SeriesRowItem`): `src/` é código de browser com alias `@/` que o
-// bundler da Vercel não resolve.
 import { tmdbFetchServer } from "./tmdbServer.js";
 import { isLikelyDubbed, pickBestTrailer, type HeroTrailer, type RawTmdbVideo } from "./dashboardData.js";
 
@@ -46,9 +14,11 @@ export const STREAMING_PROVIDERS = [
 
 export interface SeriesRowItem {
   id: number;
+  mediaType: "tv";
   title: string;
+  year: string;
+  available?: boolean;
   posterPath: string | null;
-  // Imagem de cena (paisagem) pros cards novos da página Séries.
   backdropPath: string | null;
   voteAverage: number;
   originCountry: string;
@@ -57,6 +27,7 @@ export interface SeriesRowItem {
 interface RawTvResult {
   id: number;
   name: string;
+  first_air_date?: string;
   poster_path: string | null;
   backdrop_path?: string | null;
   vote_average: number;
@@ -73,7 +44,9 @@ const ANIME_GENRE_ID = 16;
 
 const normalize = (r: RawTvResult): SeriesRowItem => ({
   id: r.id,
+  mediaType: "tv",
   title: r.name,
+  year: (r.first_air_date ?? "").slice(0, 4),
   posterPath: r.poster_path,
   backdropPath: r.backdrop_path ?? null,
   voteAverage: r.vote_average,
@@ -83,7 +56,6 @@ const normalize = (r: RawTvResult): SeriesRowItem => ({
 const isAnime = (r: RawTvResult): boolean =>
   (r.genre_ids ?? []).includes(ANIME_GENRE_ID) && (r.original_language === "ja" || (r.origin_country ?? []).includes("JP"));
 
-// Séries EXCLUEM anime; a página Animes só INCLUI.
 const belongs = (kind: DiscoveryKind, r: RawTvResult): boolean => (kind === "anime" ? isAnime(r) : !isAnime(r));
 
 const weightedRating = (voteAverage: number, voteCount: number, poolMean: number): number =>
@@ -154,7 +126,7 @@ export const fetchTvHeroTrailers = async (items: { id: number; title: string }[]
   const withTrailers = await Promise.all(
     items.map(async (item): Promise<HeroTrailer | null> => {
       try {
-        const data = await tmdbFetchServer<{ results: RawTmdbVideo[] }>(`/tv/${item.id}/videos`, {}, lang);
+        const data = await tmdbFetchServer<{ results: RawTmdbVideo[] }>(`/tv/${item.id}/videos`, { include_video_language: "pt,en,null" }, lang);
         const trailer = pickBestTrailer(data.results);
         return trailer ? { id: item.id, title: item.title, youtubeKey: trailer.key, isDubbed: isLikelyDubbed(trailer.name) } : null;
       } catch (err) {

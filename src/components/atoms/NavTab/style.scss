@@ -1,0 +1,38 @@
+@use "@/theme" as *;
+
+.nav-tab {
+  padding: 4px 0;
+  font-size: 15px;
+  font-weight: 400;
+  color: $color-border;
+  text-decoration: none;
+  cursor: pointer;
+
+  &--active {
+    color: $color-primary;
+  }
+
+  &:hover:not(&--active) {
+    color: $color-text-muted;
+  }
+
+  @media (max-width: 900px) {
+    padding: 10px 0;
+  }
+
+  &--trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border: none;
+    background: none;
+    padding: 4px 0;
+    font-family: inherit;
+
+    @media (max-width: 900px) {
+      width: 100%;
+      justify-content: space-between;
+      padding: 10px 0;
+    }
+  }
+}

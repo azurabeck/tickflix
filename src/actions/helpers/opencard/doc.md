@@ -1,0 +1,9 @@
+# actions/helpers/opencard
+
+**Página/ciclo:** `helpers` → `opencard`
+
+Um card aberto por vez em cada fileira. Se o card escolhido sair da lista, o primeiro volta a ficar aberto. usado em: EditionDetail, MajorReleasesModal, MediaRailSection, PosterGridModal, SearchModal, TimelineDetail, …
+
+## Funções (na ordem em que o ciclo acontece)
+- `cardKey` — Chave de um card na fileira (`tipo-id`, ou título e posição quando não tem id). usado em: EditionDetail, MajorReleasesModal, MediaRailSection, PosterGridModal, SearchModal, TimelineDetail, …
+- `useOpenCard` — Um card aberto por vez em cada fileira. Se o card escolhido sair da lista, o primeiro volta a ficar aberto. usado em: EditionDetail, MajorReleasesModal, MediaRailSection, PosterGridModal, SearchModal, TimelineDetail, …

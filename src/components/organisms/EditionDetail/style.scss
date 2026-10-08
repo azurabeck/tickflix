@@ -1,0 +1,111 @@
+@use "@/theme" as *;
+
+.edition-detail {
+  &__empty {
+    color: rgba(#ffffff, 0.65);
+    text-align: center;
+    padding: 24px 0;
+  }
+
+  &__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 24px;
+    border: none;
+    background: none;
+    padding: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(#ffffff, 0.7);
+    cursor: pointer;
+
+    &:hover {
+      color: var(--awards-accent);
+    }
+  }
+
+  &__title {
+    margin: 0 0 4px;
+    font-size: 26px;
+    font-weight: 800;
+    color: #ffffff;
+
+    span {
+      font-weight: 500;
+      color: rgba(#ffffff, 0.55);
+    }
+  }
+
+  &__subtitle {
+    margin: 0;
+    font-size: 13px;
+    color: rgba(#ffffff, 0.55);
+    white-space: nowrap;
+  }
+
+  &__meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  &__progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__progress-bar {
+    width: 90px;
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+    background: rgba(#ffffff, 0.18);
+  }
+
+  &__progress-fill {
+    height: 100%;
+    background: var(--awards-accent);
+  }
+
+  &__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 36px;
+  }
+
+  &__category {
+    margin-bottom: 40px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  &__category-title {
+    position: relative;
+    display: inline-block;
+    margin: 0 0 18px;
+    padding-bottom: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #ffffff;
+
+    &::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 36px;
+      height: 2px;
+      background: var(--awards-accent);
+    }
+  }
+}

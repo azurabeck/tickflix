@@ -1,0 +1,20 @@
+@use "@/theme" as *;
+
+.settings-page {
+  &__text {
+    min-width: 0;
+  }
+
+  &__title {
+    margin: 0 0 4px;
+    font-size: 15px;
+    font-weight: 700;
+    color: $color-text;
+  }
+
+  &__hint {
+    margin: 0;
+    font-size: 13px;
+    color: $color-text-muted;
+  }
+}

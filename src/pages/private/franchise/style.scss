@@ -1,0 +1,11 @@
+@use "@/theme" as *;
+
+.franchise-page {
+  &__progress {
+    margin: 0 0 24px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(#ffffff, 0.75);
+  }
+}

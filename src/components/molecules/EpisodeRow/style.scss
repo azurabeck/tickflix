@@ -1,0 +1,128 @@
+@use "@/theme" as *;
+
+$section-bg: #edeffd;
+
+.episode-row {
+  display: flex;
+  flex-direction: column;
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    > .episode-row__main {
+      flex: 1;
+      min-width: 0;
+      width: auto;
+    }
+  }
+
+  &__info-button {
+    display: inline-flex;
+    flex: 0 0 auto;
+    width: 28px;
+    height: 28px;
+    padding: 4px;
+    border: none;
+    border-radius: 50%;
+    background: none;
+    color: $color-text-muted;
+    cursor: pointer;
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    &:hover,
+    &--open {
+      color: $color-primary;
+      background: rgba($color-primary, 0.1);
+    }
+  }
+
+  &__info {
+    margin: 2px 8px 8px 38px;
+    color: $color-text-muted;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  &__main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    border: none;
+    border-radius: $radius-sm;
+    padding: 6px 8px;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background: $section-bg;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+
+    &--watched .episode-row__name,
+    &--watched .episode-row__number {
+      color: $color-primary;
+    }
+
+    &--unaired {
+      opacity: 0.45;
+      cursor: default;
+    }
+  }
+
+  &__check {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex: 0 0 auto;
+    border: 1px solid rgba($color-border, 0.6);
+    border-radius: $radius-sm;
+    color: $color-success;
+
+    .episode-row__main--watched & {
+      border-color: $color-success;
+      background: rgba($color-success, 0.12);
+    }
+
+    .episode-row__main--unaired & {
+      border-style: dashed;
+    }
+  }
+
+  &__number {
+    flex: 0 0 auto;
+    font-size: 13px;
+    font-weight: 600;
+    color: $color-text-muted;
+  }
+
+  &__name {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    color: $color-text;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__airing {
+    flex: 0 0 auto;
+    font-size: 11px;
+    font-weight: 600;
+    color: $color-text-muted;
+    white-space: nowrap;
+  }
+}

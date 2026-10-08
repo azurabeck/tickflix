@@ -1,0 +1,27 @@
+@use "@/theme" as *;
+
+.timeline-detail {
+  &__header {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px 16px;
+    flex: 0 0 auto;
+    margin-bottom: 24px;
+    padding-right: 32px;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: $color-primary-dark;
+  }
+
+  &__progress {
+    font-size: 14px;
+    color: $color-text-muted;
+    white-space: nowrap;
+  }
+}

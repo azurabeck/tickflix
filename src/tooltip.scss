@@ -1,16 +1,3 @@
-// src/tooltip.scss
-// Tooltip em balão branco do Figma (Rebecca), compartilhado entre o card de
-// filme (home/dashboard/rail-card.scss) e o RankComponent. Uso:
-//   @use "@/tooltip" as *;
-//   .meu-bloco { @include data-tooltips; }
-// e cada controle ganha `data-tooltip="texto"`.
-//
-// Padrão: balão EMBAIXO, centrado no elemento. Variações por atributo:
-//   data-tooltip-align="start" — balão alinhado à ESQUERDA do elemento
-//   data-tooltip-align="end"   — balão alinhado à DIREITA do elemento
-//   data-tooltip-side="right"  — balão ao LADO direito (seta apontando pra esquerda)
-// Medidas do SVG: balão 23px de altura, raio 8, texto 10px, seta 10x10 a
-// 1px do elemento.
 @mixin data-tooltips {
   [data-tooltip] {
     position: relative;
@@ -41,7 +28,6 @@
     transition: opacity 0.15s ease;
   }
 
-  // Seta 10x10 apontando pro elemento.
   [data-tooltip]::before {
     content: "";
     position: absolute;
@@ -91,8 +77,6 @@
     opacity: 1;
   }
 
-  // Celular/touch: não existe hover, e o balão (posição absoluta) só alargava
-  // a página, abrindo rolagem horizontal. Some por completo.
   @media (hover: none), (max-width: 700px) {
     [data-tooltip]::after,
     [data-tooltip]::before {

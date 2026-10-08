@@ -1,0 +1,63 @@
+@use "@/theme" as *;
+
+.major-releases-modal {
+  &__filter {
+    display: inline-flex;
+    gap: 6px;
+    margin-bottom: 24px;
+  }
+
+  &__filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid rgba($color-border, 0.4);
+    border-radius: 999px;
+    background: none;
+    padding: 6px 14px;
+    color: $color-text-muted;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+      border-color: $color-primary;
+      color: $color-primary;
+    }
+
+    &--active {
+      border-color: $color-primary;
+      background: rgba($color-primary, 0.1);
+      color: $color-primary;
+    }
+  }
+
+  &__group {
+    margin-bottom: 32px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  &__month {
+    position: relative;
+    margin: 0 0 16px;
+    padding-bottom: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: $color-primary;
+
+    &::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 32px;
+      height: 2px;
+      background: $color-primary;
+    }
+  }
+}

@@ -1,0 +1,31 @@
+.home-row {
+  display: grid;
+
+  column-gap: 0;
+  row-gap: 16px;
+  align-items: stretch;
+
+  > .home-section {
+    min-width: 0;
+  }
+
+  > .home-section--gap-after {
+    margin-right: 16px;
+  }
+
+  @media (max-width: 1100px) {
+    grid-template-columns: 1fr 1fr !important;
+
+    > .home-section--wide {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr !important;
+
+    > .home-section--gap-after {
+      margin-right: 0;
+    }
+  }
+}

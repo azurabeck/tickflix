@@ -1,21 +1,3 @@
-// api/_lib/tmdbServer.ts
-// Client TMDb do BACKEND — irmão de src/service/TMDbSettings.ts, não o
-// mesmo arquivo. Roda em Node (função serverless da Vercel), não no
-// navegador: token lido de `process.env.TMDB_API_KEY` (var de servidor,
-// sem prefixo VITE_ — nunca vai pro bundle do client), não de
-// `import.meta.env`. Existe pra resolver de vez o problema que motivou
-// todo esse backend: antes, CADA navegador de CADA usuário fazia esse
-// limitador rodar do zero (uma vez por sessão); agora só esta função
-// roda isso, e só quando a lista cacheada (api/_lib/sharedCache.ts)
-// expira — a esmagadora maioria das visitas nem chega a chamar o TMDb.
-//
-// Limitador de concorrência/taxa idêntico ao do client (mesmo raciocínio,
-// ver o comentário longo lá): protege UMA execução desta função de
-// disparar uma rajada de 40-250 chamadas de uma vez só quando o cache
-// expira. NÃO é coordenado entre instâncias serverless diferentes (cada
-// cold start da Vercel tem sua própria memória) — aceitável aqui porque
-// a maior parte das requisições nem chega a cair nesse caminho (cache
-// hit = zero chamada ao TMDb).
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 
 const MAX_CONCURRENT_REQUESTS = 6;
@@ -55,9 +37,6 @@ const requestTmdb = (url: string): Promise<Response> =>
     },
   });
 
-// `lang` é passado explicitamente por quem chama (não lido de i18n, que
-// não existe no servidor) — ver TMDB_LANGUAGE_BY_APP_LANGUAGE em
-// src/service/i18n.ts pro mapeamento idioma do site → idioma do TMDb.
 export const tmdbFetchServer = async <T>(
   path: string,
   params: Record<string, string>,
@@ -75,8 +54,9 @@ export const tmdbFetchServer = async <T>(
     await waitForDispatchGap();
     let response = await requestTmdb(url);
 
-    if (response.status === 429) {
-      await new Promise((resolve) => setTimeout(resolve, 800));
+    // limite do TMDb estourado (429): espera e tenta de novo, até 3 vezes, cada vez esperando mais
+    for (let attempt = 1; response.status === 429 && attempt <= 3; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 700 * attempt));
       response = await requestTmdb(url);
     }
 

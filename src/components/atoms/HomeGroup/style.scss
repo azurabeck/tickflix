@@ -1,0 +1,9 @@
+.home-group {
+  padding: 16px 0;
+}
+
+.home-group__stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

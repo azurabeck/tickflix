@@ -1,0 +1,61 @@
+@use "@/theme" as *;
+
+.search-modal {
+  &__bar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 40px;
+  }
+
+  &__input {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid rgba($color-border, 0.5);
+    border-radius: $radius-md;
+    padding: 12px 16px;
+    font-size: 14px;
+    color: $color-text;
+
+    &::placeholder {
+      color: $color-text-muted;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: $color-primary;
+    }
+  }
+
+  &__button {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: $radius-md;
+    background: $color-primary;
+    color: #ffffff;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      filter: brightness(1.1);
+    }
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+  }
+
+  &__results {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    margin-top: 20px;
+  }
+}
