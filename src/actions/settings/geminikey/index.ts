@@ -20,10 +20,10 @@ export const useGeminiKey = () => {
     setSaving(true);
     setFeedback(null);
     try {
-      await validateGeminiKey(trimmed);
-      setUserGeminiKey(trimmed);
-      setSavedKey(trimmed);
-      setKey(trimmed);
+      await validateGeminiKey(trimmed); // 1. o Google confirma
+      setUserGeminiKey(trimmed);  // 2. grava no localStorage
+      setSavedKey(trimmed); // 3. coloca a chave no state para atualizar a tela
+      setKey(trimmed); // 4. arruma o campo
       setFeedback({ text: t("settings.gemini.savedFeedback") });
     } catch (err) {
       const reason = err instanceof Error ? ` ${err.message}` : "";
