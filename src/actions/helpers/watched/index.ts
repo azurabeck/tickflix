@@ -48,14 +48,14 @@ export const fetchWatched = async (uid: string): Promise<WatchedTitle[]> => {
 };
 
 // Marca ou desmarca como visto, gravando junto os dados do card.
-// usado em: MediaCardsProvider
+// usado em: presentation/cyclewatched, MediaCardsProvider
 export const saveWatched = (uid: string, item: MediaItem, watched: boolean): Promise<void> => {
   const ref = doc(watchedCollection(uid), keyOf(item));
   return watched ? setDoc(ref, { ...cardFields(item), watchedAt: Date.now() }, { merge: true }) : deleteDoc(ref);
 };
 
 // Grava a nota (cria o registro se ainda não existir, como nas séries); sem nota e sem "visto", apaga o registro.
-// usado em: MediaCardsProvider
+// usado em: presentation/cyclenotes, MediaCardsProvider
 export const saveRating = (uid: string, item: MediaItem, rating: number | null, hasWatchedAt: boolean): Promise<void> => {
   const ref = doc(watchedCollection(uid), keyOf(item));
   if (rating !== null) return setDoc(ref, { ...cardFields(item), rating }, { merge: true });

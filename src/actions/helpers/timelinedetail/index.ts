@@ -12,7 +12,7 @@ export const timelineItems = (timeline: Timeline): MediaItem[] =>
   }));
 
 // "visto: X/Y (Z%)" da timeline (marcado = filme visto ou série/anime seguido).
-// usado em: TimelineDetail
+// usado em: presentation/cycleprogress, TimelineDetail
 export const timelineWatchedSummary = (timeline: Timeline, checkedMap: Map<string, number>) => {
   const total = timeline.movies.length;
   const watched = timeline.movies.filter((movie) => checkedMap.has(timelineMovieKey(movie))).length;

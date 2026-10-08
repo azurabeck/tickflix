@@ -1,0 +1,57 @@
+@use "@/theme" as *;
+
+.structure-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  background: $color-bg;
+  border: 1px solid #d9d2e9;
+  border-radius: 12px;
+
+  // linha que liga ao cartão da esquerda
+  &::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 100%;
+    width: 24px;
+    height: 2px;
+    background: #6d5190;
+
+    @media (max-width: 1000px) {
+      display: none;
+    }
+  }
+
+  .chip {
+    margin-bottom: 4px;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 500;
+    color: $color-primary-dark;
+  }
+
+  &__text {
+    margin: 0;
+    font-size: 12px;
+    color: $color-text-muted;
+  }
+
+  &--dark {
+    background: $color-primary-dark;
+    border-color: $color-primary-dark;
+
+    .structure-card__title {
+      color: #ffffff;
+    }
+
+    .structure-card__text {
+      color: #d0c6e6;
+    }
+  }
+}

@@ -1,12 +1,12 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ChevronDown, LogOut, RefreshCw, Settings, UserRound } from "lucide-react";
+import { ChevronDown, LogOut, Presentation, RefreshCw, Settings, UserRound } from "lucide-react";
 import { ROUTES } from "@/routes";
 import Avatar from "@/components/atoms/Avatar";
 import { useUserMenu } from "@/actions/helpers/usermenu";
 import "./style.scss";
 
-// Menu do avatar: perfil, configurações, atualizar dados e sair.
+// Menu do avatar: perfil, configurações, apresentação, atualizar dados e sair.
 const UserMenu = () => {
   const { t } = useTranslation();
   const menu = useUserMenu();
@@ -32,6 +32,10 @@ const UserMenu = () => {
           <Link to={ROUTES.SETTINGS} className="user-menu__item" role="menuitem">
             <Settings size={16} />
             {t("userMenu.settings")}
+          </Link>
+          <Link to={ROUTES.PRESENTATION} className="user-menu__item" role="menuitem">
+            <Presentation size={16} />
+            {t("userMenu.presentation")}
           </Link>
           <button type="button" className="user-menu__item" role="menuitem" onClick={menu.refresh}>
             <RefreshCw size={16} />

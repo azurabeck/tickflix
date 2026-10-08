@@ -1,0 +1,235 @@
+@use "@/theme" as *;
+
+$card-border: #d9d2e9;
+$tree-width: clamp(240px, 22vw, 360px);
+
+.presentation-structure {
+  display: grid;
+  grid-template-columns: 1fr $tree-width;
+  grid-template-areas:
+    "intro ."
+    "body image"
+    "note .";
+  column-gap: 36px;
+  row-gap: 16px;
+
+  @media (max-width: 1000px) {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "intro"
+      "body"
+      "image"
+      "note";
+  }
+
+  &__intro {
+    grid-area: intro;
+  }
+
+  &__label {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: $color-primary;
+  }
+
+  &__title {
+    margin: 4px 0;
+    font-size: 24px;
+    font-weight: 500;
+    color: $color-primary-dark;
+  }
+
+  &__description {
+    margin: 0;
+    font-size: 16px;
+    color: #514d58;
+  }
+
+  &__body {
+    grid-area: body;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  // frontend (esquerda) e serviços (direita): as linhas roxas dos cartões ligam as duas colunas
+  &__diagram {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    column-gap: 24px;
+    row-gap: 12px;
+
+    @media (max-width: 1000px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__frontend {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    background: $color-bg;
+    border: 1px solid $card-border;
+    border-radius: 12px;
+  }
+
+  &__layers {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.2fr;
+    gap: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed #d7cde4;
+
+    @media (max-width: 700px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__layer {
+    padding: 10px 12px;
+    background: #f5f2fa;
+    border: 1px solid #e4dcf0;
+    border-radius: 8px;
+  }
+
+  &__layer-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 500;
+    color: $color-primary;
+  }
+
+  &__layer-text {
+    margin: 2px 0 0;
+    font-size: 12px;
+    color: $color-text-muted;
+  }
+
+  &__example {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 500;
+    color: $color-text-muted;
+  }
+
+  &__services {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .structure-card {
+      flex: 1;
+    }
+  }
+
+  // "onde encontrar" (esquerda) e a pasta api/ (direita, tracejada)
+  &__where {
+    display: grid;
+    grid-template-columns: 4.8fr 1fr;
+    column-gap: 20px;
+
+    @media (max-width: 1000px) {
+      grid-template-columns: 1fr;
+      row-gap: 12px;
+    }
+  }
+
+  &__where-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    background: $color-bg;
+    border: 1px solid $card-border;
+    border-radius: 12px;
+  }
+
+  &__where-label {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: $color-primary;
+  }
+
+  &__where-items {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+
+    @media (max-width: 700px) {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  &__where-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 500;
+    color: $color-primary-dark;
+  }
+
+  &__where-text {
+    margin: 2px 0 0;
+    font-size: 12px;
+    color: $color-text-muted;
+  }
+
+  &__backend {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 16px;
+    border: 1px dashed $color-primary-medium;
+    border-radius: 12px;
+
+    // linha que liga ao cartão da esquerda
+    &::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      right: 100%;
+      width: 20px;
+      height: 2px;
+      background: #6d5190;
+
+      @media (max-width: 1000px) {
+        display: none;
+      }
+    }
+
+    .presentation-structure__where-title {
+      margin: 0;
+    }
+  }
+
+  &__backend-text {
+    margin: 0;
+    font-size: 12px;
+    color: $color-primary;
+  }
+
+  // a árvore de pastas ocupa a altura do mapa (o recorte começa pela esquerda, onde ficam os nomes)
+  &__image {
+    grid-area: image;
+    width: 100%;
+    height: 100%;
+    min-height: 200px;
+    object-fit: cover;
+    object-position: left top;
+    border-radius: 4px;
+  }
+
+  &__note {
+    grid-area: note;
+    margin: 0;
+    font-size: 12px;
+    color: $color-text-muted;
+  }
+}

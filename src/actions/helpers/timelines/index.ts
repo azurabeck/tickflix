@@ -57,7 +57,7 @@ interface CreateTimelineOptions {
 }
 
 // Cria uma timeline do usuário no Firestore.
-// usado em: animes/dashboard, awards/timelinesync, helpers/addtotimeline, helpers/createtimeline, series/dashboard, CreateTimelineModal, …
+// usado em: animes/dashboard, awards/timelinesync, helpers/addtotimeline, helpers/createtimeline, presentation/cycletimelineai, series/dashboard, …
 export const createTimeline = async (
   uid: string,
   name: string,
@@ -177,13 +177,13 @@ export const deleteTimeline = (uid: string, timelineId: string): Promise<void> =
   deleteDoc(doc(timelineCollection(uid), timelineId));
 
 // Quantos títulos da timeline já foram vistos.
-// usado em: TimelineCard, FollowedTimelinesRow
+// usado em: presentation/cycleprogress, TimelineCard, FollowedTimelinesRow
 export const timelineProgress = (timeline: Timeline, watchedMap: Map<string, number>): { watched: number; total: number } => ({
   watched: timeline.movies.filter((movie) => watchedMap.has(timelineMovieKey(movie))).length,
   total: timeline.movies.length,
 });
 
 // Porcentagem (0 a 100) de visto.
-// usado em: SeasonItem, TimelineCard, FollowedTimelinesRow, SeriesDetail
+// usado em: presentation/cycleprogress, SeasonItem, TimelineCard, FollowedTimelinesRow, SeriesDetail
 export const progressPercent = (watched: number, total: number): number =>
   total === 0 ? 0 : Math.round((watched / total) * 100);

@@ -1,0 +1,106 @@
+@use "@/theme" as *;
+
+.cycle-trail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  &__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+
+    // as etapas de dentro ficam recuadas, com uma linha roxa na lateral ligando à etapa de cima
+    &--1,
+    &--2 {
+      padding-left: 12px;
+      border-left: 2px solid #d0c6e6;
+    }
+
+    &--1 {
+      margin-left: 24px;
+    }
+
+    &--2 {
+      margin-left: 48px;
+    }
+  }
+
+  &__row-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: $color-primary;
+  }
+
+  &__steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 220px;
+    padding: 4px 12px 4px 4px;
+    border: 1px solid #d9d2e9;
+    border-radius: 16px;
+    background: $color-bg;
+    font: inherit;
+    font-size: 12px;
+    line-height: 16px;
+    text-align: left;
+    color: $color-text;
+    cursor: pointer;
+
+    &:hover {
+      border-color: $color-primary;
+    }
+
+    // etapa que já passou: clara
+    &--done {
+      background: #d0c6e6;
+      border-color: #d0c6e6;
+      color: #402267;
+    }
+
+    // etapa que leva à escolhida: borda roxa
+    &--ancestor {
+      border-color: $color-primary;
+      color: $color-primary;
+    }
+
+    // etapa escolhida: roxa
+    &--current {
+      background: $color-primary;
+      border-color: $color-primary;
+      font-weight: 500;
+      color: #ffffff;
+
+      .cycle-trail__label {
+        background: #ffffff;
+        color: $color-primary;
+      }
+    }
+  }
+
+  &__label {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 4px;
+    border-radius: 12px;
+    background: #e9f0f4;
+    font-size: 12px;
+    font-weight: 500;
+    color: $color-primary;
+  }
+}

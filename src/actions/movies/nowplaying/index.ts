@@ -4,7 +4,7 @@ import { slugify } from "@/actions/helpers/pagebackend";
 import type { MediaItem } from "@/types/media";
 
 // Section "Em cartaz": pega a fatia "nowplaying" do dashboard (os filmes da cidade, com o loading dela) e monta o título (com a cidade).
-// usado em: página Filmes
+// usado em: presentation/cyclerender, página Filmes
 export const useNowPlaying = (dashboard: PageDashboard) => {
   const { t } = useTranslation();
   const section = dashboard.section<MediaItem>("nowplaying", t("dashboard.errors.nowPlaying"));

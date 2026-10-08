@@ -1,0 +1,45 @@
+@use "@/theme" as *;
+
+.code-block {
+  margin: 0;
+  max-height: 100%;
+  padding: 12px 0;
+  overflow: auto;
+  background: $color-primary-dark;
+  border-radius: 12px;
+  font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+  font-size: 12px;
+  line-height: 18px;
+  color: #e8e1f5;
+
+  &__line {
+    display: flex;
+    padding: 0 16px 0 0;
+  }
+
+  &__number {
+    flex: none;
+    width: 40px;
+    padding-right: 12px;
+    text-align: right;
+    color: #6d5190;
+    user-select: none;
+  }
+
+  &__text {
+    white-space: pre;
+  }
+
+  &__token--comment {
+    color: #8e87a8;
+    font-style: italic;
+  }
+
+  &__token--string {
+    color: #62d98a;
+  }
+
+  &__token--keyword {
+    color: #c9a8ff;
+  }
+}

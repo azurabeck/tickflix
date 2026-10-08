@@ -2,6 +2,7 @@
 
 $content-max-width: 1440px;
 $content-narrow-width: 1200px;
+$content-wide-width: 1919px;
 
 .page-shell {
   &--light {
@@ -31,6 +32,14 @@ $content-narrow-width: 1200px;
 
     &--narrow {
       max-width: $content-narrow-width;
+    }
+
+    &--wide {
+      max-width: $content-max-width;
+
+      @media (max-width: 900px) {
+        padding: 0 20px;
+      }
     }
   }
 

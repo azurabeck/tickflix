@@ -11,7 +11,7 @@ export const PROGRESS_FILTERS: ProgressFilter[] = ["completed", "inProgress", "s
 //   soon       — viu TUDO que já saiu, mas ainda tem episódio por lançar
 //   notStarted — nenhum episódio visto
 //   inProgress — o resto: viu algum e ainda falta algo que já saiu
-// usado em: SeriesRailSection
+// usado em: presentation/cyclefilters, SeriesRailSection
 export const progressGroup = (series: FollowedSeries): ProgressFilter => {
   const episodes = Object.values(series.seasons).flatMap((season) => Object.values(season.episodes));
   const watched = episodes.filter((e) => e.watched).length;

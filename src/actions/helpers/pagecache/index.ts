@@ -37,7 +37,7 @@ interface CacheEntry<T> {
 const storageKey = (uid: string, key: string): string => `tickflix-cache-${uid}-${key}`;
 
 // Lê o cache local de uma página do usuário (vale 7 dias).
-// usado em: helpers/aisuggestion, helpers/pagebackend
+// usado em: helpers/aisuggestion, helpers/pagebackend, presentation/problemcache
 export const getPageCache = <T>(uid: string, key: string): T | null => {
   try {
     const raw = localStorage.getItem(storageKey(uid, key));

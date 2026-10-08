@@ -4,7 +4,7 @@ import type { PageDashboard } from "@/actions/helpers/section";
 import type { MajorReleaseMovie } from "@/types/media";
 
 // Section "Principais lançamentos": pega a fatia "releases" do dashboard (com o loading dela).
-// usado em: página Filmes
+// usado em: presentation/cyclerender, página Filmes
 export const useMajorReleases = (dashboard: PageDashboard) => {
   const { t } = useTranslation();
   return dashboard.section<MajorReleaseMovie>("releases", t("dashboard.errors.majorReleases"));
@@ -24,14 +24,14 @@ export const monthLabel = (t: TFunction, yyyymm: string): string => {
 };
 
 // Os últimos meses que têm lançamento, do mais recente pro mais antigo.
-// usado em: MajorReleasesSection
+// usado em: presentation/cyclefilters, MajorReleasesSection
 export const releaseMonths = (movies: MajorReleaseMovie[] | null): string[] => {
   const unique = new Set((movies ?? []).map((m) => m.releaseDate.slice(0, 7)));
   return [...unique].sort((a, b) => b.localeCompare(a)).slice(0, MONTH_CHIPS);
 };
 
 // Lançamentos de um mês, no limite de uma fileira.
-// usado em: MajorReleasesSection
+// usado em: presentation/cyclefilters, MajorReleasesSection
 export const releasesOfMonth = (movies: MajorReleaseMovie[] | null, month: string | null): MajorReleaseMovie[] =>
   (movies ?? []).filter((m) => m.releaseDate.slice(0, 7) === month).slice(0, ROW_LIMIT);
 

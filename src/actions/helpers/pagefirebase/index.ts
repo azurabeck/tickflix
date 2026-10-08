@@ -30,7 +30,7 @@ const useFollowedTimelines = (uid: string | null, type: ContentType) => {
 
 // Dashboard, parte Firebase: lê o que é da página (timelines seguidas) e junta o que o MediaCardsProvider já leu no login
 // (vistos, notas e seguidos). Cada section pega a sua fatia.
-// usado em: helpers/section
+// usado em: helpers/section, presentation/cyclenotes, presentation/cyclerender
 export const usePageFirebase = (uid: string | null, options: FirebaseOptions) => {
   const media = useMediaCards();
   const followedTimelines = useFollowedTimelines(uid, options.timelineType); // section "Timelines que você segue"

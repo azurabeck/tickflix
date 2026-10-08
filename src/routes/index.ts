@@ -10,6 +10,7 @@ export const ROUTES = {
   FRANCHISES: "/franquias",
   ABOUT: "/sobre",
   PROFILE: "/perfil",
+  PRESENTATION: "/apresentacao",
   SETTINGS: "/configuracoes",
 } as const;
 

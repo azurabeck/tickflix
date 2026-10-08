@@ -21,9 +21,139 @@
     "openAccount": "Abrir menú de la cuenta",
     "profile": "Mi perfil",
     "settings": "Configuración",
+    "presentation": "Presentación",
     "refresh": "Actualizar",
     "signOut": "Cerrar sesión",
     "defaultName": "Usuario"
+  },
+  "presentation": {
+    "title": "Presentación",
+    "tabs": {
+      "about": "Sobre el proyecto",
+      "structure": "Estructura",
+      "cycle": "Ciclo de funciones",
+      "problems": "Problemas y soluciones"
+    },
+    "cycle": {
+      "render": "Renderizado de datos",
+      "watched": "Marcar películas como vistas",
+      "following": "Seguir series y anime",
+      "filters": "Filtros de las secciones",
+      "timelineai": "Crear timelines con IA",
+      "suggestions": "Sugerencias de la IA",
+      "progress": "Progreso de la timeline",
+      "notes": "Notas de películas (ranking de notas)"
+    },
+    "problems": {
+      "cache": "El caché de datos",
+      "geminikey": "Ingreso manual de la clave de Gemini",
+      "context": "Context para guardar los datos de Firebase"
+    },
+    "about": {
+      "label": "Una app para quienes aman las películas",
+      "title": "Tu próxima historia\nempieza con una elección.",
+      "description": "TickFlix ayuda a los cinéfilos a organizar lo que ya vieron, seguir series y descubrir lo que viene.",
+      "seeStructure": "Conoce la estructura",
+      "seeFeatures": "Ver funcionalidades",
+      "featuresLabel": "¿Qué puedes hacer?",
+      "featuresTitle": "Todo para mantener tu vida cinéfila en orden",
+      "features": {
+        "track": {
+          "title": "Sigue",
+          "text": "Marca todo para no perder lo que ya viste"
+        },
+        "discover": {
+          "title": "Descubre",
+          "text": "La IA sugiere películas y series según tu gusto personal"
+        },
+        "timelines": {
+          "title": "Crea timelines",
+          "text": "Saber si viste todas las películas de un universo es fácil."
+        }
+      }
+    },
+    "structure": {
+      "label": "Mapa del código",
+      "title": "Cada parte tiene una responsabilidad.",
+      "description": "La pantalla recibe la acción, coordina el estado y llama al servicio que habla con los datos.",
+      "frontend": {
+        "chip": "Frontend",
+        "layers": {
+          "pages": {
+            "title": "pages",
+            "text": "Arman las pantallas y rutas."
+          },
+          "components": {
+            "title": "components",
+            "text": "Piezas visuales reutilizables."
+          },
+          "actions": {
+            "title": "actions + contexts",
+            "text": "Coordinan ciclos y estado."
+          }
+        },
+        "example": "EJEMPLO: clic en la tarjeta → el contexto se actualiza → la acción guarda en Firebase",
+        "instant": "Respuesta visual inmediata"
+      },
+      "service": {
+        "chip": "Service",
+        "title": "Integraciones de la app",
+        "text": "Firebase • TMDb • Gemini"
+      },
+      "api": {
+        "chip": "API",
+        "title": "Rutas serverless",
+        "text": "dashboard • series • gemini"
+      },
+      "where": {
+        "label": "Dónde encontrar cada cosa",
+        "items": {
+          "pages": {
+            "title": "src/pages",
+            "text": "Rutas y páginas."
+          },
+          "components": {
+            "title": "src/components",
+            "text": "Interfaz reutilizable."
+          },
+          "actions": {
+            "title": "src/actions",
+            "text": "Hooks y lógica por recurso."
+          },
+          "shared": {
+            "title": "src/contexts + service",
+            "text": "Estado compartido e integraciones."
+          }
+        }
+      },
+      "backend": {
+        "title": "api/",
+        "text": "Backend."
+      },
+      "note": "Frontend = interacción y presentación • API = acceso a datos externos y caché de secciones",
+      "treeAlt": "Carpetas dentro de src"
+    },
+    "cycles": {
+      "label": "Ciclo",
+      "step": "Paso {{label}}",
+      "lanes": {
+        "backend": "Backend",
+        "firebase": "Firebase",
+        "series": "Series y anime"
+      },
+      "file": "Archivo",
+      "function": "Función",
+      "previous": "Paso anterior",
+      "next": "Siguiente paso",
+      "loadingCode": "Cargando el código...",
+      "missingCode": "No encontré este fragmento en el código actual: el archivo cambió y el paso necesita actualizarse.",
+      "soon": "Este ciclo todavía se está armando.",
+      "inside": "Dentro del paso {{label}}",
+      "problemLabel": "Problema y solución",
+      "why": "Por qué era un problema",
+      "what": "¿Cuál es la solución?",
+      "lifecycle": "Ciclo de vida de la solución"
+    }
   },
   "pageLoader": {
     "loading": "Cargando..."

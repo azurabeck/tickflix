@@ -55,7 +55,7 @@ export const fetchSeasonEpisodes = async (seriesId: number, seasonNumber: number
 
 // Busca todas as temporadas e episódios (nenhum visto ainda) e diz se é anime
 // (mesma definição do resto do app: gênero Animação + produzido/falado em japonês).
-// usado em: MediaCardsProvider
+// usado em: presentation/cyclefollowing, MediaCardsProvider
 export const fetchSeriesWithEpisodes = async (seriesId: number) => {
   const data = await tmdbFetch<{
     status: string;
@@ -96,7 +96,7 @@ export const fetchFollowedSeries = async (uid: string): Promise<FollowedSeries[]
 };
 
 // Começa a seguir uma série/anime (ignora se já seguia).
-// usado em: MediaCardsProvider
+// usado em: presentation/cyclefollowing, MediaCardsProvider
 export const followSeries = async (
   uid: string,
   series: Pick<FollowedSeries, "id" | "title" | "posterPath" | "backdropPath" | "year" | "available" | "availableCheckedAt" | "status" | "category" | "seasons">
@@ -126,7 +126,7 @@ export const completeFollowed = async (uid: string, list: FollowedSeries[]): Pro
 };
 
 // Deixa de seguir e apaga o progresso.
-// usado em: MediaCardsProvider
+// usado em: presentation/cyclefollowing, MediaCardsProvider
 export const unfollowSeries = (uid: string, seriesId: number): Promise<void> => deleteDoc(doc(followingCollection(uid), String(seriesId)));
 
 // Um episódio, uma temporada inteira ou vários episódios de temporadas diferentes: tudo é uma lista de episódios.
@@ -140,7 +140,7 @@ export const setEpisodesWatched = (uid: string, seriesId: number, episodes: Epis
 // ---------- 3. Regras de episódios ----------
 
 // Episódios vistos e total de uma série seguida.
-// usado em: MediaCard, SeriesDetail, MediaCardsProvider
+// usado em: presentation/cyclefollowing, MediaCard, SeriesDetail, MediaCardsProvider
 export const followedSeriesProgress = (series: FollowedSeries): { watched: number; total: number } => {
   const episodes = Object.values(series.seasons).flatMap((season) => Object.values(season.episodes));
   return { watched: episodes.filter((e) => e.watched).length, total: episodes.length };

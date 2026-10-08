@@ -4,11 +4,11 @@ Casca das páginas internas: fundo, largura máxima e título. "light" = Perfil/
 
 ## Props
 - `variant?`: `"light" | "dark"`
-- `width?`: `"default" | "narrow"`
+- `width?`: `"default" | "narrow" | "wide"`
 - `title?`: `ReactNode`
 - `subtitle?`: `ReactNode`
 - `style?`: `CSSProperties`
-- `children`: `ReactNode`
+- `children?`: `ReactNode`
 
 ## Depende de
 Nada além de bibliotecas.

@@ -1,0 +1,32 @@
+@use "@/theme" as *;
+
+.presentation-features {
+  padding: 32px 0 8px;
+
+  &__label {
+    margin: 0 0 6px;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: $color-primary;
+  }
+
+  &__title {
+    margin: 0 0 16px;
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    color: #673AB7;
+  }
+
+  &__cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+
+    @media (max-width: 1000px) {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+  }
+}

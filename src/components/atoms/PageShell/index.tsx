@@ -3,17 +3,17 @@ import "./style.scss";
 
 interface PageShellProps {
   variant?: "light" | "dark";
-  width?: "default" | "narrow";
+  width?: "default" | "narrow" | "wide";
   title?: ReactNode;
   subtitle?: ReactNode;
   style?: CSSProperties;
-  children: ReactNode;
+  children?: ReactNode;
 }
 
 // Casca das páginas internas: fundo, largura máxima e título. "light" = Perfil/Configurações; "dark" = Premiações/Franquias.
 const PageShell = ({ variant = "light", width = "default", title, subtitle, style, children }: PageShellProps) => (
   <div className={`page-shell page-shell--${variant}`} style={style}>
-    <div className={width === "narrow" ? "page-shell__inner page-shell__inner--narrow" : "page-shell__inner"}>
+    <div className={width === "default" ? "page-shell__inner" : `page-shell__inner page-shell__inner--${width}`}>
       {title && <h1 className="page-shell__title">{title}</h1>}
       {subtitle && <p className="page-shell__subtitle">{subtitle}</p>}
       {children}

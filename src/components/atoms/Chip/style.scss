@@ -1,0 +1,30 @@
+@use "@/theme" as *;
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  height: 22px;
+  padding: 0 12px;
+  border-radius: 11px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+
+  &--lilac {
+    background: #d0c6e6;
+    color: #402267;
+  }
+
+  &--purple {
+    background: $color-primary;
+    color: #ffffff;
+  }
+
+  &--green {
+    background: #12e251;
+    color: $color-primary-dark;
+  }
+}

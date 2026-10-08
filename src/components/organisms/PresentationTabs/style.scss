@@ -1,0 +1,93 @@
+@use "@/theme" as *;
+
+.presentation-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 8px;
+
+  &__group {
+    position: relative;
+  }
+
+  // a aba escolhida vira uma pílula roxa
+  &__tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 14px;
+    border: none;
+    border-radius: 16px;
+    background: none;
+    font: inherit;
+    font-size: 14px;
+    line-height: 22px;
+    color: $color-primary;
+    cursor: pointer;
+
+    &:hover:not(&--active) {
+      background: rgba($color-primary, 0.08);
+    }
+
+    &--active {
+      background: $color-primary;
+      font-weight: 400;
+      color: #ffffff;
+    }
+  }
+
+  // triângulo apontando para baixo (gira quando o submenu abre)
+  &__caret {
+    width: 8px;
+    height: 7px;
+    background: #3d2963;
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    transition: transform 0.15s ease;
+
+    &--open {
+      transform: rotate(180deg);
+    }
+  }
+
+  &__tab--active &__caret {
+    background: #ffffff;
+  }
+
+  &__menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    min-width: 160px;
+    padding: 6px;
+    background: $color-bg;
+    border: 1px solid rgba($color-border, 0.3);
+    border-radius: $radius-md;
+    box-shadow: 0 10px 30px rgba(#000000, 0.15);
+  }
+
+  &__item {
+    padding: 8px 12px;
+    border: none;
+    border-radius: $radius-sm;
+    background: none;
+    font: inherit;
+    font-size: 16px;
+    text-align: left;
+    white-space: nowrap;
+    color: $color-text;
+    cursor: pointer;
+
+    &:hover {
+      background: rgba($color-primary, 0.08);
+    }
+
+    &--active {
+      font-weight: 500;
+      color: $color-primary;
+    }
+  }
+}

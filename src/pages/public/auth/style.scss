@@ -202,12 +202,12 @@
 @media (min-width: 769px) {
   .auth-page {
     &__content {
-      width: 45%;
-      max-width: 620px;
+      width: 100%;
+      max-width: 50%;
       min-height: 100vh;
       margin-top: 0;
       justify-content: center;
-      padding: 64px 96px;
+      padding: 64px 10%;
       gap: 32px;
     }
 
@@ -237,7 +237,7 @@
         $color-bg 0%,
         $color-bg 30%,
         rgba(255, 255, 255, 0.55) 48%,
-        rgba(255, 255, 255, 0.15) 68%,
+        rgba(255, 255, 255, 0.15) 58%,
         rgba(255, 255, 255, 0.02) 100%
       );
     }

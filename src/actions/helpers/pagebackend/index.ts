@@ -89,7 +89,7 @@ const saveGroupCache = (uid: string | null, slot: string, index: number, respons
 // Dashboard, parte backend. O ciclo de cada página:
 //   1. confere o cache de cada grupo; 2. confere se pediram para atualizar; 3. confere a cidade; 4. pede ao backend o que faltou (um pedido por grupo).
 // Devolve `section(nome)`: a fatia de uma section, com o loading do grupo dela.
-// usado em: helpers/section
+// usado em: helpers/section, presentation/cyclerender
 export const usePageBackend = (page: string, uid: string | null, lang: string, options: BackendOptions) => {
   const { groups, endpoint, params } = options;
   const [refresh] = useState(() => consumeRefreshRequest(page)); // pediram para buscar tudo de novo (vale na abertura da página)
@@ -107,8 +107,8 @@ export const usePageBackend = (page: string, uid: string | null, lang: string, o
   // Passo 4: pede um grupo ao backend e guarda a resposta.
   const requestGroup = (index: number, forceRefresh: boolean, cancelled: () => boolean) => {
     const names = groups[index];
-    markGroup(setLoadingGroups, index, true);
-    markGroup(setFailedGroups, index, false);
+    markGroup(setLoadingGroups, index, true); // mostra loading
+    markGroup(setFailedGroups, index, false); // limpa qualquer erro
 
     fetchBackend<BackendResponse>(endpoint, { ...params, only: names.join(","), lang, city: city ? slugify(city) : undefined, refresh: forceRefresh ? "1" : undefined })
       .then((response) => {

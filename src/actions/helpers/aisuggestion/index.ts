@@ -160,7 +160,7 @@ interface DailyOptions {
 // Ciclo "sugestões do dia": gera 3 uma vez por dia (guardadas no cache local); o que o usuário
 // assiste vira um botão de refresh sem chamar a IA; o refresh pede de uma vez tantas sugestões
 // quantos lugares vazios existem.
-// usado em: AiSuggestionsPanel
+// usado em: presentation/cyclesuggestions, AiSuggestionsPanel
 export const useDailySuggestions = ({ recentKeys, mediaKind, category, keyFilter }: DailyOptions) => {
   const isAnime = category === "animes";
   const media = useMediaCards();

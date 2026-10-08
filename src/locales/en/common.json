@@ -21,9 +21,139 @@
     "openAccount": "Open account menu",
     "profile": "My profile",
     "settings": "Settings",
+    "presentation": "Presentation",
     "refresh": "Refresh",
     "signOut": "Sign out",
     "defaultName": "User"
+  },
+  "presentation": {
+    "title": "Presentation",
+    "tabs": {
+      "about": "About the project",
+      "structure": "Structure",
+      "cycle": "Function cycle",
+      "problems": "Problems & Solutions"
+    },
+    "cycle": {
+      "render": "Data rendering",
+      "watched": "Marking movies as watched",
+      "following": "Following series and anime",
+      "filters": "Section filters",
+      "timelineai": "Creating timelines with AI",
+      "suggestions": "AI suggestions",
+      "progress": "Timeline progress",
+      "notes": "Movie ratings (ratings rank)"
+    },
+    "problems": {
+      "cache": "Data caching",
+      "geminikey": "Manual Gemini key entry",
+      "context": "Context to hold the Firebase data"
+    },
+    "about": {
+      "label": "An app for people who love movies",
+      "title": "Your next story\nstarts with a choice.",
+      "description": "TickFlix helps movie lovers keep track of what they've watched, follow series and discover what comes next.",
+      "seeStructure": "See the structure",
+      "seeFeatures": "See features",
+      "featuresLabel": "What can you do?",
+      "featuresTitle": "Everything to keep your movie life in order",
+      "features": {
+        "track": {
+          "title": "Keep track",
+          "text": "Mark everything so you never lose what you've watched"
+        },
+        "discover": {
+          "title": "Discover",
+          "text": "AI suggests movies and series based on your personal taste"
+        },
+        "timelines": {
+          "title": "Create timelines",
+          "text": "Knowing if you've seen every movie of a universe is easy."
+        }
+      }
+    },
+    "structure": {
+      "label": "Code map",
+      "title": "Each part has one responsibility.",
+      "description": "The screen receives the action, coordinates the state and calls the service that talks to the data.",
+      "frontend": {
+        "chip": "Frontend",
+        "layers": {
+          "pages": {
+            "title": "pages",
+            "text": "Build the screens and routes."
+          },
+          "components": {
+            "title": "components",
+            "text": "Reusable visual pieces."
+          },
+          "actions": {
+            "title": "actions + contexts",
+            "text": "Coordinate cycles and state."
+          }
+        },
+        "example": "EXAMPLE: click on a card → context updates → action saves to Firebase",
+        "instant": "Instant visual response"
+      },
+      "service": {
+        "chip": "Service",
+        "title": "App integrations",
+        "text": "Firebase • TMDb • Gemini"
+      },
+      "api": {
+        "chip": "API",
+        "title": "Serverless routes",
+        "text": "dashboard • series • gemini"
+      },
+      "where": {
+        "label": "Where to find things",
+        "items": {
+          "pages": {
+            "title": "src/pages",
+            "text": "Routes and pages."
+          },
+          "components": {
+            "title": "src/components",
+            "text": "Reusable interface."
+          },
+          "actions": {
+            "title": "src/actions",
+            "text": "Hooks and logic per feature."
+          },
+          "shared": {
+            "title": "src/contexts + service",
+            "text": "Shared state and integrations."
+          }
+        }
+      },
+      "backend": {
+        "title": "api/",
+        "text": "Backend."
+      },
+      "note": "Frontend = interaction and presentation • API = access to external data and section cache",
+      "treeAlt": "Folders inside src"
+    },
+    "cycles": {
+      "label": "Cycle",
+      "step": "Step {{label}}",
+      "lanes": {
+        "backend": "Backend",
+        "firebase": "Firebase",
+        "series": "Series and anime"
+      },
+      "file": "File",
+      "function": "Function",
+      "previous": "Previous step",
+      "next": "Next step",
+      "loadingCode": "Loading the code...",
+      "missingCode": "I could not find this snippet in the current code: the file changed and the step needs to be updated.",
+      "soon": "This cycle is still being built.",
+      "inside": "Inside step {{label}}",
+      "problemLabel": "Problem and solution",
+      "why": "Why it was a problem",
+      "what": "What is the solution?",
+      "lifecycle": "Life cycle of the solution"
+    }
   },
   "pageLoader": {
     "loading": "Loading..."

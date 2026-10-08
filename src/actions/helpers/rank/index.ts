@@ -16,7 +16,7 @@ export interface MyNotes {
 }
 
 // Chaves (`movie-1`, `tv-2`) mais bem avaliadas pelo usuário, só do tipo da página; empate fica com o mais recente.
-// usado em: helpers/aisuggestion
+// usado em: helpers/aisuggestion, presentation/cyclenotes
 export const topRatedKeys = (
   ratings: Map<string, number>,
   checkedMap: Map<string, number>,
@@ -31,7 +31,7 @@ export const topRatedKeys = (
     .map(([key]) => key);
 
 // Devolve a função que transforma um card em item de rank, com a nota do usuário e se ele já viu/segue.
-// usado em: animes/mostwatchedrank, movies/popularityrank, series/mostwatchedrank
+// usado em: animes/mostwatchedrank, movies/popularityrank, presentation/cyclenotes, series/mostwatchedrank
 export const useToRankItem = () => {
   const media = useMediaCards();
   return (card: MediaItem & { id: number; mediaType: "movie" | "tv" }): RankItem => {
@@ -57,7 +57,7 @@ export const toPopularityItems = (cards: (MediaItem & { id: number; mediaType: "
 
 // Section "Seu Rank de Notas" (Firebase): as notas que o usuário já deu (o MediaCardsProvider guarda título e imagens junto), da maior
 // para a menor. Só entra o que é do tipo da página; em séries e animes, a categoria que o título guarda.
-// usado em: helpers/pagefirebase
+// usado em: helpers/pagefirebase, presentation/cyclenotes
 export const useMyNotes = (mediaKind: "movie" | "tv", category?: "series" | "animes"): MyNotes => {
   const { ratings, checkedMap, titles, watchedMap, followedList, watchedLoading } = useMediaCards();
   const toRankItem = useToRankItem();
@@ -87,7 +87,7 @@ export const useMyNotes = (mediaKind: "movie" | "tv", category?: "series" | "ani
 };
 
 // As ações dos cards dos ranks (abrir, marcar como visto, avaliar): as mesmas nos dois blocos.
-// usado em: RankSection
+// usado em: presentation/cyclenotes, RankSection
 export const useRankHandlers = (category?: "series" | "animes") => {
   const media = useMediaCards();
   return {

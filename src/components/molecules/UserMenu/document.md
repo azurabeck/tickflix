@@ -1,6 +1,6 @@
 # UserMenu (molécula)
 
-Menu do avatar: perfil, configurações, atualizar dados e sair.
+Menu do avatar: perfil, configurações, apresentação, atualizar dados e sair.
 
 ## Props
 Sem props.

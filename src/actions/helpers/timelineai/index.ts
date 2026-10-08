@@ -485,7 +485,7 @@ const CHAT_TURN_SCHEMA: GeminiSchema = {
 };
 
 // Responde uma mensagem do chat de ajuste da timeline e diz se ela pede mudança na lista.
-// usado em: helpers/createtimeline
+// usado em: helpers/createtimeline, presentation/cycletimelineai
 export const respondToTimelineChat = async (
   originalDescription: string,
   priorAdjustments: string[],
@@ -526,7 +526,7 @@ interface ResolveTimelineOptions {
 }
 
 // Transforma uma descrição em texto livre numa lista de títulos reais (IA + TMDb).
-// usado em: franchises/dashboard, helpers/createtimeline
+// usado em: franchises/dashboard, helpers/createtimeline, presentation/cycletimelineai
 export const resolveTimelineMovies = async (
   description: string,
   categoryLock?: ContentType,

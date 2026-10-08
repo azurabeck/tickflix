@@ -1,0 +1,39 @@
+@use "@/theme" as *;
+
+.feature-card {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  column-gap: 16px;
+  row-gap: 8px;
+  padding: 20px 16px;
+  background: $color-bg;
+  border-radius: 12px;
+  box-shadow: 3px 3px 16px rgba(94, 94, 94, 0.25);
+
+  &__title {
+    grid-column: 2;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #000000;
+  }
+
+  &__icon {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: center;
+    display: flex;
+    line-height: 0;
+  }
+
+  &__text {
+    grid-column: 2;
+    grid-row: 2;
+    margin: 0;
+    font-size: 16px;
+    letter-spacing: 0.1em;
+    color: $color-primary;
+  }
+}

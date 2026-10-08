@@ -10,7 +10,7 @@ export type { Section } from "@/actions/helpers/pagebackend";
 //   Backend  (usePageBackend):  cache -> atualizar? -> cidade -> pedido ao backend (um por grupo).
 //   Firebase (usePageFirebase): timelines seguidas e o que o MediaCardsProvider já leu (vistos, notas e seguidos).
 // As sections só pegam a sua fatia: dashboard.section("nome") e dashboard.firebase.
-// usado em: animes/dashboard, helpers/pagebackend, helpers/pagefirebase, movies/dashboard, series/dashboard
+// usado em: animes/dashboard, helpers/pagebackend, helpers/pagefirebase, movies/dashboard, presentation/cyclerender, series/dashboard
 export const usePageDashboard = (page: string, options: BackendOptions & FirebaseOptions) => {
   const { i18n } = useTranslation();
   const uid = auth.currentUser?.uid ?? null;

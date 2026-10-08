@@ -15,6 +15,7 @@ import Timelines from "@/pages/private/timelines";
 import Franchise from "@/pages/private/franchise";
 import Profile from "@/pages/private/profile";
 import Settings from "@/pages/private/settings";
+import Presentation from "@/pages/private/presentation";
 
 const App = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -49,6 +50,7 @@ const App = () => {
         <Route path={`${ROUTES.FRANCHISES}/:slug`} element={<Franchise />} />
         <Route path={ROUTES.PROFILE} element={<Profile />} />
         <Route path={ROUTES.SETTINGS} element={<Settings />} />
+        <Route path={ROUTES.PRESENTATION} element={<Presentation />} />
       </Route>
       <Route path={ROUTES.ABOUT} element={<About />} />
       <Route path="*" element={<Navigate to={user ? ROUTES.HOME : ROUTES.AUTH} replace />} />

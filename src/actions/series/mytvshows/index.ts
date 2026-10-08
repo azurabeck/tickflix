@@ -4,7 +4,7 @@ import type { MediaItem } from "@/types/media";
 
 // Section "Minhas séries" (Firebase): inicia o loading -> a lista vem do Firestore (MediaCardsProvider) -> fecha o loading.
 // Cada título seguido já guarda o que o card precisa (imagens, ano, "disponível"), então não consulta o TMDb.
-// usado em: página Séries
+// usado em: presentation/cyclefollowing, página Séries
 export const useMyTvShows = () => {
   const { followedList, followedLoading } = useMediaCards();
 
