@@ -19,7 +19,7 @@ export const SERIES_PAGE = {
 // e uma leitura do Firebase. No TMDb séries e animes são ambos `tv`; aqui vêm só as séries.
 // usado em: página Séries
 export const useSeriesDashboard = () =>
-  usePageDashboard("series", { endpoint: "series", params: { kind: "series" }, groups: [["hero"], ["top"], STREAMING_PROVIDERS.map((p) => `provider-${p.id}`)], timelineType: SERIES_PAGE.timelineType });
+  usePageDashboard("series", { endpoint: "series", params: { kind: "series" }, groups: [["hero"], ["top"], STREAMING_PROVIDERS.map((p) => `provider-${p.id}`)], timelineType: SERIES_PAGE.timelineType, mediaKind: "tv", category: SERIES_PAGE.category });
 
 // usado em: Hero, Mais vistas e Melhores avaliadas da página Series
 export type SeriesDashboard = ReturnType<typeof useSeriesDashboard>;

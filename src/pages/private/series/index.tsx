@@ -12,7 +12,7 @@ const SeriesPage = () => {
   const hero = useSeriesHero(dashboard);
   const mine = useMyTvShows();
   const mostWatched = useSeriesMostWatchedRank(dashboard);
-  const myNotes = useSeriesMyNotesRank();
+  const myNotes = useSeriesMyNotesRank(dashboard);
 
   return <EpisodicCatalog page={SERIES_PAGE} dashboard={dashboard} hero={hero} mine={mine} mostWatched={mostWatched} myNotes={myNotes} useBestRatedOn={useSeriesBestRatedOn} />;
 };

@@ -1,12 +1,22 @@
 import { useMemo } from "react";
 import { useMediaCards } from "@/contexts/MediaCards";
 import { movieKey } from "@/actions/helpers/timelines";
-import { cardTypeOf, type DashboardMovie, type MediaItem, type RankItem } from "@/types/media";
+import { cardTypeOf, type MediaItem, type RankItem } from "@/types/media";
 
 const RANK_MAX = 20;
+const RECENT_MAX = 8;
+
+// O rank "Seu Rank de Notas" de uma página, pronto para mostrar: os itens, o carregando e o que a "Sugestão da IA" usa como base de gosto.
+// usado em: RankSection, movies/mynotesrank, series/mynotesrank, animes/mynotesrank
+export interface MyNotes {
+  items: RankItem[];
+  loading: boolean;
+  keyFilter?: (key: string) => boolean; // deixa passar só as chaves da categoria da página (séries ou animes)
+  recentKeys: string[]; // o que o usuário viu/segue nesta página, do mais recente para o mais antigo
+}
 
 // Chaves (`movie-1`, `tv-2`) mais bem avaliadas pelo usuário, só do tipo da página; empate fica com o mais recente.
-// usado na section "Seu Rank de Notas" e na base de gosto da "Sugestão da IA".
+// usado em: helpers/aisuggestion
 export const topRatedKeys = (
   ratings: Map<string, number>,
   checkedMap: Map<string, number>,
@@ -20,21 +30,11 @@ export const topRatedKeys = (
     .slice(0, limit)
     .map(([key]) => key);
 
-interface RankOptions {
-  mediaKind: "movie" | "tv";
-  category?: "series" | "animes";
-  keyFilter?: (key: string) => boolean;
-  popularity: DashboardMovie[] | null; // vem do dashboard da página (backend)
-}
-
-// Section Rank: dois rankings lado a lado.
-//   "Popularidade": a lista que veio do backend (dashboard da página), já com "disponível".
-//   "Seu Rank de Notas": as notas que o usuário já deu (o MediaCardsProvider guarda título e imagens junto), da maior para a menor.
-// usado em: RankSection
-export const useRank = ({ mediaKind, category, keyFilter, popularity }: RankOptions) => {
+// Devolve a função que transforma um card em item de rank, com a nota do usuário e se ele já viu/segue.
+// usado em: animes/mostwatchedrank, movies/popularityrank, series/mostwatchedrank
+export const useToRankItem = () => {
   const media = useMediaCards();
-
-  const toRankItem = (card: MediaItem & { id: number; mediaType: "movie" | "tv" }): RankItem => {
+  return (card: MediaItem & { id: number; mediaType: "movie" | "tv" }): RankItem => {
     const key = movieKey(card.mediaType, card.id);
     return {
       key,
@@ -48,26 +48,52 @@ export const useRank = ({ mediaKind, category, keyFilter, popularity }: RankOpti
       card,
     };
   };
+};
 
-  const popular = (popularity ?? []).slice(0, RANK_MAX);
+// Section "Popularidade" / "Mais vistas" (Rank): a fatia do dashboard (backend) vira itens de rank, com a nota do usuário em cada card.
+// usado em: animes/mostwatchedrank, movies/popularityrank, series/mostwatchedrank
+export const toPopularityItems = (cards: (MediaItem & { id: number; mediaType: "movie" | "tv" })[] | null, toRankItem: ReturnType<typeof useToRankItem>): RankItem[] | null =>
+  cards ? cards.slice(0, RANK_MAX).map(toRankItem) : null;
 
-  const ratedKeys = useMemo(
-    () => topRatedKeys(media.ratings, media.checkedMap, `${mediaKind}-`, keyFilter),
+// Section "Seu Rank de Notas" (Firebase): as notas que o usuário já deu (o MediaCardsProvider guarda título e imagens junto), da maior
+// para a menor. Só entra o que é do tipo da página; em séries e animes, a categoria que o título guarda.
+// usado em: helpers/pagefirebase
+export const useMyNotes = (mediaKind: "movie" | "tv", category?: "series" | "animes"): MyNotes => {
+  const { ratings, checkedMap, titles, watchedMap, followedList, watchedLoading } = useMediaCards();
+  const toRankItem = useToRankItem();
+
+  const keyFilter = useMemo(() => (category ? (key: string) => titles.get(key)?.category === category : undefined), [titles, category]);
+
+  const items = useMemo(
+    () =>
+      topRatedKeys(ratings, checkedMap, `${mediaKind}-`, keyFilter).flatMap((key): RankItem[] => {
+        const stored = titles.get(key);
+        const [type, id] = key.split("-");
+        return stored && (type === "movie" || type === "tv") ? [toRankItem({ ...stored, id: Number(id), mediaType: type })] : [];
+      }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [media.ratings, media.checkedMap, mediaKind, keyFilter]
+    [ratings, checkedMap, titles, mediaKind, keyFilter]
   );
-  const yourItems = ratedKeys.flatMap((key): RankItem[] => {
-    const stored = media.titles.get(key);
-    const [mediaType, id] = key.split("-");
-    return stored && (mediaType === "movie" || mediaType === "tv") ? [toRankItem({ ...stored, id: Number(id), mediaType })] : [];
-  });
 
-  const handlers = {
+  const recentKeys = useMemo(() => {
+    if (category) return followedList.filter((s) => s.category === category).map((s) => movieKey("tv", s.id));
+    return [...watchedMap.entries()]
+      .sort(([, a], [, b]) => b - a)
+      .map(([key]) => key)
+      .slice(0, RECENT_MAX);
+  }, [watchedMap, followedList, category]);
+
+  return { items, loading: watchedLoading, keyFilter, recentKeys };
+};
+
+// As ações dos cards dos ranks (abrir, marcar como visto, avaliar): as mesmas nos dois blocos.
+// usado em: RankSection
+export const useRankHandlers = (category?: "series" | "animes") => {
+  const media = useMediaCards();
+  return {
     disabled: !media.uid,
     onOpen: (item: RankItem) => media.openDetail({ id: item.id, mediaType: item.mediaType }),
     onToggleChecked: (item: RankItem) => media.toggleChecked({ ...item.card, category }),
     onRate: (item: RankItem, rating: number | null) => media.rate(item.card, rating),
   };
-
-  return { popularityItems: popular.map(toRankItem), yourItems, handlers };
 };

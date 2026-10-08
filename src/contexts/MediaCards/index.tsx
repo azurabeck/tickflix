@@ -48,7 +48,7 @@ interface MediaCardsApi {
 const MediaCardsContext = createContext<MediaCardsApi | null>(null);
 
 // Estado global dos cards: o que o usuário viu, avaliou e segue, as ações sobre os cards e os modais que eles abrem.
-// usado em: animes/myanimes, animes/mynotesrank, awards/dashboard, franchises/dashboard, helpers/aisuggestion, helpers/rank, …
+// usado em: animes/myanimes, awards/dashboard, franchises/dashboard, helpers/aisuggestion, helpers/pagefirebase, helpers/rank, …
 export const useMediaCards = (): MediaCardsApi => {
   const ctx = useContext(MediaCardsContext);
   if (!ctx) throw new Error("useMediaCards precisa estar dentro de <MediaCardsProvider>");

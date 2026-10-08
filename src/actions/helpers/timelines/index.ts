@@ -84,7 +84,7 @@ const legacyOscarOrdinal = (raw: Record<string, unknown>): number | null =>
   typeof raw.oscarEditionOrdinal === "number" && !raw.awardSlug ? raw.oscarEditionOrdinal : null;
 
 // Lê as timelines do usuário (as mais novas primeiro) e corrige formatos antigos.
-// usado em: helpers/addtotimeline, helpers/section, timelines/mytimelines
+// usado em: helpers/addtotimeline, helpers/pagefirebase, timelines/mytimelines
 export const fetchTimelines = async (uid: string): Promise<Timeline[]> => {
   const snapshot = await getDocs(query(timelineCollection(uid), orderBy("createdAt", "desc")));
   const timelines = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...(docSnap.data() as Omit<Timeline, "id">) }));

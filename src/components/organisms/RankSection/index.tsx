@@ -4,32 +4,30 @@ import HomeRow from "@/components/atoms/HomeRow";
 import HomeSection from "@/components/atoms/HomeSection";
 import AiSuggestionsPanel from "@/components/organisms/AiSuggestionsPanel";
 import RankComponent from "@/components/molecules/RankComponent";
-import { useRank } from "@/actions/helpers/rank";
+import { useRankHandlers, type MyNotes } from "@/actions/helpers/rank";
+import type { Section } from "@/actions/helpers/section";
 import type { SuggestionKind } from "@/actions/helpers/aisuggestion";
-import type { DashboardMovie } from "@/types/media";
+import type { RankItem } from "@/types/media";
 
 interface RankSectionProps {
   mediaKind?: SuggestionKind;
   category?: "series" | "animes";
-  keyFilter?: (key: string) => boolean;
   popularityTitle: ReactNode;
-  popularity: DashboardMovie[] | null;
-  popularityLoading?: boolean;
-  popularityError: string | null;
-  recentKeys: string[];
+  popularity: Section<RankItem>;
+  myNotes: MyNotes;
 }
 
-// Linha com três blocos: ranking popular, "Seu Rank de Notas" e a sugestão da IA.
-const RankSection = ({ mediaKind = "movie", category, keyFilter, popularityTitle, popularity, popularityLoading, popularityError, recentKeys }: RankSectionProps) => {
+// Linha com três blocos: ranking popular (backend), "Seu Rank de Notas" (Firebase) e a sugestão da IA. Só mostra o que as sections entregam.
+const RankSection = ({ mediaKind = "movie", category, popularityTitle, popularity, myNotes }: RankSectionProps) => {
   const { t } = useTranslation();
-  const { popularityItems, yourItems, handlers } = useRank({ mediaKind, category, keyFilter, popularity });
+  const handlers = useRankHandlers(category);
 
   const emptyKey = category === "animes" ? "dashboard.rank.yoursEmptyAnime" : mediaKind === "tv" ? "dashboard.rank.yoursEmptyTv" : "dashboard.rank.yoursEmpty";
 
   return (
     <HomeRow columns="1fr 1fr 2fr">
       <HomeSection gapAfter>
-        <RankComponent title={popularityTitle} items={popularityItems} loading={popularityLoading ?? (popularity === null && !popularityError)} error={popularityError} {...handlers} />
+        <RankComponent title={popularityTitle} items={popularity.items ?? []} loading={popularity.loading} error={popularity.error} {...handlers} />
       </HomeSection>
       <HomeSection>
         <RankComponent
@@ -38,12 +36,13 @@ const RankSection = ({ mediaKind = "movie", category, keyFilter, popularityTitle
               {t("dashboard.rank.yoursLabel")} <strong>{t("dashboard.rank.yoursStrong")}</strong>
             </>
           }
-          items={yourItems}
+          items={myNotes.items}
+          loading={myNotes.loading}
           emptyMessage={t(emptyKey)}
           {...handlers}
         />
       </HomeSection>
-      <AiSuggestionsPanel recentKeys={recentKeys} mediaKind={mediaKind} category={category} keyFilter={keyFilter} />
+      <AiSuggestionsPanel recentKeys={myNotes.recentKeys} mediaKind={mediaKind} category={category} keyFilter={myNotes.keyFilter} />
     </HomeRow>
   );
 };

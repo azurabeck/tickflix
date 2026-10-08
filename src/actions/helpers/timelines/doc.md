@@ -8,7 +8,7 @@ Ciclo das timelines: criar, listar, seguir, atualizar filmes, apagar e calcular 
 - `movieKey` — Chave `movie-<id>` / `tv-<id>` usada em vistos, notas e timelines.
 - `timelineMovieKey` — Chave de um título de timeline (mesmo formato de `movieKey`). usado em: franchises/dashboard, helpers/timelineai, helpers/timelinedetail, TimelineCard
 - `createTimeline` — Cria uma timeline do usuário no Firestore. usado em: animes/dashboard, awards/timelinesync, helpers/addtotimeline, helpers/createtimeline, series/dashboard, CreateTimelineModal, …
-- `fetchTimelines` — Lê as timelines do usuário (as mais novas primeiro) e corrige formatos antigos. usado em: helpers/addtotimeline, helpers/section, timelines/mytimelines
+- `fetchTimelines` — Lê as timelines do usuário (as mais novas primeiro) e corrige formatos antigos. usado em: helpers/addtotimeline, helpers/pagefirebase, timelines/mytimelines
 - `fetchTimelineByAwardEdition` — Acha a timeline de uma edição de premiação, se já existir. usado em: awards/timelinesync
 - `fetchTimelineByFranchise` — Acha a timeline de uma franquia, se já existir. usado em: franchises/dashboard
 - `createFranchiseTimeline` — Cria a timeline de uma franquia (um id fixo por franquia). usado em: franchises/dashboard

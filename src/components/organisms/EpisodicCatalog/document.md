@@ -7,12 +7,12 @@ Layout das páginas Séries e Animes: minha lista, ranks + IA e uma fileira por 
 - `dashboard`: `PageDashboard`
 - `hero`: `Section<HeroTrailer>`
 - `mine`: `{ items: MediaItem[]; loading: boolean }`
-- `mostWatched`: `Section<DashboardMovie>`
-- `myNotes`: `{ keyFilter: (key: string) => boolean; recentKeys: string[] }`
+- `mostWatched`: `Section<RankItem>`
+- `myNotes`: `MyNotes`
 - `useBestRatedOn`: `(dashboard: PageDashboard, providerId: number) => Section<MediaItem>`
 
 ## Depende de
-`components/atoms/HomeGroup`, `components/organisms/BestRatedOnRail`, `components/organisms/CreateTimelinePanel`, `components/organisms/FollowedTimelinesRow`, `components/organisms/HeroCarousel`, `components/organisms/RankSection`, `components/organisms/SeriesRailSection`, `components/organisms/TimelineDetail`, `contexts/MediaCards`, `actions/helpers/section`, `actions/helpers/streamings`, `actions/helpers/timelines`
+`components/atoms/HomeGroup`, `components/organisms/BestRatedOnRail`, `components/organisms/CreateTimelinePanel`, `components/organisms/FollowedTimelinesRow`, `components/organisms/HeroCarousel`, `components/organisms/RankSection`, `components/organisms/SeriesRailSection`, `components/organisms/TimelineDetail`, `contexts/MediaCards`, `actions/helpers/rank`, `actions/helpers/section`, `actions/helpers/streamings`, `actions/helpers/timelines`
 
 ## Estilo
 `style.scss` — classes `episodic-catalog` e `episodic-catalog__*` (BEM).

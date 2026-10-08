@@ -9,10 +9,11 @@ import RankSection from "@/components/organisms/RankSection";
 import SeriesRailSection from "@/components/organisms/SeriesRailSection";
 import TimelineDetail from "@/components/organisms/TimelineDetail";
 import { useMediaCards } from "@/contexts/MediaCards";
+import type { MyNotes } from "@/actions/helpers/rank";
 import type { PageDashboard, Section } from "@/actions/helpers/section";
 import { STREAMING_PROVIDERS } from "@/actions/helpers/streamings";
 import type { Timeline } from "@/actions/helpers/timelines";
-import type { DashboardMovie, HeroTrailer, MediaItem } from "@/types/media";
+import type { HeroTrailer, MediaItem, RankItem } from "@/types/media";
 import "./style.scss";
 
 interface EpisodicCatalogProps {
@@ -20,8 +21,8 @@ interface EpisodicCatalogProps {
   dashboard: PageDashboard;
   hero: Section<HeroTrailer>;
   mine: { items: MediaItem[]; loading: boolean };
-  mostWatched: Section<DashboardMovie>;
-  myNotes: { keyFilter: (key: string) => boolean; recentKeys: string[] };
+  mostWatched: Section<RankItem>;
+  myNotes: MyNotes;
   useBestRatedOn: (dashboard: PageDashboard, providerId: number) => Section<MediaItem>;
 }
 
@@ -45,16 +46,13 @@ const EpisodicCatalog = ({ page, dashboard, hero, mine, mostWatched, myNotes, us
         <RankSection
           mediaKind="tv"
           category={page.category}
-          keyFilter={myNotes.keyFilter}
           popularityTitle={
             <>
               {t(page.labels.mostWatched)} <strong>{new Date().getFullYear()}</strong>
             </>
           }
-          popularity={mostWatched.items}
-          popularityLoading={mostWatched.loading}
-          popularityError={mostWatched.error}
-          recentKeys={myNotes.recentKeys}
+          popularity={mostWatched}
+          myNotes={myNotes}
         />
 
         {STREAMING_PROVIDERS.map((provider) => (

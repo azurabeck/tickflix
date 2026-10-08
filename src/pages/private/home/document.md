@@ -8,4 +8,4 @@ A página só compõe: componentes de `components/` e a lógica de `actions/`.
 `atoms/HomeGroup`, `organisms/CreateTimelinePanel`, `organisms/FollowedTimelinesRow`, `organisms/HeroCarousel`, `organisms/MajorReleasesModal`, `organisms/MediaRailSection`, `organisms/PosterGridModal`, `organisms/RankSection`, `organisms/RecentlyWatchedModal`, `organisms/MajorReleasesSection`, `organisms/TimelineDetail`
 
 ## Actions
-`actions/movies/dashboard`, `actions/movies/popularityrank`, `actions/movies/hero`, `actions/movies/majorreleases`, `actions/movies/nowplaying`, `actions/movies/recentlywatched`, `actions/helpers/timelines`
+`actions/movies/dashboard`, `actions/movies/popularityrank`, `actions/movies/mynotesrank`, `actions/movies/hero`, `actions/movies/majorreleases`, `actions/movies/nowplaying`, `actions/movies/recentlywatched`, `actions/helpers/timelines`

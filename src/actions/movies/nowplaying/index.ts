@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
-import { slugify, type PageDashboard } from "@/actions/helpers/section";
+import type { PageDashboard } from "@/actions/helpers/section";
+import { slugify } from "@/actions/helpers/pagebackend";
 import type { MediaItem } from "@/types/media";
 
 // Section "Em cartaz": pega a fatia "nowplaying" do dashboard (os filmes da cidade, com o loading dela) e monta o título (com a cidade).

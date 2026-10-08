@@ -17,7 +17,7 @@ export const requestRefresh = (): void => {
 };
 
 // Pergunta (uma vez por página) se há um pedido de atualização pendente.
-// usado em: helpers/section
+// usado em: helpers/pagebackend
 export const consumeRefreshRequest = (page: string): boolean => {
   try {
     const token = localStorage.getItem(REFRESH_TOKEN_KEY);
@@ -37,7 +37,7 @@ interface CacheEntry<T> {
 const storageKey = (uid: string, key: string): string => `tickflix-cache-${uid}-${key}`;
 
 // Lê o cache local de uma página do usuário (vale 7 dias).
-// usado em: helpers/aisuggestion, helpers/section
+// usado em: helpers/aisuggestion, helpers/pagebackend
 export const getPageCache = <T>(uid: string, key: string): T | null => {
   try {
     const raw = localStorage.getItem(storageKey(uid, key));
@@ -51,7 +51,7 @@ export const getPageCache = <T>(uid: string, key: string): T | null => {
 };
 
 // Guarda o cache local de uma página do usuário.
-// usado em: helpers/aisuggestion, helpers/section
+// usado em: helpers/aisuggestion, helpers/pagebackend
 export const setPageCache = <T>(uid: string, key: string, data: T): void => {
   try {
     const entry: CacheEntry<T> = { data, cachedAt: Date.now() };

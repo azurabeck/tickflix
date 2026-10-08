@@ -12,7 +12,7 @@ const AnimePage = () => {
   const hero = useAnimesHero(dashboard);
   const mine = useMyAnimes();
   const mostWatched = useAnimesMostWatchedRank(dashboard);
-  const myNotes = useAnimesMyNotesRank();
+  const myNotes = useAnimesMyNotesRank(dashboard);
 
   return <EpisodicCatalog page={ANIMES_PAGE} dashboard={dashboard} hero={hero} mine={mine} mostWatched={mostWatched} myNotes={myNotes} useBestRatedOn={useAnimesBestRatedOn} />;
 };

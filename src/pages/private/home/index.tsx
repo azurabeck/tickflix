@@ -14,6 +14,7 @@ import TimelineDetail from "@/components/organisms/TimelineDetail";
 import { useMediaCards } from "@/contexts/MediaCards";
 import { useMoviesDashboard } from "@/actions/movies/dashboard";
 import { usePopularityRank } from "@/actions/movies/popularityrank";
+import { useMoviesMyNotesRank } from "@/actions/movies/mynotesrank";
 import { useHero } from "@/actions/movies/hero";
 import { useMajorReleases } from "@/actions/movies/majorreleases";
 import { openOnIngresso, useNowPlaying } from "@/actions/movies/nowplaying";
@@ -31,7 +32,8 @@ const Home = () => {
   const dashboard = useMoviesDashboard();
   const hero = useHero(dashboard);
   const nowPlaying = useNowPlaying(dashboard);
-  const boxOffice = usePopularityRank(dashboard);
+  const popularity = usePopularityRank(dashboard);
+  const myNotes = useMoviesMyNotesRank(dashboard);
   const releases = useMajorReleases(dashboard);
   const recent = useRecentlyWatched(RAIL_LIMIT);
 
@@ -57,10 +59,8 @@ const Home = () => {
               {t("dashboard.rank.popularityLabel")} <strong>{new Date().getFullYear()}</strong>
             </>
           }
-          popularity={boxOffice.items}
-          popularityLoading={boxOffice.loading}
-          popularityError={boxOffice.error}
-          recentKeys={recent.keys}
+          popularity={popularity}
+          myNotes={myNotes}
         />
 
         <MediaRailSection
