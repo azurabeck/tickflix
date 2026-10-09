@@ -70,7 +70,8 @@
           "title": "Crie timelines",
           "text": "Saber se viu todos os filmes de um determinado universo, é facil."
         }
-      }
+      },
+      "qrAlt": "QR code para abrir o site do TickFlix"
     },
     "structure": {
       "label": "Mapa do código",

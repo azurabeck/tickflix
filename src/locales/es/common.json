@@ -70,7 +70,8 @@
           "title": "Crea timelines",
           "text": "Saber si viste todas las películas de un universo es fácil."
         }
-      }
+      },
+      "qrAlt": "Código QR para abrir el sitio de TickFlix"
     },
     "structure": {
       "label": "Mapa del código",

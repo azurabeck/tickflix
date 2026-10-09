@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import qrCode from "@/assets/presentation/qrcode.jpg";
 import PresentationHero from "@/components/organisms/PresentationHero";
 
 const meta = {
@@ -6,7 +7,7 @@ const meta = {
   component: PresentationHero,
   tags: ["autodocs"],
   parameters: { layout: "fullscreen" },
-  args: { onStructure: () => {}, onFeatures: () => {} },
+  args: { qrSrc: qrCode, onStructure: () => {}, onFeatures: () => {} },
 } satisfies Meta<typeof PresentationHero>;
 export default meta;
 type Story = StoryObj<typeof meta>;

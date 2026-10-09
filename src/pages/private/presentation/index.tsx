@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import qrCode from "@/assets/presentation/qrcode.jpg";
 import Logo from "@/components/atoms/Logo";
 import PageShell from "@/components/atoms/PageShell";
 import PresentationCycle from "@/components/organisms/PresentationCycle";
@@ -11,7 +12,7 @@ import { usePresentationTabs } from "@/actions/presentation/tabs";
 import "./style.scss";
 
 // Página Apresentação (menu do usuário): título, abas e o conteúdo da aba escolhida.
-// O GIF (ou imagem) da aba "Sobre o projeto" entra em `mediaSrc` do PresentationHero; sem ele, fica só o retângulo preto.
+// O QR code da aba "Sobre o projeto" (src/assets/presentation/qrcode.jpg) entra em `qrSrc` do PresentationHero.
 const Presentation = () => {
   const { t } = useTranslation();
   const menu = usePresentationTabs();
@@ -29,7 +30,7 @@ const Presentation = () => {
 
       <section className="presentation-page__panel">
         <PresentationTabs menu={menu} />
-        {isAbout && <PresentationHero onStructure={() => menu.show("structure")} onFeatures={() => menu.show("cycle", "render")} />}
+        {isAbout && <PresentationHero qrSrc={qrCode} onStructure={() => menu.show("structure")} onFeatures={() => menu.show("cycle", "render")} />}
         {isStructure && <PresentationStructure />}
         {isCycle && cycle && <PresentationCycle key={cycle.id} cycle={cycle} />}
         {isCycle && !cycle && <p className="presentation-page__soon">{t("presentation.cycles.soon")}</p>}

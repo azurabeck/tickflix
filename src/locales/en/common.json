@@ -70,7 +70,8 @@
           "title": "Create timelines",
           "text": "Knowing if you've seen every movie of a universe is easy."
         }
-      }
+      },
+      "qrAlt": "QR code to open the TickFlix site"
     },
     "structure": {
       "label": "Code map",

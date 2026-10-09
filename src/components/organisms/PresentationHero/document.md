@@ -1,11 +1,11 @@
 # PresentationHero (organismo)
 
-Topo da aba "Sobre o projeto": chamada com dois botões e, ao lado, o espaço do vídeo/GIF.
+Topo da aba "Sobre o projeto": chamada com dois botões e, ao lado, o QR code do site.
 
 ## Props
 - `onStructure`: `() => void`
 - `onFeatures`: `() => void`
-- `mediaSrc?`: `string; // o GIF (ou imagem) do projeto; sem ele, fica só o retângulo preto`
+- `qrSrc`: `string; // a imagem do QR code do site`
 
 ## Depende de
 Nada além de bibliotecas.

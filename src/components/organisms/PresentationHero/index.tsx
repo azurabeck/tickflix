@@ -4,11 +4,11 @@ import "./style.scss";
 interface PresentationHeroProps {
   onStructure: () => void;
   onFeatures: () => void;
-  mediaSrc?: string; // o GIF (ou imagem) do projeto; sem ele, fica só o retângulo preto
+  qrSrc: string; // a imagem do QR code do site
 }
 
-// Topo da aba "Sobre o projeto": chamada com dois botões e, ao lado, o espaço do vídeo/GIF.
-const PresentationHero = ({ onStructure, onFeatures, mediaSrc }: PresentationHeroProps) => {
+// Topo da aba "Sobre o projeto": chamada com dois botões e, ao lado, o QR code do site.
+const PresentationHero = ({ onStructure, onFeatures, qrSrc }: PresentationHeroProps) => {
   const { t } = useTranslation();
 
   return (
@@ -30,7 +30,7 @@ const PresentationHero = ({ onStructure, onFeatures, mediaSrc }: PresentationHer
         </div>
       </div>
 
-      <div className="presentation-hero__media">{mediaSrc && <img src={mediaSrc} alt="" className="presentation-hero__image" />}</div>
+      <img src={qrSrc} alt={t("presentation.about.qrAlt")} className="presentation-hero__qr" />
     </div>
   );
 };
