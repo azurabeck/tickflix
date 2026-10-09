@@ -11,9 +11,5 @@ Estado de um ciclo na tela: o caminho da etapa escolhida (ex.: ["dashboard", "ba
 - `useCycleView` — Estado de um ciclo na tela: o caminho da etapa escolhida (ex.: ["dashboard", "backend", "request"]), a trilha, o trecho dela e o anterior/próximo. usado em: PresentationCycle
 
 ## Tipos
-- `StepLane`
-- `CycleStep`
 - `Cycle`
-- `StepSnippet`
-- `TrailNode`
 - `TrailRow`

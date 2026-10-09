@@ -3,7 +3,7 @@ import { CYCLE_IDS, PROBLEM_IDS } from "@/actions/presentation/cycles";
 
 // Uma aba da Apresentação: simples (só o texto) ou com submenu (`items`).
 // usado em: PresentationTabs
-export interface PresentationTab {
+interface PresentationTab {
   id: string;
   labelKey: string;
   items?: { id: string; labelKey: string }[];
@@ -27,7 +27,7 @@ const PRESENTATION_TABS: PresentationTab[] = [
 
 // Qual aba (e item do submenu, se tiver) está aberta no painel.
 // usado em: PresentationTabs, página Apresentação
-export interface PresentationSelection {
+interface PresentationSelection {
   tab: string;
   item: string | null;
 }

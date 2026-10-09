@@ -11,4 +11,3 @@ Tira do código-fonte o trecho pedido. Devolve null se não achar (o código mud
 ## Tipos
 - `SnippetRef`
 - `Snippet`
-- `CodeToken`

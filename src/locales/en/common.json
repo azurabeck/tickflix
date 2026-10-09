@@ -155,9 +155,6 @@
       "lifecycle": "Life cycle of the solution"
     }
   },
-  "pageLoader": {
-    "loading": "Loading..."
-  },
   "tagline": "your adventure lives at the movies",
   "close": "Close",
   "watchedProgress": "watched: {{watched}}/{{total}}",
@@ -292,24 +289,19 @@
     "ctaTitle": "Ready to build your first timeline?"
   },
   "dashboard": {
-    "seeAll": "See all",
     "loading": "Loading...",
     "prevItems": "Previous",
     "nextItems": "Next",
-    "buyTicket": "Buy ticket",
-    "placeLabel": "#{{rank}}",
     "rows": {
       "recentlyWatched": "Recently watched",
       "nowPlayingCity": "In theaters in {{city}}",
       "nowPlayingBrazil": "In theaters in Brazil",
-      "boxOffice": "{{year}} box office champions",
       "majorReleases": "Top releases from the last 12 months"
     },
     "errors": {
       "nowPlaying": "Couldn't load what's in theaters.",
       "boxOffice": "Couldn't load the box office champions.",
-      "majorReleases": "Couldn't load the top releases.",
-      "watchedAll": "Couldn't load what you've watched."
+      "majorReleases": "Couldn't load the top releases."
     },
     "hero": {
       "nowPlayingBadge": "IN THEATERS",
@@ -338,16 +330,12 @@
       "processError": "Couldn't process this request. Try adjusting the description.",
       "chatError": "Couldn't process this message. Try again."
     },
-    "followedTimelines": {
-      "title": "Timelines you follow"
-    },
     "majorReleasesModal": {
       "title": "Top releases from the last 12 months",
       "filterAll": "All",
       "filterAvailable": "Available",
       "filterAriaLabel": "Filter by availability",
       "emptyAvailable": "No releases available to stream or rent yet.",
-      "loadError": "Couldn't load the full list.",
       "monthYearFormat": "{{month}} {{year}}",
       "months": [
         "January",
@@ -389,13 +377,6 @@
       "quota": "The AI's daily quota is used up. Try again tomorrow (or use your own key in Settings)."
     }
   },
-  "availabilityBadge": {
-    "title": "Available to stream or rent"
-  },
-  "watchButton": {
-    "mark": "Mark as watched",
-    "unmark": "Remove from watched"
-  },
   "addToTimeline": {
     "button": "Add to a timeline",
     "addToExisting": "Add to existing timeline",
@@ -420,9 +401,6 @@
       "remove": "Remove {{title}}",
       "saveError": "Couldn't create the timeline right now."
     }
-  },
-  "example": {
-    "hello": "Hello! This is an example of translated text."
   },
   "rating": {
     "label": "Your rating:",

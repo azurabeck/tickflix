@@ -238,7 +238,7 @@ interface RawWatchProvidersResponse {
 const isAvailableToWatch = (country: RawCountryProviders | undefined): boolean =>
   Boolean(country && ((country.flatrate?.length ?? 0) > 0 || (country.rent?.length ?? 0) > 0));
 
-export const fetchAvailableBrUs = async (id: number, lang: string, mediaType: "movie" | "tv" = "movie"): Promise<boolean> => {
+const fetchAvailableBrUs = async (id: number, lang: string, mediaType: "movie" | "tv" = "movie"): Promise<boolean> => {
   const data = await tmdbFetchServer<RawWatchProvidersResponse>(`/${mediaType}/${id}/watch/providers`, {}, lang);
   return isAvailableToWatch(data.results.BR) || isAvailableToWatch(data.results.US);
 };

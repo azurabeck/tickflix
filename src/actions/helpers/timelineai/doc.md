@@ -6,7 +6,7 @@ Ciclo "criar timeline por texto": a IA entende o pedido, o catálogo do TMDb res
 
 ## Funções (na ordem em que o ciclo acontece)
 - `respondToTimelineChat` — Responde uma mensagem do chat de ajuste da timeline e diz se ela pede mudança na lista. usado em: helpers/createtimeline, presentation/cycletimelineai
-- `resolveTimelineMovies` — Transforma uma descrição em texto livre numa lista de títulos reais (IA + TMDb). usado em: franchises/dashboard, helpers/createtimeline, presentation/cycletimelineai
+- `resolveTimelineMovies` — Transforma uma descrição em texto livre numa lista de títulos reais: o texto vai direto para a IA (com pesquisa do Google) e só a lista que ela devolve passa pelo TMDb. usado em: franchises/dashboard, helpers/createtimeline, presentation/cycletimelineai, presentation/problemgeminikey
 
 ## Tipos
 - `ResolvedTimelineDraft`

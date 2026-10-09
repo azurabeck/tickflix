@@ -17,7 +17,17 @@ interface CreateTimelineModalProps {
 
 const CreateTimelineModal = ({ uid, initialDescription, onClose, onSaved, categoryLock }: CreateTimelineModalProps) => {
   const { t } = useTranslation();
-  const { turns, draft, loading, input, setInput, saving, saveError, send, save } = useTimelineChat(uid, initialDescription, categoryLock, onSaved);
+  const { 
+    turns,      // a conversa: cada turno tem a mensagem da pessoa, a resposta da IA, quantos títulos vieram e o erro (se houve)
+    draft,      // a timeline pronta para salvar (nome, tipo e títulos); null enquanto a primeira busca não terminou
+    loading,    // true enquanto a IA está buscando a lista (na abertura ou num ajuste)
+    input,      // o texto que a pessoa está digitando no campo do chat de ajustes
+    setInput,   // atualiza o texto do campo a cada tecla
+    saving,     // true enquanto a timeline está sendo gravada no Firebase
+    saveError,  // a mensagem de erro se não foi possível salvar (senão null)
+    send,       // envia a mensagem do campo: a IA responde e, se for um pedido de mudança, a lista é refeita
+    save        // grava a timeline no Firebase (já seguida) e avisa o modal que terminou
+   } = useTimelineChat(uid, initialDescription, categoryLock, onSaved);
 
   const movies: TimelineMovie[] = draft?.movies ?? [];
 

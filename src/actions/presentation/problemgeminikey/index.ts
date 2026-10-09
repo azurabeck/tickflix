@@ -46,10 +46,22 @@ export const GEMINIKEY_PROBLEM: Cycle = {
     },
     {
       id: "route",
-      title: "Na hora de usar a IA, escolhe a rota",
-      text: "Toda chamada à IA passa pelo geminiGenerateJSON. Se existe chave da pessoa, chama o Google direto. Se não, usa o backend. Clique para ver como ele lê a chave.",
+      title: "A IA é acionada e escolhe a rota",
+      text: "Quem aciona é a criação de timelines (ciclo 5) ou as sugestões da IA (ciclo 6): cada uma chama o geminiGenerateJSON com o seu prompt. Ele usa a chave da pessoa, se existir, ou o backend. Clique para ver quem aciona.",
       code: { file: "src/service/IASettings.ts", name: "geminiGenerateJSON" },
       children: [
+        {
+          id: "bytimeline",
+          title: "Acionada pela timeline",
+          text: "A criação de timelines monta o prompt com o tema da pessoa e chama o geminiGenerateJSON.",
+          code: { file: "src/actions/helpers/timelineai/index.ts", name: "resolveTimelineMovies", from: "const answer = await geminiGenerateJSON", lines: 1 },
+        },
+        {
+          id: "bysuggestion",
+          title: "Acionada pelas sugestões",
+          text: "As sugestões da IA montam o prompt com o gosto da pessoa e chamam o geminiGenerateJSON.",
+          code: { file: "src/actions/helpers/aisuggestion/index.ts", name: "fetchAiSuggestions", from: "const raw = await geminiGenerateJSON", lines: 1 },
+        },
         {
           id: "read",
           title: "Lê a chave guardada",

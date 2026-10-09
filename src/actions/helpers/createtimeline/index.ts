@@ -31,13 +31,17 @@ export const useTimelineChat = (uid: string, initialDescription: string, categor
   const updateLastTurn = (patch: Partial<TimelineTurn>) =>
     setTurns((prev) => prev.map((turn, index) => (index === prev.length - 1 ? { ...turn, ...patch } : turn)));
 
+  // A busca (IA + TMDb): guarda a lista que a pessoa vê e devolve quantos títulos vieram. Serve para a abertura e para os ajustes.
+  const search = async (description: string): Promise<number> => {
+    const result = await resolveTimelineMovies(description, categoryLock);
+    setDraft(result);
+    return result.movies.length;
+  };
+
   // 1. primeira resolução, ao abrir
   useEffect(() => {
-    resolveTimelineMovies(initialDescription, categoryLock)
-      .then((result) => {
-        setDraft(result);
-        updateLastTurn({ resultCount: result.movies.length });
-      })
+    search(initialDescription)
+      .then((count) => updateLastTurn({ resultCount: count }))
       .catch((err) => {
         console.error("Erro ao processar timeline:", err);
         updateLastTurn({ error: err instanceof Error ? err.message : t("dashboard.createTimeline.processError") });
@@ -55,10 +59,9 @@ export const useTimelineChat = (uid: string, initialDescription: string, categor
     setInput("");
     setLoading(true);
     try {
-      const chat = await respondToTimelineChat(initialDescription, turns.slice(1).map((turn) => turn.message), (draft?.movies ?? []).map((movie) => movie.title), text);
-      const next = chat.isRefinement ? await resolveTimelineMovies(combineMessages([...turns.map((turn) => turn.message), text]), categoryLock) : null;
-      if (next) setDraft(next);
-      updateLastTurn({ reply: chat.reply, resultCount: next ? next.movies.length : null });
+      const chat = await respondToTimelineChat(turns.map((turn) => turn.message), draft?.movies ?? [], text);
+      const count = chat.isRefinement ? await search(combineMessages([...turns.map((turn) => turn.message), text])) : null;
+      updateLastTurn({ reply: chat.reply, resultCount: count });
     } catch (err) {
       console.error("Erro na conversa da timeline:", err);
       updateLastTurn({ error: err instanceof Error ? err.message : t("dashboard.createTimeline.chatError") });
@@ -83,5 +86,15 @@ export const useTimelineChat = (uid: string, initialDescription: string, categor
     }
   };
 
-  return { turns, draft, loading, input, setInput, saving, saveError, send, save };
+  return {
+    turns, // a conversa: cada turno tem a mensagem da pessoa, a resposta da IA, quantos títulos vieram e o erro (se houve)
+    draft, // a timeline pronta para salvar (nome, tipo e títulos); null enquanto a primeira busca não terminou
+    loading, // true enquanto a IA está buscando a lista (na abertura ou num ajuste)
+    input, // o texto que a pessoa está digitando no campo do chat de ajustes
+    setInput, // atualiza o texto do campo a cada tecla
+    saving, // true enquanto a timeline está sendo gravada no Firebase
+    saveError, // a mensagem de erro se não foi possível salvar (senão null)
+    send, // envia a mensagem do campo: a IA responde e, se for um pedido de mudança, a lista é refeita
+    save, // grava a timeline no Firebase (já seguida) e avisa o modal que terminou
+  };
 };

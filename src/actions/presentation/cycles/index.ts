@@ -14,12 +14,12 @@ import { WATCHED_CYCLE } from "@/actions/presentation/cyclewatched";
 
 // Por onde o caminho passa: o que fala com o backend, o que fala com o Firebase, ou o que só acontece em séries e animes.
 // usado em: PresentationCycle
-export type StepLane = "backend" | "firebase" | "series";
+type StepLane = "backend" | "firebase" | "series";
 
 // Uma etapa de um ciclo: o que acontece (em frase curta) e o trecho de código responsável.
 // Se a etapa tem `children`, é porque ela faz várias coisas: as de dentro só aparecem na trilha quando a etapa é escolhida.
 // usado em: presentation/cyclerender
-export interface CycleStep {
+interface CycleStep {
   id: string;
   title: string;
   text: string;
@@ -61,14 +61,14 @@ const SOURCES = import.meta.glob(
 
 // O trecho de uma etapa, lido do arquivo real do projeto: carregando, pronto ou "não encontrado" (o código mudou).
 // usado em: PresentationCycle
-export type StepSnippet = { status: "loading" } | { status: "missing" } | { status: "ready"; snippet: Snippet };
+type StepSnippet = { status: "loading" } | { status: "missing" } | { status: "ready"; snippet: Snippet };
 
 // Como mostrar uma etapa na trilha: a escolhida, as que levam até ela, as que já passaram ou as que ainda vêm.
 type NodeState = "current" | "ancestor" | "done" | "next";
 
 // Uma etapa na trilha: o número (3, 3B, 3B.1), o caminho até ela e como mostrar.
 // usado em: CycleTrail
-export interface TrailNode {
+interface TrailNode {
   step: CycleStep;
   path: string[];
   label: string;

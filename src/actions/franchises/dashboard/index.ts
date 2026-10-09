@@ -44,7 +44,7 @@ export const useFranchisesDashboard = (config: FranchiseConfig | null) => {
         let movies = catalog?.movies ?? null;
 
         if (!movies || movies.length === 0) {
-          const draft = await resolveTimelineMovies(config.query, undefined, { skipCollectionAxis: true });
+          const draft = await resolveTimelineMovies(config.query);
           movies = draft.movies;
           await saveFranchiseCatalog(config, movies).catch((err) => console.error(`Erro ao gravar catálogo global da franquia ${config.slug}:`, err));
         }

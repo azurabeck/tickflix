@@ -16,7 +16,7 @@ const cacheAvailable = (): boolean => {
   return false;
 };
 
-export const getSharedCache = async <T>(key: string): Promise<T | null> => {
+const getSharedCache = async <T>(key: string): Promise<T | null> => {
   if (!cacheAvailable()) return null;
   const snap = await adminDb().collection(COLLECTION).doc(key).get();
   if (!snap.exists) return null;
@@ -26,7 +26,7 @@ export const getSharedCache = async <T>(key: string): Promise<T | null> => {
   return entry.data;
 };
 
-export const setSharedCache = async <T>(key: string, data: T): Promise<void> => {
+const setSharedCache = async <T>(key: string, data: T): Promise<void> => {
   if (!cacheAvailable()) return;
   const entry: CacheDoc<T> = { data, cachedAt: Date.now() };
   await adminDb().collection(COLLECTION).doc(key).set(entry);

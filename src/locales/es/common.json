@@ -155,9 +155,6 @@
       "lifecycle": "Ciclo de vida de la solución"
     }
   },
-  "pageLoader": {
-    "loading": "Cargando..."
-  },
   "tagline": "tu aventura vive en el cine",
   "close": "Cerrar",
   "watchedProgress": "visto: {{watched}}/{{total}}",
@@ -292,24 +289,19 @@
     "ctaTitle": "¿Listo para armar tu primera timeline?"
   },
   "dashboard": {
-    "seeAll": "Ver todo",
     "loading": "Cargando...",
     "prevItems": "Ver anteriores",
     "nextItems": "Ver siguientes",
-    "buyTicket": "Comprar entrada",
-    "placeLabel": "N.º {{rank}}",
     "rows": {
       "recentlyWatched": "Vistos recientemente",
       "nowPlayingCity": "En cartelera en {{city}}",
       "nowPlayingBrazil": "En cartelera en Brasil",
-      "boxOffice": "Campeones de taquilla {{year}}",
       "majorReleases": "Principales estrenos de los últimos 12 meses"
     },
     "errors": {
       "nowPlaying": "No fue posible cargar las películas en cartelera.",
       "boxOffice": "No fue posible cargar los campeones de taquilla.",
-      "majorReleases": "No fue posible cargar los principales estrenos.",
-      "watchedAll": "No se pudo cargar lo que has visto."
+      "majorReleases": "No fue posible cargar los principales estrenos."
     },
     "hero": {
       "nowPlayingBadge": "EN CARTELERA",
@@ -338,16 +330,12 @@
       "processError": "No pude procesar ese pedido. Intenta ajustar la descripción.",
       "chatError": "No pude procesar ese mensaje. Inténtalo de nuevo."
     },
-    "followedTimelines": {
-      "title": "Timelines que sigues"
-    },
     "majorReleasesModal": {
       "title": "Principales estrenos de los últimos 12 meses",
       "filterAll": "Todo",
       "filterAvailable": "Disponible",
       "filterAriaLabel": "Filtrar por disponibilidad",
       "emptyAvailable": "Todavía no hay estrenos disponibles para streaming o alquiler.",
-      "loadError": "No fue posible cargar la lista completa.",
       "monthYearFormat": "{{month}} de {{year}}",
       "months": [
         "enero",
@@ -389,13 +377,6 @@
       "quota": "Se agotó la cuota diaria de la IA. Inténtalo mañana (o usa tu propia clave en Configuración)."
     }
   },
-  "availabilityBadge": {
-    "title": "Disponible para streaming o alquiler"
-  },
-  "watchButton": {
-    "mark": "Marcar como visto",
-    "unmark": "Quitar de vistos"
-  },
   "addToTimeline": {
     "button": "Agregar a una timeline",
     "addToExisting": "Agregar a timeline existente",
@@ -420,9 +401,6 @@
       "remove": "Quitar {{title}}",
       "saveError": "No fue posible crear la timeline ahora."
     }
-  },
-  "example": {
-    "hello": "¡Hola! Este es un ejemplo de texto traducido."
   },
   "rating": {
     "label": "Tu nota:",

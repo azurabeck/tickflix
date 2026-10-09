@@ -22,21 +22,22 @@ export interface Snippet {
 const declarationPattern = (name: string): RegExp => new RegExp(`^\\s*(?:export\\s+)?(?:default\\s+)?(?:async\\s+)?(?:const|function|interface|type)\\s+${name}\\b`);
 
 // Quanto a linha abre ou fecha de {, ( e [ (ignora texto entre aspas e comentários de uma linha).
-const depthChange = (line: string): number => {
+// `state.quote` lembra se uma linha terminou dentro de um texto de crase (que pode ter várias linhas).
+const depthChange = (line: string, state: { quote: string | null }): number => {
   let depth = 0;
-  let quote: string | null = null;
   for (let i = 0; i < line.length; i++) {
     const char = line[i];
-    if (quote) {
+    if (state.quote) {
       if (char === "\\") i++;
-      else if (char === quote) quote = null;
+      else if (char === state.quote) state.quote = null;
       continue;
     }
     if (char === "/" && line[i + 1] === "/") break;
-    if (char === '"' || char === "'" || char === "`") quote = char;
+    if (char === '"' || char === "'" || char === "`") state.quote = char;
     else if (char === "{" || char === "(" || char === "[") depth++;
     else if (char === "}" || char === ")" || char === "]") depth--;
   }
+  if (state.quote && state.quote !== "`") state.quote = null; // aspas simples e duplas não passam para a linha seguinte
   return depth;
 };
 
@@ -47,10 +48,11 @@ const findBlock = (lines: string[], name: string): [number, number] | null => {
   if (start === -1) return null;
 
   let depth = 0;
+  const state = { quote: null as string | null };
   for (let i = start; i < lines.length; i++) {
-    depth += depthChange(lines[i]);
+    depth += depthChange(lines[i], state);
     const ending = lines[i].trimEnd();
-    if (depth <= 0 && (ending.endsWith(";") || ending.endsWith("}"))) return [start, i];
+    if (depth <= 0 && !state.quote && (ending.endsWith(";") || ending.endsWith("}"))) return [start, i];
   }
   return null;
 };
@@ -93,7 +95,7 @@ export const extractSnippet = (source: string, ref: SnippetRef): Snippet | null 
 
 // Pedaço de uma linha de código, com o tipo (para colorir).
 // usado em: CodeBlock
-export interface CodeToken {
+interface CodeToken {
   text: string;
   kind: "comment" | "string" | "keyword" | "plain";
 }
