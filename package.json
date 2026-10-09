@@ -35,5 +35,10 @@
     "storybook": "^10.6.1",
     "typescript": "^5.5.4",
     "vite": "^5.4.1"
+  },
+  "overrides": {
+    "jwks-rsa": {
+      "jose": "^5.10.0"
+    }
   }
 }
