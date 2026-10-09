@@ -9,9 +9,6 @@
     "api/gemini.ts": {
       "maxDuration": 60
     },
-    "api/tmdb.ts": {
-      "maxDuration": 30
-    },
     "api/suggestions.ts": {
       "maxDuration": 60
     }

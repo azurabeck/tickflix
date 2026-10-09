@@ -96,10 +96,6 @@ export const installFetchMock = (): void => {
   window.fetch = async (input, init) => {
     const raw = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
     const url = new URL(raw, window.location.href);
-    if (url.pathname === "/api/tmdb") {
-      const { path = "", ...rest } = Object.fromEntries(url.searchParams);
-      return handleTmdb(new URL(`https://api.themoviedb.org/3${path}?${new URLSearchParams(rest).toString()}`));
-    }
     if (url.hostname === "api.themoviedb.org") return handleTmdb(url);
     if (url.pathname.startsWith("/api/")) return handleBackend(url);
     return realFetch(input, init);
