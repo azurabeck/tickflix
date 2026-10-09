@@ -10,6 +10,7 @@ export const auth = {
     displayName: "Rebecca Souza",
     email: "rebecca@exemplo.com",
     photoURL: null,
+    getIdToken: async () => "token-de-exemplo",
     metadata: { creationTime: "2025-03-10T12:00:00Z" },
   },
 } as unknown as Auth;

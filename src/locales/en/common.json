@@ -103,7 +103,7 @@
       "api": {
         "chip": "API",
         "title": "Serverless routes",
-        "text": "dashboard • series • gemini"
+        "text": "dashboard • series • gemini • tmdb • suggestions"
       },
       "where": {
         "label": "Where to find things",

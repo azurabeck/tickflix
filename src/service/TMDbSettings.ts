@@ -1,6 +1,5 @@
 import i18n, { TMDB_LANGUAGE_BY_APP_LANGUAGE, type SupportedLanguage } from "./i18n";
 
-const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w342";
 
 // usado no cabeçalho do detalhe do título (imagem de fundo grande).
@@ -13,22 +12,22 @@ export const TMDB_PROFILE_BASE = "https://image.tmdb.org/t/p/w185";
 // usado nos logos de streaming do detalhe do título.
 export const TMDB_LOGO_BASE = "https://image.tmdb.org/t/p/w92";
 
-// usado aqui nas chamadas ao TMDb e no prompt de pesquisa do "Adicionar dados" de Premiações.
+// usado só no prompt de pesquisa do "Adicionar dados" de Premiações (o usuário o cola numa IA externa, que consulta o TMDb com ele).
 export const READ_ACCESS_TOKEN = import.meta.env.VITE_TMDB_API_KEY;
 
 const DEFAULT_TMDB_LANGUAGE = "pt-BR";
 
-const currentTmdbLanguage = (): string => {
+// O idioma do app no formato do TMDb (ex.: pt-BR).
+// usado em: helpers/aisuggestion
+export const currentTmdbLanguage = (): string => {
   const short = (i18n.language ?? "pt").slice(0, 2) as SupportedLanguage;
   return TMDB_LANGUAGE_BY_APP_LANGUAGE[short] ?? DEFAULT_TMDB_LANGUAGE;
 };
 
 const MAX_CONCURRENT_REQUESTS = 6;
-const MIN_DISPATCH_GAP_MS = 120;
 
 let activeRequests = 0;
 const waitQueue: (() => void)[] = [];
-let nextDispatchAt = 0;
 
 const acquireSlot = (): Promise<void> => {
   if (activeRequests < MAX_CONCURRENT_REQUESTS) {
@@ -44,51 +43,19 @@ const releaseSlot = (): void => {
   else activeRequests--;
 };
 
-const waitForDispatchGap = async (): Promise<void> => {
-  const now = Date.now();
-  const scheduledAt = Math.max(now, nextDispatchAt);
-  nextDispatchAt = scheduledAt + MIN_DISPATCH_GAP_MS;
-  const delay = scheduledAt - now;
-  if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay));
-};
-
-const requestTmdb = (url: string): Promise<Response> =>
-  fetch(url, {
-    headers: {
-      Authorization: `Bearer ${READ_ACCESS_TOKEN}`,
-      accept: "application/json",
-    },
-  });
-
-// Toda chamada ao TMDb passa por aqui (limita pedidos simultâneos, tenta de novo no 429 e já manda o idioma do app).
-// usado no detalhe do título, nas temporadas das séries, nas estatísticas do Perfil e na criação de timeline pela IA.
-export const tmdbFetch = async <T>(
-  path: string,
-  params: Record<string, string> = {}
-): Promise<T> => {
-  if (!READ_ACCESS_TOKEN) {
-    throw new Error("VITE_TMDB_API_KEY não configurada — ver .env.example.");
-  }
-
-  const query = new URLSearchParams({ language: currentTmdbLanguage(), ...params });
-  const url = `${TMDB_BASE_URL}${path}?${query.toString()}`;
+// Toda chamada ao TMDb passa por aqui: vai para o nosso backend (/api/tmdb), que usa a chave, limita os pedidos e tenta de novo no 429.
+// Aqui só limita quantos pedidos saem do navegador ao mesmo tempo e já manda o idioma do app.
+// usado no detalhe do título, nas temporadas das séries, nas estatísticas do Perfil, nas sugestões e na criação de timeline pela IA.
+export const tmdbFetch = async <T>(path: string, params: Record<string, string> = {}): Promise<T> => {
+  const query = new URLSearchParams({ path, language: currentTmdbLanguage(), ...params });
 
   await acquireSlot();
   try {
-    await waitForDispatchGap();
-    let response = await requestTmdb(url);
-
-    if (response.status === 429) {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      response = await requestTmdb(url);
-    }
-
+    const response = await fetch(`/api/tmdb?${query.toString()}`);
     if (!response.ok) {
       const body = await response.json().catch(() => null);
-      const detail = body?.status_message;
-      throw new Error(`TMDb respondeu ${response.status} em ${path}${detail ? `: ${detail}` : ""}`);
+      throw new Error(body?.error ?? `TMDb respondeu ${response.status} em ${path}`);
     }
-
     return response.json() as Promise<T>;
   } finally {
     releaseSlot();

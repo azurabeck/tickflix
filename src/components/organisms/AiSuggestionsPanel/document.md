@@ -3,10 +3,8 @@
 Painel roxo "Sugestão da IA": 3 sugestões por dia; o que você assiste vira um botão de refresh.
 
 ## Props
-- `recentKeys`: `string[]`
-- `mediaKind?`: `SuggestionKind`
+- `mediaKind`: `SuggestionKind`
 - `category?`: `"series" | "animes"`
-- `keyFilter?`: `(key: string) => boolean`
 
 ## Depende de
 `components/atoms/HomeSection`, `components/molecules/SuggestionCard`, `components/atoms/SuggestionRefreshCard`, `actions/helpers/aisuggestion`, `actions/helpers/timelines`

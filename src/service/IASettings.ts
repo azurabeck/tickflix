@@ -151,3 +151,40 @@ export const geminiGenerateJSON = async <T>(prompt: string, schema: GeminiSchema
   const userKey = getUserGeminiKey();
   return userKey ? generateWithUserKey<T>(userKey, prompt, schema, useSearch) : generateViaBackend<T>(prompt, schema, useSearch);
 };
+
+const SUGGESTIONS_TIMEOUT_MS = 65_000;
+
+// Pede as sugestões da IA ao backend (/api/suggestions). Vai o token de login e, se a pessoa cadastrou a própria chave do Gemini,
+// ela vai SÓ no corpo do pedido (HTTPS): nunca na URL, e o servidor não a guarda. Sem chave própria, o servidor usa a da plataforma.
+// usado em: helpers/aisuggestion, presentation/problemgeminikey
+export const callSuggestionsApi = async <T>(payload: object): Promise<T> => {
+  const idToken = await auth.currentUser?.getIdToken();
+  if (!idToken) throw new Error("Faça login pra usar a IA.");
+
+  const userKey = getUserGeminiKey();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), SUGGESTIONS_TIMEOUT_MS);
+  let response: Response;
+
+  try {
+    response = await fetch("/api/suggestions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+      signal: controller.signal,
+      body: JSON.stringify(userKey ? { ...payload, geminiKey: userKey } : payload),
+    });
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw new Error("Gemini demorou demais pra responder (timeout).");
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  if (!response.ok) {
+    const errorBody = (await response.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(errorBody?.error ?? `API da IA respondeu ${response.status}`);
+  }
+  return (await response.json()) as T;
+};

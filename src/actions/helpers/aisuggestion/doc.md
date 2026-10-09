@@ -2,10 +2,10 @@
 
 **Página/ciclo:** `helpers` → `aisuggestion`
 
-Ciclo "sugestões do dia": gera 3 uma vez por dia (guardadas no cache local); o que o usuário assiste vira um botão de refresh sem chamar a IA; o refresh pede de uma vez tantas sugestões quantos lugares vazios existem. usado em: presentation/cyclesuggestions, AiSuggestionsPanel
+Sugestões da IA do dia: o front só pede ao backend (uma chamada autenticada) e guarda carregando / erro / o que mostrar. Filme visto ou série seguida vira um lugar livre (botão de refresh), sem chamar a IA; o refresh preenche só os lugares livres. usado em: presentation/cyclesuggestions, AiSuggestionsPanel
 
 ## Funções (na ordem em que o ciclo acontece)
-- `useDailySuggestions` — Ciclo "sugestões do dia": gera 3 uma vez por dia (guardadas no cache local); o que o usuário assiste vira um botão de refresh sem chamar a IA; o refresh pede de uma vez tantas sugestões quantos lugares vazios existem. usado em: presentation/cyclesuggestions, AiSuggestionsPanel
+- `useDailySuggestions` — Sugestões da IA do dia: o front só pede ao backend (uma chamada autenticada) e guarda carregando / erro / o que mostrar. Filme visto ou série seguida vira um lugar livre (botão de refresh), sem chamar a IA; o refresh preenche só os lugares livres. usado em: presentation/cyclesuggestions, AiSuggestionsPanel
 
 ## Tipos
 - `SuggestionKind`

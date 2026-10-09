@@ -13,6 +13,7 @@ const config: StorybookConfig = {
       ...viteConfig.resolve,
       alias: [
         { find: "@/service/FirebaseSettings", replacement: `${mocks}/firebase.ts` },
+        { find: /^\.\/FirebaseSettings$/, replacement: `${mocks}/firebase.ts` }, // imports relativos dentro de src/service
         { find: /^firebase\/firestore$/, replacement: `${mocks}/firestore.ts` },
         ...(Array.isArray(alias) ? alias : Object.entries(alias).map(([find, replacement]) => ({ find, replacement }))),
       ],

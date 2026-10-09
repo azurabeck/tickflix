@@ -20,6 +20,8 @@ export default defineConfig({
     proxy: {
       "/api": {
         target: "http://localhost:3000",
+        // A página de Apresentação lê o código de api/*.ts como texto (import "?raw"): isso o Vite serve, não a API.
+        bypass: (req) => (req.url?.includes("raw") ? req.url : undefined),
         configure: (proxy) => {
           proxy.on("error", () => {
             console.error("\n[tickflix] A API local (/api) não está rodando. Em outro terminal: npm run dev:api\n");

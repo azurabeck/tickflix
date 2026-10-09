@@ -79,6 +79,10 @@ const handleBackend = (url: URL): Response => {
     const providers = Object.fromEntries([8, 119, 337, 1899, 307, 350].map((id) => ["provider-" + id, { items: seriesCards }]));
     return json({ hero: { items: HERO_TRAILERS }, top: { items: seriesCards }, ...providers });
   }
+  if (endpoint === "suggestions") {
+    const slots = MOVIES.slice(0, 3).map((m) => ({ id: m.id, mediaType: "movie", title: m.title, posterPath: m.posterPath, available: true }));
+    return json({ status: "ok", basis: "ratings", slots });
+  }
   return json({ error: "Endpoint indisponível no Storybook" }, 503);
 };
 
@@ -92,6 +96,10 @@ export const installFetchMock = (): void => {
   window.fetch = async (input, init) => {
     const raw = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
     const url = new URL(raw, window.location.href);
+    if (url.pathname === "/api/tmdb") {
+      const { path = "", ...rest } = Object.fromEntries(url.searchParams);
+      return handleTmdb(new URL(`https://api.themoviedb.org/3${path}?${new URLSearchParams(rest).toString()}`));
+    }
     if (url.hostname === "api.themoviedb.org") return handleTmdb(url);
     if (url.pathname.startsWith("/api/")) return handleBackend(url);
     return realFetch(input, init);

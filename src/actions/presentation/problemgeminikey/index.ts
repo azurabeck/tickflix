@@ -8,7 +8,7 @@ export const GEMINIKEY_PROBLEM: Cycle = {
   intro: "A IA do TickFlix usa o Gemini, do Google. Por padrão, passa pelo servidor com a chave da plataforma. Em Configurações, a pessoa pode usar a dela.",
   problem: {
     why: "A chave da plataforma fica no servidor e tem uma cota diária só, dividida entre todo mundo. Quando a cota acaba, ninguém consegue criar timelines nem receber sugestões até o dia seguinte. O app chega a avisar: \"A cota diária da IA acabou\".",
-    what: "Em Configurações, a pessoa cola a própria chave do Gemini. O app testa a chave, guarda só no navegador dela e, daí em diante, chama o Google direto, com a cota dela. Sem chave própria, continua usando a da plataforma pelo servidor.",
+    what: "Em Configurações, a pessoa cola a própria chave do Gemini. O app testa a chave, guarda só no navegador dela e passa a usá-la, com a cota dela: na criação de timelines, direto do navegador ao Google; nas sugestões, junto do pedido ao nosso servidor, que a usa só naquela chamada e não a guarda. Sem chave própria, usa a da plataforma.",
   },
   steps: [
     {
@@ -32,7 +32,7 @@ export const GEMINIKEY_PROBLEM: Cycle = {
         {
           id: "store",
           title: "Guarda só neste navegador",
-          text: "O setUserGeminiKey grava a chave no localStorage, com o id do usuário na chave (cada pessoa tem a sua). Mandar vazio remove a chave. A chave não é enviada ao nosso servidor.",
+          text: "O setUserGeminiKey grava a chave no localStorage, com o id do usuário na chave (cada pessoa tem a sua). Mandar vazio remove a chave. O navegador só a envia quando a IA é usada (veja a etapa 3).",
           code: { file: "src/service/IASettings.ts", name: "setUserGeminiKey" },
           note: "Atenção: a chave fica em texto no localStorage, como qualquer dado guardado ali: quem tiver acesso a este navegador consegue lê-la. Em outro computador, é preciso colar de novo.",
         },
@@ -47,7 +47,7 @@ export const GEMINIKEY_PROBLEM: Cycle = {
     {
       id: "route",
       title: "A IA é acionada e escolhe a rota",
-      text: "Quem aciona é a criação de timelines (ciclo 5) ou as sugestões da IA (ciclo 6): cada uma chama o geminiGenerateJSON com o seu prompt. Ele usa a chave da pessoa, se existir, ou o backend. Clique para ver quem aciona.",
+      text: "A criação de timelines (ciclo 5) chama o geminiGenerateJSON, que usa a chave da pessoa, se existir, ou o backend. As sugestões da IA (ciclo 6) vão pelo backend e levam a chave da pessoa no corpo do pedido. Clique para ver quem aciona.",
       code: { file: "src/service/IASettings.ts", name: "geminiGenerateJSON" },
       children: [
         {
@@ -59,8 +59,8 @@ export const GEMINIKEY_PROBLEM: Cycle = {
         {
           id: "bysuggestion",
           title: "Acionada pelas sugestões",
-          text: "As sugestões da IA montam o prompt com o gosto da pessoa e chamam o geminiGenerateJSON.",
-          code: { file: "src/actions/helpers/aisuggestion/index.ts", name: "fetchAiSuggestions", from: "const raw = await geminiGenerateJSON", lines: 1 },
+          text: "As sugestões chamam o backend (/api/suggestions). Se a pessoa tem chave própria, ela vai só no corpo do pedido (HTTPS), nunca na URL; o servidor a usa só naquela chamada, sem registrar nem guardar. Sem chave própria, o servidor usa a da plataforma.",
+          code: { file: "src/service/IASettings.ts", name: "callSuggestionsApi", from: "const userKey", to: "body: JSON.stringify" },
         },
         {
           id: "read",
@@ -73,7 +73,7 @@ export const GEMINIKEY_PROBLEM: Cycle = {
     {
       id: "direct",
       title: "Com a chave sua: direto ao Google",
-      text: "O navegador chama o Gemini sem passar pelo nosso servidor. Cada chamada tem um limite de tempo e, se o Google falhar por um erro passageiro, tenta de novo e depois com um modelo reserva. O uso passa a contar na conta da pessoa.",
+      text: "Na criação de timelines, o navegador chama o Gemini sem passar pelo nosso servidor. Cada chamada tem um limite de tempo e, se o Google falhar por um erro passageiro, tenta de novo e depois com um modelo reserva. O uso passa a contar na conta da pessoa.",
       code: { file: "src/service/IASettings.ts", name: "generateWithUserKey", from: "const callModel", to: "clearTimeout(timeout);", after: 2 },
     },
     {

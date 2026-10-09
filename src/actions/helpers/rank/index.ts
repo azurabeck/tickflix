@@ -4,20 +4,17 @@ import { movieKey } from "@/actions/helpers/timelines";
 import { cardTypeOf, type MediaItem, type RankItem } from "@/types/media";
 
 const RANK_MAX = 20;
-const RECENT_MAX = 8;
 
-// O rank "Seu Rank de Notas" de uma página, pronto para mostrar: os itens, o carregando e o que a "Sugestão da IA" usa como base de gosto.
+// O rank "Seu Rank de Notas" de uma página, pronto para mostrar: os itens e o carregando.
 // usado em: RankSection, movies/mynotesrank, series/mynotesrank, animes/mynotesrank
 export interface MyNotes {
   items: RankItem[];
   loading: boolean;
-  keyFilter?: (key: string) => boolean; // deixa passar só as chaves da categoria da página (séries ou animes)
-  recentKeys: string[]; // o que o usuário viu/segue nesta página, do mais recente para o mais antigo
 }
 
 // Chaves (`movie-1`, `tv-2`) mais bem avaliadas pelo usuário, só do tipo da página; empate fica com o mais recente.
-// usado em: helpers/aisuggestion, presentation/cyclenotes
-export const topRatedKeys = (
+// usado em: useMyNotes, presentation/cyclenotes
+const topRatedKeys = (
   ratings: Map<string, number>,
   checkedMap: Map<string, number>,
   prefix: string,
@@ -59,7 +56,7 @@ export const toPopularityItems = (cards: (MediaItem & { id: number; mediaType: "
 // para a menor. Só entra o que é do tipo da página; em séries e animes, a categoria que o título guarda.
 // usado em: helpers/pagefirebase, presentation/cyclenotes
 export const useMyNotes = (mediaKind: "movie" | "tv", category?: "series" | "animes"): MyNotes => {
-  const { ratings, checkedMap, titles, watchedMap, followedList, watchedLoading } = useMediaCards();
+  const { ratings, checkedMap, titles, watchedLoading } = useMediaCards();
   const toRankItem = useToRankItem();
 
   const keyFilter = useMemo(() => (category ? (key: string) => titles.get(key)?.category === category : undefined), [titles, category]);
@@ -75,15 +72,7 @@ export const useMyNotes = (mediaKind: "movie" | "tv", category?: "series" | "ani
     [ratings, checkedMap, titles, mediaKind, keyFilter]
   );
 
-  const recentKeys = useMemo(() => {
-    if (category) return followedList.filter((s) => s.category === category).map((s) => movieKey("tv", s.id));
-    return [...watchedMap.entries()]
-      .sort(([, a], [, b]) => b - a)
-      .map(([key]) => key)
-      .slice(0, RECENT_MAX);
-  }, [watchedMap, followedList, category]);
-
-  return { items, loading: watchedLoading, keyFilter, recentKeys };
+  return { items, loading: watchedLoading };
 };
 
 // As ações dos cards dos ranks (abrir, marcar como visto, avaliar): as mesmas nos dois blocos.

@@ -7,27 +7,25 @@ import { movieKey } from "@/actions/helpers/timelines";
 import "./style.scss";
 
 interface AiSuggestionsPanelProps {
-  recentKeys: string[];
-  mediaKind?: SuggestionKind;
+  mediaKind: SuggestionKind;
   category?: "series" | "animes";
-  keyFilter?: (key: string) => boolean;
 }
 
 // Painel roxo "Sugestão da IA": 3 sugestões por dia; o que você assiste vira um botão de refresh.
-const AiSuggestionsPanel = ({ recentKeys, mediaKind = "movie", category, keyFilter }: AiSuggestionsPanelProps) => {
+const AiSuggestionsPanel = ({ mediaKind, category }: AiSuggestionsPanelProps) => {
   const { t } = useTranslation();
-  const { daily, basis, generating, failed, quotaHit, refreshing, refreshFailed, refresh, retry } = useDailySuggestions({ recentKeys, mediaKind, category, keyFilter });
+  const { slots, basis, noTaste, loading, failed, quotaHit, refreshing, refreshFailed, refresh, retry } = useDailySuggestions({ mediaKind, category });
 
-  const showEmptyHint = !daily && !basis;
+  const hasSlots = slots.length > 0;
 
   return (
     <HomeSection variant="purple" wide className="ai-panel">
       <h3 className="ai-panel__title">{t("dashboard.ai.title")}</h3>
-      {(daily || basis) && <p className="ai-panel__basis">{t(basis === "watched" ? "dashboard.ai.basisWatched" : "dashboard.ai.basisRatings")}</p>}
+      {hasSlots && basis && <p className="ai-panel__basis">{t(basis === "watched" ? "dashboard.ai.basisWatched" : "dashboard.ai.basisRatings")}</p>}
 
-      {showEmptyHint && <p className="ai-panel__message">{t("dashboard.ai.empty")}</p>}
-      {!daily && basis && generating && <p className="ai-panel__message">{t("dashboard.ai.loading")}</p>}
-      {!daily && basis && failed && !generating && (
+      {noTaste && <p className="ai-panel__message">{t("dashboard.ai.empty")}</p>}
+      {!hasSlots && loading && <p className="ai-panel__message">{t("dashboard.ai.loading")}</p>}
+      {!hasSlots && failed && !loading && (
         <div className="ai-panel__message">
           <p>{t(quotaHit ? "dashboard.ai.quota" : "dashboard.ai.error")}</p>
           {!quotaHit && (
@@ -38,10 +36,10 @@ const AiSuggestionsPanel = ({ recentKeys, mediaKind = "movie", category, keyFilt
         </div>
       )}
 
-      {daily && (
+      {hasSlots && (
         <>
           <div className="ai-panel__posters">
-            {daily.slots.map((slot, index) =>
+            {slots.map((slot, index) =>
               slot ? (
                 <SuggestionCard key={movieKey(slot.mediaType, slot.id)} id={slot.id} mediaType={slot.mediaType} title={slot.title} posterPath={slot.posterPath} available={slot.available} category={category} />
               ) : (

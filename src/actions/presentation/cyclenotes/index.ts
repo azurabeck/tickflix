@@ -55,7 +55,7 @@ export const NOTES_CYCLE: Cycle = {
     {
       id: "build",
       title: "O rank é montado",
-      text: "O useMyNotes monta o rank a partir desse mapa. Ele escolhe as melhores notas, transforma cada uma em item de rank e devolve a lista, o loading e as chaves que a Sugestão da IA usa. Clique em uma das partes.",
+      text: "O useMyNotes monta o rank a partir desse mapa. Ele escolhe as melhores notas, transforma cada uma em item de rank e devolve a lista e o loading. Clique em uma das partes.",
       code: { file: "src/actions/helpers/rank/index.ts", name: "useMyNotes" },
       children: [
         {

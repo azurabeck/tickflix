@@ -42,7 +42,7 @@ const RankSection = ({ mediaKind = "movie", category, popularityTitle, popularit
           {...handlers}
         />
       </HomeSection>
-      <AiSuggestionsPanel recentKeys={myNotes.recentKeys} mediaKind={mediaKind} category={category} keyFilter={myNotes.keyFilter} />
+      <AiSuggestionsPanel mediaKind={mediaKind} category={category} />
     </HomeRow>
   );
 };
