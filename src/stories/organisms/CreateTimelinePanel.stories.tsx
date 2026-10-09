@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { fn } from "storybook/test";
 import CreateTimelinePanel from "@/components/organisms/CreateTimelinePanel";
 
 const meta = {
@@ -7,7 +6,7 @@ const meta = {
   component: CreateTimelinePanel,
   tags: ["autodocs"],
   parameters: { layout: "fullscreen" },
-  args: { uid: "demo", onCreated: fn() },
+  args: { uid: "demo" },
 } satisfies Meta<typeof CreateTimelinePanel>;
 export default meta;
 type Story = StoryObj<typeof meta>;

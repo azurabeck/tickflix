@@ -7,13 +7,12 @@ import "./style.scss";
 
 interface CreateTimelinePanelProps {
   uid: string | null;
-  onCreated?: () => void;
   categoryLock?: ContentType;
   placeholder?: string;
 }
 
 // Faixa "Criar uma nova timeline": o texto digitado abre o modal que monta a timeline com IA.
-const CreateTimelinePanel = ({ uid, onCreated, categoryLock, placeholder }: CreateTimelinePanelProps) => {
+const CreateTimelinePanel = ({ uid, categoryLock, placeholder }: CreateTimelinePanelProps) => {
   const { t } = useTranslation();
   const [description, setDescription] = useState("");
   const [modalDescription, setModalDescription] = useState<string | null>(null);
@@ -23,11 +22,8 @@ const CreateTimelinePanel = ({ uid, onCreated, categoryLock, placeholder }: Crea
     setModalDescription(description.trim());
   };
 
-  const handleSaved = () => {
-    setModalDescription(null);
-    setDescription("");
-    onCreated?.();
-  };
+  // Recarrega a página para a nova timeline aparecer na lista.
+  const handleSaved = () => window.location.reload();
 
   return (
     <>

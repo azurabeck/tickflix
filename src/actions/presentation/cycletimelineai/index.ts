@@ -151,9 +151,8 @@ export const TIMELINEAI_CYCLE: Cycle = {
     {
       id: "close",
       title: "O modal fecha",
-      text: "O onSaved fecha o modal e limpa o texto da faixa.",
+      text: "O onSaved recarrega a página (window.location.reload), para a nova timeline aparecer na lista \"Timelines que você segue\".",
       code: { file: "src/components/organisms/CreateTimelinePanel/index.tsx", name: "handleSaved" },
-      note: "Atenção: as páginas não passam o onCreated para a faixa, então nada recarrega a lista \"Timelines que você segue\" depois de salvar. A nova timeline só aparece quando a página é aberta de novo. É o comportamento atual do código.",
     },
   ],
 };

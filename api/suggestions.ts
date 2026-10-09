@@ -5,7 +5,8 @@ import { GeminiError, generateJSON } from "./_lib/geminiServer.js";
 import { tmdbFetchServer } from "./_lib/tmdbServer.js";
 import { withAvailability } from "./_lib/dashboardData.js";
 
-// Sugestões da IA, tudo no servidor. O frontend só diz o tipo (movie/tv) e a categoria (series/animes) e pede `load` (abrir a tela) ou `refresh` (renovar).
+// Sugestões da IA, tudo no servidor. O frontend só diz o tipo (movie/tv) e a categoria (series/animes) e pede `load` (abrir a tela) ou `refresh` (preencher os lugares livres).
+// Já aceita também: `discard` com `id` e `mediaType` (libera essa sugestão) e `refresh` com `id` e `mediaType` (troca só essa sugestão por uma nova).
 // O servidor confere o login, lê no Firebase o que a pessoa viu, avaliou e segue, escolhe a base de gosto, guarda as 3 sugestões do dia por usuário
 // (em users/<uid>/suggestions, que só o servidor acessa) e, quando precisa, chama o Gemini e confirma cada título no TMDb.
 // Resposta: { status: "ok" | "no-taste", basis: "ratings" | "watched" | null, slots: (cartão | null)[] }; um slot null está livre para renovar.
@@ -21,8 +22,9 @@ const ANIMATION_GENRE_ID = 16;
 const DEFAULT_TIME_ZONE = "America/Sao_Paulo";
 
 interface Body {
-  action: "load" | "refresh";
+  action: "load" | "refresh" | "discard";
   mediaKind: "movie" | "tv";
+  target?: { id: number; mediaType: "movie" | "tv" }; // a sugestão que o discard libera ou que o refresh troca
   category?: "series" | "animes";
   lang: string;
   timeZone: string;
@@ -82,7 +84,10 @@ const isStringArray = (value: unknown, max: number): value is string[] => Array.
 // Confere o corpo do pedido; devolve null se algo estiver fora do formato.
 const parseBody = (raw: unknown): Body | null => {
   const body = (raw ?? {}) as Record<string, unknown>;
-  if (body.action !== "load" && body.action !== "refresh") return null;
+  if (body.action !== "load" && body.action !== "refresh" && body.action !== "discard") return null;
+  const hasTarget = body.id !== undefined || body.mediaType !== undefined;
+  if (hasTarget && (typeof body.id !== "number" || (body.mediaType !== "movie" && body.mediaType !== "tv"))) return null;
+  if (body.action === "discard" && !hasTarget) return null;
   if (body.mediaKind !== "movie" && body.mediaKind !== "tv") return null;
   if (body.category !== undefined && body.category !== "series" && body.category !== "animes") return null;
   if (!isStringArray(body.genres ?? [], 30)) return null;
@@ -91,6 +96,7 @@ const parseBody = (raw: unknown): Body | null => {
   return {
     action: body.action,
     mediaKind: body.mediaKind,
+    target: hasTarget ? { id: body.id as number, mediaType: body.mediaType as "movie" | "tv" } : undefined,
     category: body.category as Body["category"],
     lang: typeof body.lang === "string" && ALLOWED_LANGS.has(body.lang) ? body.lang : "pt-BR",
     timeZone: typeof body.timeZone === "string" ? body.timeZone : DEFAULT_TIME_ZONE,
@@ -279,7 +285,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const before = JSON.stringify(daily?.slots);
     if (daily) daily = { ...daily, slots: daily.slots.map((slot) => (slot && data.checked.has(`${slot.mediaType}-${slot.id}`) ? null : slot)) };
 
-    const empty = daily ? daily.slots.filter((slot) => slot === null).length : SLOTS;
+    // Qual lugar do dia guarda a sugestão pedida (discard ou refresh de um card). -1 = nenhum.
+    const targetIndex = daily && body.target ? daily.slots.findIndex((slot) => slot !== null && slot.id === body.target?.id && slot.mediaType === body.target.mediaType) : -1;
+    const withoutSlot = (slots: (Suggestion | null)[], index: number) => slots.map((slot, i) => (i === index ? null : slot));
+
+    // Descartar: libera só essa sugestão. Ela já está no histórico (não volta) e o lugar vira botão de refresh; não chama a IA.
+    if (body.action === "discard") {
+      if (daily && targetIndex >= 0) {
+        daily = { ...daily, slots: withoutSlot(daily.slots, targetIndex) };
+        await ref.set(daily);
+      }
+      res.status(200).json({ status: "ok", basis, slots: daily?.slots ?? [] });
+      return;
+    }
+
+    // Refresh de um card que ocupa um lugar: troca só ele, por uma sugestão nova. Sem card (ou sem `target`): preenche os lugares livres.
+    const replacing = body.action === "refresh" && targetIndex >= 0;
+    const empty = replacing ? 1 : daily ? daily.slots.filter((slot) => slot === null).length : SLOTS;
     const mustGenerate = daily ? body.action === "refresh" && empty > 0 : true;
 
     if (mustGenerate && !basis) {
@@ -297,6 +319,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       const current: Daily = daily ?? { day: today, slots: Array.from({ length: SLOTS }, () => null), history: [] };
+      const toFill = replacing ? [targetIndex] : current.slots.flatMap((slot, i) => (slot === null ? [i] : [])); // os lugares que vão receber sugestão nova
       const exclude = new Set([...data.knownKeys, ...current.history]);
       const created: Suggestion[] = [];
       const tried: string[] = [];
@@ -310,7 +333,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (created.length === 0) throw new GeminiError(502, "A IA não devolveu nenhuma sugestão válida.");
 
       const queue = [...created];
-      daily = { day: today, slots: current.slots.map((slot) => slot ?? queue.shift() ?? null), history: [...current.history, ...created.map((s) => `${s.mediaType}-${s.id}`)] };
+      daily = { day: today, slots: current.slots.map((slot, i) => (toFill.includes(i) ? queue.shift() ?? null : slot)), history: [...current.history, ...created.map((s) => `${s.mediaType}-${s.id}`)] };
       await ref.set(daily);
     } else if (daily && JSON.stringify(daily.slots) !== before) {
       await ref.set(daily);

@@ -84,7 +84,7 @@ const AddToTimelineButton = ({ uid, movie }: AddToTimelineButtonProps) => {
 
       {uid && createOpen && (
         <div onClick={(e) => e.stopPropagation()}>
-          <AddToTimelineCreateModal uid={uid} initialMovie={movie} onClose={() => setCreateOpen(false)} onSaved={() => setCreateOpen(false)} />
+          <AddToTimelineCreateModal uid={uid} initialMovie={movie} onClose={() => setCreateOpen(false)} onSaved={() => window.location.reload()} />
         </div>
       )}
     </div>

@@ -4,7 +4,6 @@ Faixa "Criar uma nova timeline": o texto digitado abre o modal que monta a timel
 
 ## Props
 - `uid`: `string | null`
-- `onCreated?`: `() => void`
 - `categoryLock?`: `ContentType`
 - `placeholder?`: `string`
 
