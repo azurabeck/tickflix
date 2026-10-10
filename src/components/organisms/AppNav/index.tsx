@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Menu, Search, X } from "lucide-react";
+import { Maximize, Menu, Minimize, Search, X } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import Logo from "@/components/atoms/Logo";
@@ -8,6 +8,7 @@ import NavDropdown from "@/components/molecules/NavDropdown";
 import UserMenu from "@/components/molecules/UserMenu";
 import SearchModal from "@/components/organisms/SearchModal";
 import { NAV_LINK_ROUTES, buildNavMenus } from "@/actions/helpers/nav";
+import { useDesktopWindow } from "@/actions/helpers/desktopwindow";
 import "./style.scss";
 
 // Barra de navegação fixa no topo: abas, submenus, busca e menu da conta.
@@ -18,6 +19,7 @@ const AppNav = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
+  const desktop = useDesktopWindow();
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -61,6 +63,12 @@ const AppNav = () => {
           <button type="button" className="app-nav__search-btn" onClick={() => setSearchOpen(true)} aria-label={t("nav.search")}>
             <Search size={20} />
           </button>
+
+          {desktop.installed && (
+            <button type="button" className="app-nav__search-btn" onClick={desktop.toggleFullscreen} aria-label={t(desktop.fullscreen ? "nav.exitFullscreen" : "nav.fullscreen")}>
+              {desktop.fullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+            </button>
+          )}
 
           <UserMenu />
 

@@ -15,7 +15,9 @@
       "animes": "Anime",
       "franquias": "Franchises",
       "premiacoes": "Awards"
-    }
+    },
+    "fullscreen": "Full screen",
+    "exitFullscreen": "Exit full screen"
   },
   "userMenu": {
     "openAccount": "Open account menu",

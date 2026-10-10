@@ -8,6 +8,21 @@ $content-max-width: 1440px;
   position: sticky;
   top: 0;
   z-index: 9999;
+  // App instalado (janela sem a barra do Windows): a barra de navegação vira a barra de título.
+  // Arrasta a janela pelos espaços vazios e deixa livre o canto direito, onde o Windows põe minimizar, maximizar e fechar.
+  @media (display-mode: window-controls-overlay) {
+    padding-right: calc(100% - env(titlebar-area-width, 100%) - env(titlebar-area-x, 0px));
+    -webkit-app-region: drag;
+    app-region: drag;
+
+    .logo,
+    .app-nav__menu,
+    .app-nav__actions {
+      -webkit-app-region: no-drag;
+      app-region: no-drag;
+    }
+  }
+
   &__inner {
     max-width: $content-max-width;
     margin: 0 auto;

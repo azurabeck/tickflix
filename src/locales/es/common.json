@@ -15,7 +15,9 @@
       "animes": "Animes",
       "franquias": "Franquicias",
       "premiacoes": "Premiaciones"
-    }
+    },
+    "fullscreen": "Pantalla completa",
+    "exitFullscreen": "Salir de pantalla completa"
   },
   "userMenu": {
     "openAccount": "Abrir menú de la cuenta",
